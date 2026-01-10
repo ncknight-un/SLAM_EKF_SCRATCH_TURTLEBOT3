@@ -23,4 +23,14 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+# Set up Install Directories: 
+install(DIRECTORY
+  launch
+  urdf
+  meshes
+  config
+  DESTINATION share/${PROJECT_NAME}
+)
+
+
 ament_package()
