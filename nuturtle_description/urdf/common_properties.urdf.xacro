@@ -1,9 +1,9 @@
 <?xml version="1.0" ?>
 <robot name="xacro_properties" xmlns:xacro="http://ros.org/wiki/xacro">
-<!-- This document has been modified from the original URDF provided by ROBOTIS. 
-This modifications allow this URDF to be launched solely from this package, 
-removing all dependencies on ROBOTIS turtlebot3 open-source package.Furthermore, 
-this document has been modified to use xacro. -->
+  <!-- This document has been modified from the original URDF provided by ROBOTIS. 
+  This modifications allow this URDF to be launched solely from this package, 
+  removing all dependencies on ROBOTIS turtlebot3 open-source package.Furthermore, 
+  this document has been modified to use xacro. -->
 
   <!-- Init colour -->
   <material name="black">
@@ -44,4 +44,5 @@ this document has been modified to use xacro. -->
   <material name="white">
     <color rgba="1.0 1.0 1.0 1.0"/>
   </material>
+
 </robot>
