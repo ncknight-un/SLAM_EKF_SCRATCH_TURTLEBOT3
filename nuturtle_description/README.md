@@ -10,30 +10,32 @@ URDF files for Nuturtle - NCK
 
 # Launch File Details
 * To show the Arguements of the single bot launch file, run: `ros2 launch nuturtle_description load_one.launch.xml --show-args`
-  Output: `Arguments (pass arguments as '<name>:=<value>'):
 
-    'use_rviz':
+  Output: Arguments (pass arguments as `<name>:=<value>`):
+
+    `use_rviz`:
         The user can control whether the turtlebot3 is shown in Rviz or not at launch.
-        (default: 'true')
+        (default: `true`)
 
-    'use_jsp':
+    `use_jsp`:
         The joint state publisher can be true or false. If true, the joint state publisher will launch default joint states
-        (default: 'true')
+        (default: `true`)
 
-    'color':
-        Set the base_Link color of the robot. Valid choices are: ['purple', 'red', 'green', 'blue']
-        (default: 'purple')`
+    `color`:
+        Set the base_Link color of the robot. Valid choices are: [`purple`, `red`, `green`, `blue`]
+        (default: `purple`)`
 * To show the Arguements of all-bot launch file, run: `ros2 launch nuturtle_description load_all.launch.xml --show-args`
-  Output: `Arguments (pass arguments as '<name>:=<value>'):
 
-    'use_rviz':
+  Output: Arguments (pass arguments as `<name>:=<value>`):
+
+    `use_rviz`:
         The user can control whether the turtlebot3 is shown in Rviz or not at launch.
-        (default: 'true')
+        (default: `true`)
 
-    'use_jsp':
+    `use_jsp`:
         The joint state publisher can be true or false. If true, the joint state publisher will launch default joint states
-        (default: 'true')
+        (default: `true`)
 
-    'color':
-        Set the base_Link color of the robot. Valid choices are: ['purple', 'red', 'green', 'blue']
-        (default: 'purple')`
+    `color`:
+        Set the base_Link color of the robot. Valid choices are: [`purple`, `red`, `green`, `blue`]
+        (default: `purple`)`
