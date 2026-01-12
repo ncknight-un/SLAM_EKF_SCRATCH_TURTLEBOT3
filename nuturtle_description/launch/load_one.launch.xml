@@ -30,9 +30,6 @@
     <node pkg="joint_state_publisher" exec="joint_state_publisher" if="$(eval '\'$(var use_jsp)\'==\'true\'')"/>
 
     <!-- RViz - If RViz is launched and closed, the launchfile will terminate-->
-    <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nuturtle_description)/config/load_one_$(var color).rviz" on_exit="shutdown">
-      <!-- Set fixed frame -->
-      <param name="fixed_frame" value="$(var color)base_link"/>
-    </node>
+    <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nuturtle_description)/config/load_one_$(var color).rviz" if="$(eval '\'$(var use_rviz)\'==\'true\'')" on_exit="shutdown"/>
   </group>
 </launch>
