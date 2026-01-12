@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- #################### Begin_Citation [1] ########################### -->
+    <!-- Load the Purplebot -->
+    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
+        <arg name="color" value="purple"/>
+        <arg name="use_rviz" value="false"/>
+    </include>
+    <!-- #################### End_Citation [1] ############################# -->
+    <!-- Load the Redbot -->
+    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
+        <arg name="color" value="red"/>
+        <arg name="use_rviz" value="false"/>
+    </include>
+    <!-- Load the Bluebot -->
+    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
+        <arg name="color" value="blue"/>
+        <arg name="use_rviz" value="false"/>
+    </include>
+    <!-- Load the Greenbot -->
+    <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
+        <arg name="color" value="green"/>
+        <arg name="use_rviz" value="false"/>
+    </include>
+
+    <!-- RViz - If RViz is launched and closed, the launchfile will terminate-->
+    <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nuturtle_description)/config/basic_all.rviz" on_exit="shutdown">
+        <remap from="map" to="nusim/world"/>
+    </node>
+
+    <!-- Set the Static Transforms to set the robots at their initial positions -->
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="PurpleBot"
+          args="0.0 -1.0 0.0 0.0 0.0 0.0 nusim/world purple/base_footprint"/>
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="RedBot"
+          args="0.25 0.0 0.0 0.0 0.0 0.0 nusim/world red/base_footprint"/>
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="BlueBot"
+          args="-0.5 0.0 0.0 0.0 0.0 0.0 nusim/world blue/base_footprint"/>
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="GreenBot"
+          args="0.0 0.5 0.0 0.0 0.0 0.0 nusim/world green/base_footprint"/>
+</launch>
