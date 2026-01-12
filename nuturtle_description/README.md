@@ -23,7 +23,7 @@ URDF files for Nuturtle - NCK
 
     `color`:
         Set the base_Link color of the robot. Valid choices are: [`purple`, `red`, `green`, `blue`]
-        (default: `purple`)`
+        (default: `purple`)
 * To show the Arguements of all-bot launch file, run: `ros2 launch nuturtle_description load_all.launch.xml --show-args`
 
   Output: Arguments (pass arguments as `<name>:=<value>`):
@@ -38,4 +38,4 @@ URDF files for Nuturtle - NCK
 
     `color`:
         Set the base_Link color of the robot. Valid choices are: [`purple`, `red`, `green`, `blue`]
-        (default: `purple`)`
+        (default: `purple`)
