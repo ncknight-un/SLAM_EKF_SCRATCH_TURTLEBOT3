@@ -3,4 +3,4 @@
 * Winter 2025
 # Package List
 This repository consists of several ROS packages
-- <PACKAGE1> - <one sentence description>
+- Nuturtle-description - URDF development and Rviz vizualization of one or multiple turtlebots in one simulation.
