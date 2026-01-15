@@ -20,7 +20,7 @@ find_package(Doxygen)
 # you don't need or want to.
 # name is the name of the library without the extension or lib prefix
 # name creates a cmake "target" (in this case the target is called "libname"
-add_library(turtlelib src/turtlelib.cpp)
+add_library(turtlelib src/converter.cpp)
 
 # Use target_include_directories so that #include"mylibrary/header.hpp" works
 # The use of the <BUILD_INTERFACE> and <INSTALL_INTERFACE> is because when
@@ -46,7 +46,7 @@ target_compile_features(turtlelib PUBLIC cxx_std_23)
 
 # Create an executable from the following source code files
 # The Name of the executable creates a cmake "target"
-add_executable(turtlebot src/main.cpp)
+add_executable(converter src/converter.cpp)
 
 # Use target_link_libraries to add dependencies to a "target"
 # (e.g., a library or executable)
@@ -55,7 +55,7 @@ add_executable(turtlebot src/main.cpp)
 # and paths to th locations of header files.
 # Because libname has PUBLIC cxx_std_23 as a compile feature
 # Name will also be compiled with c++23 as the standard.
-target_link_libraries(turtlebot Eigen3::Eigen turtlelib)
+target_link_libraries(converter Eigen3::Eigen turtlelib)
 
 # install the include files by copying the whole include directory
 install(DIRECTORY include/turtlelib DESTINATION include)
@@ -64,7 +64,7 @@ install(DIRECTORY include/turtlelib DESTINATION include)
 # Also create CMake Export called project_name-targets
 # The CMake Export contains files that allow other CMake projects
 # to find this project. It must be installed separately.
-install(TARGETS turtlelib turtlebot EXPORT turtlelib-targets)
+install(TARGETS turtlelib converter EXPORT turtlelib-targets)
 
 # The project_name-targets created by install(TARGETS) needs to be installed.
 # install(EXPORT ...) will generate a file called project_name-config.cmake
@@ -83,7 +83,7 @@ find_package(Doxygen)
 
 # Building documentation should be optional.
 # To build documentation pass -DBUILD_DOCS=ON when generating the build system
-option(BUILD_DOCS "Build the documentation" ON)
+option(BUILD_DOCS "Build the documentation" OFF)
 
 # build the documentation
 if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})

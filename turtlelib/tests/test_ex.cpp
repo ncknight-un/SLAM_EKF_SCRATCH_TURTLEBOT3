@@ -1,7 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
-#include "turtlelib/turtlelib.h"
+#include "turtlelib/angle.hpp"
 
-TEST_CASE("Turtle moves") {
+TEST_CASE("Turtle Test") {
     // Placeholder test
-    turtlelib::Turtle t;
 }
