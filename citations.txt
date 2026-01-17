@@ -1,2 +1,2 @@
 [1] ROS 2 Design. "ROS 2 Launch XML Format". design.ros2.org. Accessed: January 12th, 2026. [Online]. Available: https://design.ros2.org/articles/roslaunch_xml.html
-[2] 
+[2] https://www.geeksforgeeks.org/cpp/how-to-handle-wrong-data-type-input-in-cpp/.

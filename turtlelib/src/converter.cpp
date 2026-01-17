@@ -1,43 +1,52 @@
 #include "turtlelib/angle.hpp"
 #include <iostream>
-#include <cstdio>
-#include <cstring>
+#include <string>
+#include <limits>
+#include <iomanip>
 
 int main() {
-    // Establish variables to store the user input:
-    char datatype[4];
-    auto data = double(0.0);
-
     while(true) {
-        // Prompt the user for input:
-        printf("Enter an angle: <angle> <deg|rad>, (CTRL-D to exit)\n");
-        scanf("%lf %s", &data, datatype);
+        // Establish variables to store the user input:
+        std::string datatype = "";
+        auto data = double(0.0);
 
+        // Prompt the user for input:
+        std::cout << "Enter an angle: <angle> <deg|rad>, (CTRL-D to exit)" << std::endl;
+        std::cin >> data >> datatype;
+
+        // Break loop if user inputs EOF character:
+        if (std::cin.eof()){break;}
         // Convert the datatype and normalize: 
-        if (strcmp(datatype, "rad") == 0){              // Returns 0 if the strings are identical
+        if (datatype == "rad"){
             // Normalize the data: 
             data = turtlelib::normalize_angle(data);
             auto conv_data = turtlelib::rad2deg(data);
 
             // Return the converted data to the user:
-            printf("%lf %2s is %lf deg.\n", data, datatype, conv_data);
+            std::cout << std::fixed << std::setprecision(2) << std::format("{} {} is {} deg.", data, datatype, conv_data) << std::endl;
         }
-        else if (strcmp(datatype, "deg") == 0){
+        else if (datatype == "deg"){
             // Convert then normalize:
             auto conv_data = turtlelib::deg2rad(data);
             conv_data = turtlelib::normalize_angle(conv_data);
 
             // Return the converted data to the user:
-            printf("%lf %2s is %lf rad.\n", data, datatype, conv_data);
+            std::cout << std::fixed << std::setprecision(2) << std::format("{} {} is {} rad.", turtlelib::rad2deg(conv_data), datatype, conv_data) << std::endl;
         }
-        else {
+        // ################################# Begin_Citation [2] ################################
+        // Check to see if an invalid value was inputed for data
+        else if (std::cin.fail()) {
             // Break Loop and Notify User of Invalid Input, continue Loop: 
-            printf("Invalid input: ");
+            std::cin.clear(); // clear error flags
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "Invalid input! ";
+        }
+        // ################################## End_Citation [2] #################################
+        // Return invalid input if datatype isn't rad or deg:
+        else{
+            std::cout << "Invalid input! ";
         }
     } // End of while (Program Termination)
-        
+
     return 0;
 }
-
-// Make sure that the loop terminates correctly. 
-// Fix the use case for invalid data.

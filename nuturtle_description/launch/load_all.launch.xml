@@ -5,22 +5,26 @@
     <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
         <arg name="color" value="purple"/>
         <arg name="use_rviz" value="false"/>
+        <arg name="use_jsp" value="true"/>
     </include>
     <!-- #################### End_Citation [1] ############################# -->
     <!-- Load the Redbot -->
     <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
         <arg name="color" value="red"/>
         <arg name="use_rviz" value="false"/>
+        <arg name="use_jsp" value="true"/>
     </include>
     <!-- Load the Bluebot -->
     <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
         <arg name="color" value="blue"/>
         <arg name="use_rviz" value="false"/>
+        <arg name="use_jsp" value="true"/>
     </include>
     <!-- Load the Greenbot -->
     <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
         <arg name="color" value="green"/>
         <arg name="use_rviz" value="false"/>
+        <arg name="use_jsp" value="true"/>
     </include>
 
     <!-- RViz - If RViz is launched and closed, the launchfile will terminate-->
