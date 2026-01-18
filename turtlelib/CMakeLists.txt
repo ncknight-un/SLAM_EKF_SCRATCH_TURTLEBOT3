@@ -20,7 +20,7 @@ find_package(Doxygen)
 # you don't need or want to.
 # name is the name of the library without the extension or lib prefix
 # name creates a cmake "target" (in this case the target is called "libname"
-add_library(turtlelib src/converter.cpp)
+add_library(turtlelib src/geometry2d.cpp)
 
 # Use target_include_directories so that #include"mylibrary/header.hpp" works
 # The use of the <BUILD_INTERFACE> and <INSTALL_INTERFACE> is because when
@@ -52,7 +52,7 @@ add_executable(converter src/converter.cpp)
 # (e.g., a library or executable)
 # This will automatically add all required library files
 # that need to be linked
-# and paths to th locations of header files.
+# and paths to the locations of header files.
 # Because libname has PUBLIC cxx_std_23 as a compile feature
 # Name will also be compiled with c++23 as the standard.
 target_link_libraries(converter Eigen3::Eigen turtlelib)
@@ -78,12 +78,9 @@ install(EXPORT turtlelib-targets
         NAMESPACE turtlelib::
         DESTINATION lib/cmake/${PROJECT_NAME})
 
-# Auto-generate Doxygen Documenation:
-find_package(Doxygen)
-
 # Building documentation should be optional.
 # To build documentation pass -DBUILD_DOCS=ON when generating the build system
-option(BUILD_DOCS "Build the documentation" OFF)
+option(BUILD_DOCS "Build the documentation" ON)
 
 # build the documentation
 if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
@@ -108,9 +105,9 @@ if(BUILD_TESTING)
     find_package(Catch2 3 REQUIRED)
 
     # A test is just an executable that is linked against the unit testing library
-    add_executable(my_test_exe tests/test_ex.cpp)
-    target_link_libraries(my_test_exe Catch2::Catch2WithMain turtlelib)
+    add_executable(test_2d tests/test_geometry2d.cpp)
+    target_link_libraries(test_2d Catch2::Catch2WithMain turtlelib)
 
     # register the test with CTest, telling it what executable to run
-    add_test(NAME the_test_name COMMAND my_test_exe)
+    add_test(NAME Test2d COMMAND test_2d)
 endif()
