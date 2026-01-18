@@ -3,9 +3,10 @@
 namespace turtlelib {
     std::istream & operator>>(std::istream & is, Point2D & p){
         // First step is to determine the format:
-        char ignore;
+        char first = is.peek();
         // Peek to see if the first character is '('
-        if (is.peek() == '(') {         // Format (x, y)
+        if (first == '(') {         // Format (x, y)
+            char ignore; 
             is.get(ignore);             // ignore '('
             if (!(is >> p.x)) {        // try to read x, fail if invalid.
                 is.setstate(std::ios::failbit);
@@ -26,12 +27,17 @@ namespace turtlelib {
                 return is;
             }
         } 
-        else {                          // Format x y
+        else if ((first >= '0' && first <= '9') || first == '-') {             // Format x y (allow neg x)
             // Check that x and y are valid, otherwise mark them as fail.
             if (!(is >> p.x >> p.y)) {
                 is.setstate(std::ios::failbit);
                 return is;
             }
+        }
+        else {
+            // Input begins invalid
+            is.setstate(std::ios::failbit);
+            return is;
         }
 
         return is;        // return the stream
@@ -48,33 +54,48 @@ namespace turtlelib {
     } // End of operator+
 
     std::ostream & operator<<(std::ostream & os, const Vector2D & v) {
-        os << "[" << v.x << "," << v.y << "]";
+        // I decided to force the printout to always keep a precision of 5 decimal places:
+        os << "[" << std::fixed << std::setprecision(5) << v.x << ", " << std::fixed << std::setprecision(5) << v.y << "]";
         return os;
     } // End of operator<<
 
     std::istream & operator>>(std::istream & is, Vector2D & v) {
         // First step is to determine the format:
-        char ignore;
+        char first = is.peek();
         // Peek to see if the first character is '['
-        if (is.peek() == '[') {         // Format [x, y]
+        if (first == '[') {         // Format [x, y]
+            char ignore;
             is.get(ignore);             // ignore '['
             if (!(is >> v.x)) {        // try to read x, fail if invalid.
                 is.setstate(std::ios::failbit);
                 return is;
             }
             is.get(ignore);             // ignore ','
+            if (ignore != ',') {
+                is.setstate(std::ios::failbit);
+                return is;
+            }
             if (!(is >> v.y)) {        // try to read y, fail if invalid.
                 is.setstate(std::ios::failbit);
                 return is;
             }
             is.get(ignore);      // ignore ']'
+            if (ignore != ']') {
+                is.setstate(std::ios::failbit);
+                return is;
+            }
         } 
-        else {                       // Format x y
+        else if ((first >= '0' && first <= '9') || first == '-') {             // Format x y (allow neg x)
             // Check that x and y are valid, otherwise mark them as fail.
             if (!(is >> v.x >> v.y)) {
                 is.setstate(std::ios::failbit);
                 return is;
             }
+        }
+        else {
+            // Input begins invalid:
+            is.setstate(std::ios::failbit);
+            return is;
         }
         
         return is;        // return the stream

@@ -9,6 +9,7 @@
 #include <format>
 #include <stdexcept>
 #include <cmath>
+#include <iomanip>
 // Note: <iosfwd> contains forward definitions for iostream objects allowing implementation of 
 // custom iostream operators without requiring the inclusion of <iostream>, which is a big header file.
 #include<iosfwd>
