@@ -85,38 +85,35 @@ namespace turtlelib
 /// All floating-point format specifiers are honored and applied to both x and y.
 template<class CharT>
 class std::formatter<turtlelib::Point2D, CharT> {
-    std::formatter<float, CharT> float_formatter; // Member variable for float
+    public:
+        std::formatter<float, CharT> float_formatter; // Member variable for float
 
-    /// \brief Parse the format-specifier, storing the results in *this so that
-    ///   they can be used for controlling how MyType is formatted
-    /// \param parse_ctx An std::basic_format_parse_Context<CharT>
-    ///   This contains .begin() and .end() iterators for all characters after
-    ///   the : in the format-spec (including the "}").  If the
-    ///   format-spec is empty (e.g., "{}") then .begin() == .end()
-    /// \returns std::basic_format_parse_context<CharT>::iterator
-    /// The iterator points to the character that is past the end of the last character parsed by the parse function
-    /// If re-using a parser via inheritance, do not include this function here.
-    constexpr auto parse(auto & parse_ctx) {
-        return float_formatter.parse(parse_ctx);
-    }
+        /// \brief Parse the format-specifier, storing the results in *this so that
+        ///   they can be used for controlling how MyType is formatted
+        /// \param parse_ctx An std::basic_format_parse_Context<CharT>
+        ///   This contains .begin() and .end() iterators for all characters after
+        ///   the : in the format-spec (including the "}").  If the
+        ///   format-spec is empty (e.g., "{}") then .begin() == .end()
+        /// \returns std::basic_format_parse_context<CharT>::iterator
+        /// The iterator points to the character that is past the end of the last character parsed by the parse function
+        /// If re-using a parser via inheritance, do not include this function here.
+        constexpr auto parse(auto & parse_ctx) {
+            return float_formatter.parse(parse_ctx);
+        }
 
-    /// \brief Writes a string representation of t to the fmt_ctx range
-    /// \param t The type to output.
-    ///    (Note: this can also be taken by value instead of const &, if desired).
-    /// \param fmt_ctx An std::basic_format_context<LegacyOutputIterator, CharT>
-    ///    Contains an iterator to output characters to. There is no guarantee
-    ///    of what type LegacyOutputIterator is, so your code should not
-    ///    depend it being a particular iterator type
-    /// \returns std::basic_format_context<>::iterator. The iterator should
-    ///   point to one past the last output character (e.g., where the next
-    ///   character from whatever else is being added to the string should be inserted)
-    auto format(const turtlelib::Vector2D & v, auto & fmt_ctx) const {
-        auto out = fmt_ctx.out();
-        out = std::format_to(out, "({}, {})",
-                             float_formatter.format(v.x, fmt_ctx),
-                             float_formatter.format(v.y, fmt_ctx));
-        return out;
-    }
+        /// \brief Writes a string representation of t to the fmt_ctx range
+        /// \param t The type to output.
+        ///    (Note: this can also be taken by value instead of const &, if desired).
+        /// \param fmt_ctx An std::basic_format_context<LegacyOutputIterator, CharT>
+        ///    Contains an iterator to output characters to. There is no guarantee
+        ///    of what type LegacyOutputIterator is, so your code should not
+        ///    depend it being a particular iterator type
+        /// \returns std::basic_format_context<>::iterator. The iterator should
+        ///   point to one past the last output character (e.g., where the next
+        ///   character from whatever else is being added to the string should be inserted)
+        auto format(const turtlelib::Point2D & p, auto & fmt_ctx) const {
+            return std::format_to(fmt_ctx.out(), "({}, {})", p.x, p.y);
+        }
 };
 
 /// \brief A formatter for Vector2D
@@ -124,37 +121,34 @@ class std::formatter<turtlelib::Point2D, CharT> {
 /// The vector is output as [x, y]
 template<class CharT>
 class std::formatter<turtlelib::Vector2D, CharT> {
-    std::formatter<float, CharT> float_formatter; // Member variable for float
+    public:
+        std::formatter<float, CharT> float_formatter; // Member variable for float
 
-    /// \brief Parse the format-specifier, storing the results in *this so that
-    ///   they can be used for controlling how MyType is formatted
-    /// \param parse_ctx An std::basic_format_parse_Context<CharT>
-    ///   This contains .begin() and .end() iterators for all characters after
-    ///   the : in the format-spec (including the "}").  If the
-    ///   format-spec is empty (e.g., "{}") then .begin() == .end()
-    /// \returns std::basic_format_parse_context<CharT>::iterator
-    /// The iterator points to the character that is past the end of the last character parsed by the parse function
-    /// If re-using a parser via inheritance, do not include this function here.
-    constexpr auto parse(auto & parse_ctx) {
-        return float_formatter.parse(parse_ctx);
-    }
+        /// \brief Parse the format-specifier, storing the results in *this so that
+        ///   they can be used for controlling how MyType is formatted
+        /// \param parse_ctx An std::basic_format_parse_Context<CharT>
+        ///   This contains .begin() and .end() iterators for all characters after
+        ///   the : in the format-spec (including the "}").  If the
+        ///   format-spec is empty (e.g., "{}") then .begin() == .end()
+        /// \returns std::basic_format_parse_context<CharT>::iterator
+        /// The iterator points to the character that is past the end of the last character parsed by the parse function
+        /// If re-using a parser via inheritance, do not include this function here.
+        constexpr auto parse(auto & parse_ctx) {
+            return float_formatter.parse(parse_ctx);
+        }
 
-    /// \brief Writes a string representation of t to the fmt_ctx range
-    /// \param t The type to output.
-    ///    (Note: this can also be taken by value instead of const &, if desired).
-    /// \param fmt_ctx An std::basic_format_context<LegacyOutputIterator, CharT>
-    ///    Contains an iterator to output characters to. There is no guarantee
-    ///    of what type LegacyOutputIterator is, so your code should not
-    ///    depend it being a particular iterator type
-    /// \returns std::basic_format_context<>::iterator. The iterator should
-    ///   point to one past the last output character (e.g., where the next
-    ///   character from whatever else is being added to the string should be inserted)
-    auto format(const turtlelib::Vector2D & v, auto & fmt_ctx) const {
-        auto out = fmt_ctx.out();
-        out = std::format_to(out, "[{}, {}]",
-                             float_formatter.format(v.x, fmt_ctx),
-                             float_formatter.format(v.y, fmt_ctx));
-        return out;
-    }
+        /// \brief Writes a string representation of t to the fmt_ctx range
+        /// \param t The type to output.
+        ///    (Note: this can also be taken by value instead of const &, if desired).
+        /// \param fmt_ctx An std::basic_format_context<LegacyOutputIterator, CharT>
+        ///    Contains an iterator to output characters to. There is no guarantee
+        ///    of what type LegacyOutputIterator is, so your code should not
+        ///    depend it being a particular iterator type
+        /// \returns std::basic_format_context<>::iterator. The iterator should
+        ///   point to one past the last output character (e.g., where the next
+        ///   character from whatever else is being added to the string should be inserted)
+        auto format(const turtlelib::Vector2D & v, auto & fmt_ctx) const {
+            return std::format_to(fmt_ctx.out(), "[{}, {}]", v.x, v.y);         // Returns [x, y]
+        }
 };
 #endif

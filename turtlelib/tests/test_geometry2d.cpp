@@ -178,27 +178,28 @@ TEST_CASE("VECTOR2D normalize", "[normalize]") {
     }
 }
 
+TEST_CASE("Point2D formatting Tests", "turtlelib::Point2D p{x, y}") {
+    SECTION("Standard Formating Test"){
+        turtlelib::Point2D p{1.5, -2.3};
+        std::string s = std::format("{}", p);
+        REQUIRE(s == "(1.5, -2.3)");
+    }
 
-//Note I need to fix read in of Vector for ( ) case.
+    SECTION("Point2D - Origin") {
+        turtlelib::Point2D p{0.0, 0.0};
+        REQUIRE(std::format("{}", p) == "(0, 0)");
+    }
+}
 
-// TEST_CASE("Vector2D formatting Tests", "turtlelib::Vector2D v{x, y}") {
-//     SECTION("Standard Formating Test"){
-//         turtlelib::Vector2D v{1.5, -2.3};
-//         std::string s = std::format("{}", v);
-//         REQUIRE(s == "[1.5, -2.3]");
-//     }
+TEST_CASE("Vector2D formatting Tests", "turtlelib::Vector2D v{x, y}") {
+    SECTION("Standard Formating Test"){
+        turtlelib::Vector2D v{1.5, -2.3};
+        std::string s = std::format("{}", v);
+        REQUIRE(s == "[1.5, -2.3]");
+    }
 
-//     SECTION("Vector2D formatting with precision") {
-//         turtlelib::Vector2D v{1.23456, -2.98765};
-//         std::string s = std::format("{:.2f}", v);
-//         REQUIRE(s == "[1.23, -2.99]");
-//     }
-
-//     SECTION("Vector2D edge cases") {
-//         turtlelib::Vector2D v{0.0, 0.0};
-//         REQUIRE(std::format("{}", v) == "[0, 0]");
-
-//         turtlelib::Vector2D v2{-0.1, 123456.789};
-//         REQUIRE(std::format("{:.1f}", v2) == "[-0.1, 123456.8]");
-//     }
-// }
+    SECTION("Vector2D - Zero Vector") {
+        turtlelib::Vector2D v{0.0, 0.0};
+        REQUIRE(std::format("{}", v) == "[0, 0]");
+    }
+}
