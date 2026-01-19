@@ -32,8 +32,7 @@ class Nusimulator : public rclcpp::Node {
         // Reset service
         reset_service_ = this->create_service<std_srvs::srv::Empty>(
             "~/reset",
-            std::bind(&Nusimulator::handle_service_reset, this,
-                      std::placeholders::_1, std::placeholders::_2)
+            std::bind(&Nusimulator::handle_service_reset, this, std::placeholders::_1, std::placeholders::_2)
         );
     }
     
