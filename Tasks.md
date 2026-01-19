@@ -14,4 +14,7 @@ Task B.3
 Task B.4
 Task B.5
 Task B.6
-Task B.7
+Task B.7 -> Can't open SVG atm, set up filed needed
+Task B.8 -> Waiting to finish B.7
+Task B.9
+Tasl C.1
