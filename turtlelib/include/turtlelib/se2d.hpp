@@ -120,6 +120,7 @@ namespace turtlelib
 
 }
 
+// ########################################### Begin_Citation [6] ###########################
 /// \brief A formatter for Transform2D
 /// Creates a string representation of a Transform2D
 /// as "{<angle> [<unit>], <x> <y>}"
@@ -147,46 +148,51 @@ struct std::formatter<turtlelib::Transform2D, CharT>
 template<class CharT>
 struct std::formatter<turtlelib::Twist2D, CharT>
 {
-    // std::formatter<float, CharT> float_formatter; // Member variable for float
-    // char unit = '\0'; // 'R', 'D', or '\0'
+    std::formatter<float, CharT> float_formatter; // Member variable for float
+    // Parser Unit Identifiers:
+    bool isDeg_ = false;
 
-    // /// \brief Parse the format-specifier, storing the results in *this so that
-    // ///   they can be used for controlling how MyType is formatted
-    // /// \param parse_ctx An std::basic_format_parse_Context<CharT>
-    // ///   This contains .begin() and .end() iterators for all characters after
-    // ///   the : in the format-spec (including the "}").  If the
-    // ///   format-spec is empty (e.g., "{}") then .begin() == .end()
-    // /// \returns std::basic_format_parse_context<CharT>::iterator
-    // /// The iterator points to the character that is past the end of the last character parsed by the parse function
-    // /// If re-using a parser via inheritance, do not include this function here.
-    // constexpr auto parse(auto & parse_ctx) {
-    //     auto it = parse_ctx.begin();
-    //     if (it != parse_ctx.end()) {
-    //         if (*it == 'R' || *it == 'D') {
-    //             unit = *it;
-    //             ++it;
-    //         }
-    //     }
-    //     return it;
-    // }
+    /// \brief Parse the format-specifier, storing the results in *this so that
+    ///   they can be used for controlling how MyType is formatted
+    /// \param parse_ctx An std::basic_format_parse_Context<CharT>
+    ///   This contains .begin() and .end() iterators for all characters after
+    ///   the : in the format-spec (including the "}").  If the
+    ///   format-spec is empty (e.g., "{}") then .begin() == .end()
+    /// \returns std::basic_format_parse_context<CharT>::iterator
+    /// The iterator points to the character that is past the end of the last character parsed by the parse function
+    /// If re-using a parser via inheritance, do not include this function here.
+    constexpr auto parse(auto & parse_ctx) {
+        // Case 3: Custom Formating: Refer to https://nu-msr.github.io/navigation/lectures/cpp/custom_formatters.html
+        auto i = parse_ctx.begin();
+        // Iterate over parse_ctx and determine if R or D or None:
+        while (i != parse_ctx.end() && *i != '}') {
+            if (*i == 'D' || *i == 'd') {
+                // Set unit for formater:
+                isDeg_ = true;
+            }
+            ++i;
+        }
+        return i;
+    }
 
-    // /// \brief Writes a string representation of t to the fmt_ctx range
-    // /// \param t The type to output.
-    // ///    (Note: this can also be taken by value instead of const &, if desired).
-    // /// \param fmt_ctx An std::basic_format_context<LegacyOutputIterator, CharT>
-    // ///    Contains an iterator to output characters to. There is no guarantee
-    // ///    of what type LegacyOutputIterator is, so your code should not
-    // ///    depend it being a particular iterator type
-    // /// \returns std::basic_format_context<>::iterator. The iterator should
-    // ///   point to one past the last output character (e.g., where the next
-    // ///   character from whatever else is being added to the string should be inserted)
-    // auto format(const turtlelib::Twist2D & tw, auto & fmt_ctx) const {
-    //     double omega = tw.omega;
-    //     std::string unit_str;
-    //     if (unit == 'D') { omega = omega * 180.0 / M_PI; unit_str = " deg/s"; }
-    //     else if (unit == 'R') { unit_str = " rad/s"; }
-
-    //     return std::format_to(parse_ctx.out(), "<{}{}, {}, {}>", omega, unit_str, tw.x, tw.y);
-    // }
+    /// \brief Writes a string representation of t to the fmt_ctx range
+    /// \param t The type to output.
+    ///    (Note: this can also be taken by value instead of const &, if desired).
+    /// \param fmt_ctx An std::basic_format_context<LegacyOutputIterator, CharT>
+    ///    Contains an iterator to output characters to. There is no guarantee
+    ///    of what type LegacyOutputIterator is, so your code should not
+    ///    depend it being a particular iterator type
+    /// \returns std::basic_format_context<>::iterator. The iterator should
+    ///   point to one past the last output character (e.g., where the next
+    ///   character from whatever else is being added to the string should be inserted)
+    auto format(const turtlelib::Twist2D & tw, auto & fmt_ctx) const {
+        if (isDeg_) {
+            return std::format_to(fmt_ctx.out(), "<{:.5f} deg/s, {:.5f}, {:.5f}>", tw.omega, tw.x, tw.y);
+        }
+        else {
+            return std::format_to(fmt_ctx.out(), "<{:.5f} rad/s, {:.5f}, {:.5f}>", tw.omega, tw.x, tw.y);
+        }
+    }
+    // ########################################## End_Citation [6] #############################
 };
 #endif

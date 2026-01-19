@@ -111,7 +111,7 @@ struct std::formatter<turtlelib::Point2D, CharT> {
         ///   point to one past the last output character (e.g., where the next
         ///   character from whatever else is being added to the string should be inserted)
         auto format(const turtlelib::Point2D & p, auto & fmt_ctx) const {
-            return std::format_to(fmt_ctx.out(), "({}, {})", p.x, p.y);
+            return std::format_to(fmt_ctx.out(), "({:.5f}, {:.5f})", p.x, p.y);
         }
 };
 
@@ -146,7 +146,7 @@ struct std::formatter<turtlelib::Vector2D, CharT> {
         ///   point to one past the last output character (e.g., where the next
         ///   character from whatever else is being added to the string should be inserted)
         auto format(const turtlelib::Vector2D & v, auto & fmt_ctx) const {
-            return std::format_to(fmt_ctx.out(), "[{}, {}]", v.x, v.y);         // Returns [x, y]
+            return std::format_to(fmt_ctx.out(), "[{:.5f}, {:.5f}]", v.x, v.y);         // Returns [x, y]
         }
 };
 #endif

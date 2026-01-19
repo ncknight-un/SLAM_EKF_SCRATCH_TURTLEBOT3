@@ -479,15 +479,34 @@ TEST_CASE("turtlelib::Transform2D Getter() Functions>>", "[.getter()]") {
 
 // FORMATING TESTS:
 TEST_CASE("Twist2D formatting Tests", "turtlelib::Twist2D p{x, y}") {
-    SECTION("Standard Formating Test"){
-        turtlelib::Point2D p{1.5, -2.3};
-        std::string s = std::format("{}", p);
-        REQUIRE(s == "(1.5, -2.3)");
+    SECTION("Standard Formating Test - Default"){
+        turtlelib::Twist2D tw{-3.0, 1.0, -1.0};
+        std::string s = std::format("{:R}", tw);
+        REQUIRE(s == "<-3.00000 rad/s, 1.00000, -1.00000>");
     }
 
-    SECTION("Point2D - Origin") {
-        turtlelib::Point2D p{0.0, 0.0};
-        REQUIRE(std::format("{}", p) == "(0, 0)");
+    SECTION("Standard Formating Test - Origin") {
+        turtlelib::Twist2D tw{0.0, 0.0, 0.0};
+        std::string s = std::format("{:R}", tw);
+        REQUIRE(s == "<0.00000 rad/s, 0.00000, 0.00000>");
+    }
+
+    SECTION("Standard Formating Test - Degrees"){
+        turtlelib::Twist2D tw{-3.0, 1.0, -1.0};
+        std::string s = std::format("{:D}", tw);
+        REQUIRE(s == "<-3.00000 deg/s, 1.00000, -1.00000>");
+    }
+
+    SECTION("Standard Formating Test - Radians"){
+        turtlelib::Twist2D tw{-3.0, 1.0, -1.0};
+        std::string s = std::format("{:R}", tw);
+        REQUIRE(s == "<-3.00000 rad/s, 1.00000, -1.00000>");
+    }
+
+    SECTION("Standard Formating Test - Radians"){
+        turtlelib::Twist2D tw{-3.0, 1.0, -1.0};
+        std::string s = std::format("{:R}", tw);
+        REQUIRE(s == "<-3.00000 rad/s, 1.00000, -1.00000>");
     }
 }
 
