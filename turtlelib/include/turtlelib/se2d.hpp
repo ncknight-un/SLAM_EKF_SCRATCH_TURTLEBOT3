@@ -6,21 +6,22 @@
 #include<iosfwd>
 #include "turtlelib/geometry2d.hpp"
 #include <format>
+#include <limits>
+#include <sstream>
 
 namespace turtlelib
 {
 
     /// \brief represent a 2-Dimensional twist
     struct Twist2D {
-        public:
-            /// \brief the angular velocity
-            double omega = 0.0;
+        /// \brief the angular velocity
+        double omega = 0.0;
 
-            /// \brief the linear x velocity
-            double x = 0.0;
+        /// \brief the linear x velocity
+        double x = 0.0;
 
-            /// \brief the linear y velocity
-            double y = 0.0;
+        /// \brief the linear y velocity
+        double y = 0.0;
     };
 
     /// \brief read the Twist2D in the format "<w [<unit>], x, y>" or as "w [<unit>] x y"
@@ -32,7 +33,6 @@ namespace turtlelib
     /// \param tw [out] the twist read from the stream
     /// \returns the istream is with the twist characters removed
     std::istream & operator>>(std::istream & is, Twist2D & tw);
-
 
     /// \brief a rigid body transformation in 2 dimensions
     class Transform2D {
@@ -107,7 +107,6 @@ namespace turtlelib
     /// Should be able to read input either as:
     ///  "theta [<unit>] dx dy" (i.e., three numbers separated by whitespace, angle assumed to be radians)
     //   "{<angle> [<unit>], <x>, <y>}" (as output by std::format)
-    ///  "{<angle> [<unit>], <x>, <y>}" (as output by std::format)
     ///  [<unit>] is optional and can be any string without spaces that starts with a d for deg or r for rad
     ///  If [<unit>] is omitted, assume the unit is radians
     std::istream & operator>>(std::istream & is, Transform2D & tf);

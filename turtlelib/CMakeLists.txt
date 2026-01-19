@@ -115,5 +115,5 @@ if(BUILD_TESTING)
 
     # register the test with CTest, telling it what executable to run
     add_test(NAME Test2d COMMAND test_2d)
-    add_test(Name Testse2 COMMAND test_se2)
+    add_test(NAME Testse2 COMMAND test_se2d)
 endif()
