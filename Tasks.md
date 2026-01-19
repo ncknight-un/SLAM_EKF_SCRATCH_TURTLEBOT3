@@ -12,3 +12,6 @@ Task B.1
 Task B.2
 Task B.3
 Task B.4
+Task B.5
+Task B.6
+Task B.7

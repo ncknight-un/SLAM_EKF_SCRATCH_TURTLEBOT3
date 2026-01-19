@@ -23,6 +23,8 @@ find_package(Doxygen)
 add_library(turtlelib 
     src/geometry2d.cpp
     src/se2d.cpp
+    src/svg.cpp
+    src/frame_main.cpp
 )
 
 # Use target_include_directories so that #include"mylibrary/header.hpp" works
@@ -50,6 +52,7 @@ target_compile_features(turtlelib PUBLIC cxx_std_23)
 # Create an executable from the following source code files
 # The Name of the executable creates a cmake "target"
 add_executable(converter src/converter.cpp)
+add_executable(frame_main src/frame_main.cpp)
 
 # Use target_link_libraries to add dependencies to a "target"
 # (e.g., a library or executable)
@@ -110,10 +113,13 @@ if(BUILD_TESTING)
     # A test is just an executable that is linked against the unit testing library
     add_executable(test_2d tests/test_geometry2d.cpp)
     add_executable(test_se2d tests/test_se2d.cpp)
+    add_executable(test_svg tests/test_svg.cpp)
     target_link_libraries(test_2d Catch2::Catch2WithMain turtlelib)
     target_link_libraries(test_se2d Catch2::Catch2WithMain turtlelib)
+    target_link_libraries(test_svg Catch2::Catch2WithMain turtlelib)
 
     # register the test with CTest, telling it what executable to run
     add_test(NAME Test2d COMMAND test_2d)
     add_test(NAME Testse2 COMMAND test_se2d)
+    add_test(NAME Testsvg COMMAND test_svg)
 endif()
