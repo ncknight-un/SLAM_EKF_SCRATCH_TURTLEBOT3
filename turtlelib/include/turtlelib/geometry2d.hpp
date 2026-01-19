@@ -84,8 +84,7 @@ namespace turtlelib
 /// The output is "(x, y)"
 /// All floating-point format specifiers are honored and applied to both x and y.
 template<class CharT>
-class std::formatter<turtlelib::Point2D, CharT> {
-    public:
+struct std::formatter<turtlelib::Point2D, CharT> {
         std::formatter<float, CharT> float_formatter; // Member variable for float
 
         /// \brief Parse the format-specifier, storing the results in *this so that
@@ -120,8 +119,7 @@ class std::formatter<turtlelib::Point2D, CharT> {
 /// All double format-spec specifiers apply to each number in the vector
 /// The vector is output as [x, y]
 template<class CharT>
-class std::formatter<turtlelib::Vector2D, CharT> {
-    public:
+struct std::formatter<turtlelib::Vector2D, CharT> {
         std::formatter<float, CharT> float_formatter; // Member variable for float
 
         /// \brief Parse the format-specifier, storing the results in *this so that

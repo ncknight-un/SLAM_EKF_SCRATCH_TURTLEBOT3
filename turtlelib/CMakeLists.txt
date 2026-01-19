@@ -20,7 +20,10 @@ find_package(Doxygen)
 # you don't need or want to.
 # name is the name of the library without the extension or lib prefix
 # name creates a cmake "target" (in this case the target is called "libname"
-add_library(turtlelib src/geometry2d.cpp)
+add_library(turtlelib 
+    src/geometry2d.cpp
+    src/se2d.cpp
+)
 
 # Use target_include_directories so that #include"mylibrary/header.hpp" works
 # The use of the <BUILD_INTERFACE> and <INSTALL_INTERFACE> is because when
@@ -106,7 +109,9 @@ if(BUILD_TESTING)
 
     # A test is just an executable that is linked against the unit testing library
     add_executable(test_2d tests/test_geometry2d.cpp)
+    add_executable(test_se2d tests/test_se2d.cpp)
     target_link_libraries(test_2d Catch2::Catch2WithMain turtlelib)
+    target_link_libraries(test_se2d Catch2::Catch2WithMain turtlelib)
 
     # register the test with CTest, telling it what executable to run
     add_test(NAME Test2d COMMAND test_2d)
