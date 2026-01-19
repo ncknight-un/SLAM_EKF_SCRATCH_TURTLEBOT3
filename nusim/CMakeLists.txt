@@ -10,6 +10,9 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 # uncomment the following section in order to fill in
 # further dependencies manually.
@@ -18,7 +21,10 @@ add_executable(nusimulator src/nusim.cpp)
 target_link_libraries(nusimulator PUBLIC
   ${std_msgs_TARGETS}
   ${std_srvs_TARGETS}
+  tf2_ros::tf2_ros
+  tf2::tf2
   rclcpp::rclcpp
+  ${geometry_msgs_TARGETS}
 )
 
 install(TARGETS
@@ -37,5 +43,12 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+# Set up Install Directories:
+install(DIRECTORY
+  launch
+  config
+  DESTINATION share/${PROJECT_NAME}
+)
 
 ament_package()

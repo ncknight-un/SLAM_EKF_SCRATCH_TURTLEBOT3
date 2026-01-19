@@ -17,4 +17,7 @@ Task B.6
 Task B.7 -> Can't open SVG atm, set up filed needed
 Task B.8 -> Waiting to finish B.7
 Task B.9
-Tasl C.1
+Task C.1
+Task C.2
+Task C.3
+Task C.6 -> Started, not completed (Need to imlement Config file)

@@ -4,4 +4,4 @@
 [4] https://tcs.rwth-aachen.de/docs/cpp/reference/en.cppreference.com/w/cpp/language/friend.html    (January 18)
 [5] https://chatgpt.com/share/696dd640-2334-8010-b3d4-837069ea793c                                  (January 18)
 [6] https://www.cppstories.com/2022/custom-stdformat-cpp20/                                         (January 19)
-[7] 
+[7] Gregory Aiosa. get_parameter() dynamic update discussion. Jan. 19th, 2026.
