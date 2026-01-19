@@ -52,7 +52,7 @@ target_compile_features(turtlelib PUBLIC cxx_std_23)
 # Create an executable from the following source code files
 # The Name of the executable creates a cmake "target"
 add_executable(converter src/converter.cpp)
-add_executable(frame_main src/frame_main.cpp)
+# add_executable(frame_main src/frame_main.cpp)
 
 # Use target_link_libraries to add dependencies to a "target"
 # (e.g., a library or executable)
@@ -84,21 +84,21 @@ install(EXPORT turtlelib-targets
         NAMESPACE turtlelib::
         DESTINATION lib/cmake/${PROJECT_NAME})
 
-# Building documentation should be optional.
-# To build documentation pass -DBUILD_DOCS=ON when generating the build system
-option(BUILD_DOCS "Build the documentation" ON)
+# # Building documentation should be optional.
+# # To build documentation pass -DBUILD_DOCS=ON when generating the build system
+# option(BUILD_DOCS "Build the documentation" OFF)
 
-# build the documentation
-if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
-    # Turn the README.md into the homepage of the doxygen docs
-    set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
+# # build the documentation
+# if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
+#     # Turn the README.md into the homepage of the doxygen docs
+#     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
 
-    # Tell Doxygen where to find the documentation
-    doxygen_add_docs(doxygen include/ src/ README.md ALL)
+#     # Tell Doxygen where to find the documentation
+#     doxygen_add_docs(doxygen include/ src/ README.md ALL)
 
-    # The documentation will be in the build/html directory
-    # The main page is build/html/index.html
-endif()
+#     # The documentation will be in the build/html directory
+#     # The main page is build/html/index.html
+# endif()
 
 # Execution of Unit Testing CTests:  (run ctest --verbose)
 include(CTest)
