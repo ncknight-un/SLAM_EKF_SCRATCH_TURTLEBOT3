@@ -93,9 +93,9 @@ namespace turtlelib {
         // Establish Cos and Sin:
         double c = std::cos(rot_);
         double s = std::sin(rot_);
-        // Multiply R_ab by v_b:
-        double vx_new = (c * v.x) - (s * v.y) + trans_.x;
-        double vy_new = (s * v.x) + (c * v.y) + trans_.y;
+        // Rotate the vector only: (Vector not affected by translation)
+        double vx_new = (c * v.x) - (s * v.y);
+        double vy_new = (s * v.x) + (c * v.y);
         // Return the new transformed position:
         return Vector2D{vx_new, vy_new};
     } // End of operator() Vector
@@ -105,9 +105,9 @@ namespace turtlelib {
         double c = std::cos(rot_);
         double s = std::sin(rot_);
         // Multiply Adj_ij by V_j:
-        double vw_new = 1 * v.omega;
-        double vx_new = (trans_.x * v.omega) + (c * v.x) - (s * v.y);
-        double vy_new = (-1*trans_.x*v.omega) + (s * v.x) + (c * v.y);
+        double vw_new = v.omega;
+        double vx_new = (trans_.y * v.omega) + (c * v.x) - (s * v.y);
+        double vy_new = (-1*trans_.x * v.omega) + (s * v.x) + (c * v.y);
         // Return the Twist in the new frame:
         return Twist2D{vw_new, vx_new, vy_new};
     } // End of operator() Twist

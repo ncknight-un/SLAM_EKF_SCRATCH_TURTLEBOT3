@@ -4,6 +4,9 @@
 #include <sstream>
 #include <format>
 
+using Catch::Matchers::WithinRel;
+constexpr double EPS =  0.001;
+
 // POINT2D OPERATOR>>:
 TEST_CASE("Point2D instream operator>>", "[operator>>]") {
     turtlelib::Point2D p;
@@ -11,16 +14,16 @@ TEST_CASE("Point2D instream operator>>", "[operator>>]") {
     SECTION("Parses (x, y) format") {
         std::stringstream ss("(1.5, 2.5)");
         ss >> p;
-        REQUIRE_THAT(p.x, Catch::Matchers::WithinRel(1.5, 0.001));
-        REQUIRE_THAT(p.y, Catch::Matchers::WithinRel(2.5, 0.001));
+        REQUIRE_THAT(p.x, WithinRel(1.5,  EPS));
+        REQUIRE_THAT(p.y, WithinRel(2.5,  EPS));
         REQUIRE(!ss.fail()); // reading succeeded
     }
 
     SECTION("Parses x y format") {
         std::stringstream ss("3.0 4.0");
         ss >> p;
-        REQUIRE_THAT(p.x, Catch::Matchers::WithinRel(3.0, 0.001));
-        REQUIRE_THAT(p.y, Catch::Matchers::WithinRel(4.0, 0.001));
+        REQUIRE_THAT(p.x, WithinRel(3.0,  EPS));
+        REQUIRE_THAT(p.y, WithinRel(4.0,  EPS));
         REQUIRE(!ss.fail()); // reading succeeded
     }
 
@@ -57,8 +60,8 @@ TEST_CASE("Point2D operator-", "[operator-]") {
         turtlelib::Vector2D v = p1 - p2;
         
         // Verify that the vector was generated successfully:
-        REQUIRE_THAT(v.x, Catch::Matchers::WithinRel(0.5, 0.001));  // Vector x direction correct
-        REQUIRE_THAT(v.y, Catch::Matchers::WithinRel(0.5, 0.001));  // Vector y direction correct
+        REQUIRE_THAT(v.x, WithinRel(0.5,  EPS));  // Vector x direction correct
+        REQUIRE_THAT(v.y, WithinRel(0.5,  EPS));  // Vector y direction correct
     }
 }
 
@@ -76,8 +79,8 @@ TEST_CASE("VECTOR2D operator+", "[operator+]") {
         turtlelib::Point2D p_res = p + v;
         
         // Verify that the vector was generated successfully:
-        REQUIRE_THAT(p_res.x, Catch::Matchers::WithinRel(2.5, 0.001));  // Point x direction correct
-        REQUIRE_THAT(p_res.y, Catch::Matchers::WithinRel(4.5, 0.001));  // Point y direction correct
+        REQUIRE_THAT(p_res.x, WithinRel(2.5,  EPS));  // Point x direction correct
+        REQUIRE_THAT(p_res.y, WithinRel(4.5,  EPS));  // Point y direction correct
     }
 }
 
@@ -115,16 +118,16 @@ TEST_CASE("Vector2D instream operator>>", "[operator>>]") {
     SECTION("Parses [x, y] format") {
         std::stringstream ss("[3.5, 1.5]");
         ss >> v;
-        REQUIRE_THAT(v.x, Catch::Matchers::WithinRel(3.5, 0.001));
-        REQUIRE_THAT(v.y, Catch::Matchers::WithinRel(1.5, 0.001));
+        REQUIRE_THAT(v.x, WithinRel(3.5,  EPS));
+        REQUIRE_THAT(v.y, WithinRel(1.5,  EPS));
         REQUIRE(!ss.fail()); // reading succeeded
     }
 
     SECTION("Parses x y format") {
         std::stringstream ss("5.0 5.0");
         ss >> v;
-        REQUIRE_THAT(v.x, Catch::Matchers::WithinRel(5.0, 0.001));
-        REQUIRE_THAT(v.y, Catch::Matchers::WithinRel(5.0, 0.001));
+        REQUIRE_THAT(v.x, WithinRel(5.0,  EPS));
+        REQUIRE_THAT(v.y, WithinRel(5.0,  EPS));
         REQUIRE(!ss.fail()); // reading succeeded
     }
 
@@ -159,8 +162,8 @@ TEST_CASE("VECTOR2D normalize", "[normalize]") {
         turtlelib::Vector2D v_norm = normalize(v);
         
         // Verify that the vector was generated successfully:
-        REQUIRE_THAT(v_norm.x, Catch::Matchers::WithinRel(0.7071, 0.001));  // norm x direction correct
-        REQUIRE_THAT(v_norm.y, Catch::Matchers::WithinRel(0.7071, 0.001));  // norm y direction correct
+        REQUIRE_THAT(v_norm.x, WithinRel(0.7071,  EPS));  // norm x direction correct
+        REQUIRE_THAT(v_norm.y, WithinRel(0.7071,  EPS));  // norm y direction correct
         REQUIRE(ss.fail() == false);
     }
 
