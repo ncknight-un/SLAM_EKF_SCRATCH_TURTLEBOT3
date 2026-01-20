@@ -1,8 +1,12 @@
 <?xml version='1.0'?>
 <launch>
+    <!-- Arguement to launch Rviz -->
+    <arg name="config_file" default="basic_world" 
+    description="The user can control what config file is used to load the world"/>
+
     <!-- Launch the Nusim Node-->
     <node pkg='nusim' exec='nusimulator'>
-        <param from = "$(find-pkg-share nusim)/config/basic_world.yaml"/>
+        <param from = "$(find-pkg-share nusim)/config/$(var config_file).yaml"/>
     </node>
 
     <!-- Load the Redbot for Ground-->

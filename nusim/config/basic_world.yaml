@@ -3,18 +3,11 @@
     arena_x_length: 5.0
     arena_y_length: 10.0
     arena_thickness: 0.25
-    obstacle_radius: 0.038
-    obstacles: 
-      obs_1:
-        x: -0.4
-        y: -0.7
-      obs_2:
-        x: 0.7
-        y: -0.8
-      obs_3:
-        x: 0.5
-        y: 0.8
-    robot: 
-      x: -0.6
-      y: 0.3
-      theta: 1.28
+    obstacle_height: 0.25
+    robot:
+      x0: -0.6
+      y0: 0.3
+      theta0: 1.28
+    obstacles_x: [-0.4, 0.7, 0.5]
+    obstacles_y: [-0.7, -0.8, 0.8]
+    obstacles_r: [0.038, 0.038,0.038]
