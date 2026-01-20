@@ -84,6 +84,7 @@ install(EXPORT turtlelib-targets
         NAMESPACE turtlelib::
         DESTINATION lib/cmake/${PROJECT_NAME})
 
+# THIS Doxygen formater has been removed due to compiling issue, but is an example of how to set up.
 # # Building documentation should be optional.
 # # To build documentation pass -DBUILD_DOCS=ON when generating the build system
 # option(BUILD_DOCS "Build the documentation" ON)

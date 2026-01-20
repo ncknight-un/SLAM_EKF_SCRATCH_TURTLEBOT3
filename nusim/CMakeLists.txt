@@ -15,18 +15,16 @@ find_package(tf2 REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+# Link Libraries:
 add_executable(nusimulator src/nusim.cpp)
 target_link_libraries(nusimulator PUBLIC
   ${std_msgs_TARGETS}
   ${std_srvs_TARGETS}
+  ${geometry_msgs_TARGETS}
+  ${visualization_msgs_TARGETS}
   tf2_ros::tf2_ros
   tf2::tf2
   rclcpp::rclcpp
-  ${geometry_msgs_TARGETS}
-  ${visualization_msgs_TARGETS}
 )
 
 install(TARGETS

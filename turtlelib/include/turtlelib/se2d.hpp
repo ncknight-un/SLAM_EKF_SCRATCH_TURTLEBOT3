@@ -25,14 +25,14 @@ struct Twist2D
   double y = 0.0;
 };
 
-    /// \brief read the Twist2D in the format "<w [<unit>], x, y>" or as "w [<unit>] x y"
-    /// The "" are not part of the input.
-    /// The [<unit>] is optional and can be any string without spaces that starts with an r
-    /// (for rad/s) and any string without spaces that starts with a d for deg/s)
-    /// If the unit is omitted, assume rad/s.
-    /// \param is [in/out] the istream to read from
-    /// \param tw [out] the twist read from the stream
-    /// \returns the istream is with the twist characters removed
+/// \brief read the Twist2D in the format "<w [<unit>], x, y>" or as "w [<unit>] x y"
+/// The "" are not part of the input.
+/// The [<unit>] is optional and can be any string without spaces that starts with an r
+/// (for rad/s) and any string without spaces that starts with a d for deg/s)
+/// If the unit is omitted, assume rad/s.
+/// \param is [in/out] the istream to read from
+/// \param tw [out] the twist read from the stream
+/// \returns the istream is with the twist characters removed
 std::istream & operator>>(std::istream & is, Twist2D & tw);
 
     /// \brief a rigid body transformation in 2 dimensions
@@ -147,8 +147,7 @@ struct std::formatter<turtlelib::Transform2D, CharT>
 /// format-spec values are accepted and apply to all numbers inserted
 /// into the string.
 template<class CharT>
-struct std::formatter<turtlelib::Twist2D, CharT>
-{
+struct std::formatter<turtlelib::Twist2D, CharT> {
   std::formatter<float, CharT> float_formatter;   // Member variable for float
     // Parser Unit Identifiers:
   bool isDeg_ = false;

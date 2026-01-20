@@ -1,4 +1,28 @@
-#include <chrono>
+/// \file
+/// \brief Creates a ROS 2 Node which internally tracks the Ground Truth of a Turtlebot in simulation.
+///
+/// PARAMETERS:
+///     rate (double): Timer frequency for the main simulation loop (Hz)
+///     robot.x0 (double): Initial x-coordinate of the robot in the world frame
+///     robot.y0 (double): Initial y-coordinate of the robot in the world frame
+///     robot.theta0 (double): Initial orientation (yaw) of the robot in radians
+///     arena_x_length (double): Length of the arena in the x-direction (meters)
+///     arena_y_length (double): Length of the arena in the y-direction (meters)
+///     arena_thickness (double): Thickness of arena walls (meters)
+///     obstacles_x (vector<double>): X-coordinates of obstacles
+///     obstacles_y (vector<double>): Y-coordinates of obstacles
+///     obstacles_r (vector<double>): Radii of obstacles
+///     obstacle_height (double): Height of obstacles (meters)
+/// PUBLISHES:
+///     ~/timestep (std_msgs::msg::UInt64): Current simulation timestep counter
+///     ~/real_walls (visualization_msgs::msg::MarkerArray): Markers representing arena walls
+///     ~/real_obstacles (visualization_msgs::msg::MarkerArray): Markers representing obstacles
+/// SUBSCRIBES:
+///     None
+/// SERVERS:
+///     ~/reset (std_srvs::srv::Empty): Resets the simulation timestep and robot initial pose
+/// CLIENTS:
+///     None
 #include <memory>
 #include <string>
 #include "rclcpp/rclcpp.hpp"
@@ -14,6 +38,7 @@
 
 using namespace std::chrono_literals;
 
+/// \brief A class to launch a Simulator Node
 class Nusimulator : public rclcpp::Node {
 public:
   Nusimulator()
@@ -83,7 +108,10 @@ public:
   }
 
 private:
-  // Establish Helper Functions:
+/// \brief Creates visualization markers for the arena walls and floor
+///
+/// \returns A MarkerArray containing 4 walls (red) and a floor (white) with dimensions
+///          set by the parameters arena_x_length, arena_y_length, and arena_thickness
   visualization_msgs::msg::MarkerArray createWalls()
   {
     // Initialize and publish the Real Walls:
@@ -160,6 +188,10 @@ private:
     }
     return marker_array_walls;
   }
+  /// \brief Creates visualization markers for obstacles
+  ///
+  /// \returns A MarkerArray containing cylinders representing obstacles at positions
+  ///          obstacles_x, obstacles_y with radii obstacles_r and height obstacle_height
   visualization_msgs::msg::MarkerArray createObstacles()
   {
     // Initialize and publish the Real Obstacles:
@@ -199,6 +231,13 @@ private:
     }
     return marker_array_obstacles;
   }
+  /// \brief Resets the simulation timestep and robot initial pose
+  ///
+  /// Resets timestep_ to 0 and sets x0_, y0_, theta0_ to their declared parameters.
+  ///
+  /// \param request - Empty request from the std_srvs::srv::Empty service
+  /// \param response - Empty response from the std_srvs::srv::Empty service
+  /// \returns void
   void handle_service_reset(
     const std::shared_ptr<std_srvs::srv::Empty::Request> request,
     const std::shared_ptr<std_srvs::srv::Empty::Response> response)

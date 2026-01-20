@@ -1,3 +1,17 @@
+/// \file
+/// \brief Program for angle input, conversion, and normalization
+///
+/// This program prompts the user to enter an angle with a unit ("deg" or "rad"),
+/// normalizes it to the range [-π, π] for radians, converts between degrees and radians,
+/// and outputs the result.
+///
+/// Usage:
+///   Enter an angle followed by its unit (deg or rad), e.g., "45 deg" or "1.57 rad".
+///   Press CTRL-D to exit.
+///
+/// Example:
+///   Input:  90 deg
+///   Output: 90.00 deg is 1.57 rad.
 #include "turtlelib/angle.hpp"
 #include <iostream>
 #include <string>
