@@ -1,8 +1,8 @@
 [Colaborators] Worked with: Greg Aiosa, Theo Coulson
 [1] ROS 2 Design. "ROS 2 Launch XML Format". design.ros2.org. Accessed: January 12th, 2026. [Online]. Available: https://design.ros2.org/articles/roslaunch_xml.html
-[2] https://www.geeksforgeeks.org/cpp/how-to-handle-wrong-data-type-input-in-cpp/.
-[3] https://stackoverflow.com/questions/21695935/how-to-throw-stdinvalid-argument-error             (January 17)
-[4] https://tcs.rwth-aachen.de/docs/cpp/reference/en.cppreference.com/w/cpp/language/friend.html    (January 18)
-[5] https://chatgpt.com/share/696dd640-2334-8010-b3d4-837069ea793c                                  (January 18)
-[6] https://www.cppstories.com/2022/custom-stdformat-cpp20/                                         (January 19)
-[7] Gregory Aiosa. get_parameter() dynamic update discussion. Jan. 19th, 2026.
+[2] GeeksforGeeks. "How to Handle Wrong Data Type Input in C++"". geeksforgeeks.org. Accessed: January 17th, 2026. [Online]. Available: https://www.geeksforgeeks.org/cpp/how-to-handle-wrong-data-type-input-in-cpp/.
+[3] Stack Overflow. "How to throw std::invalid_arguement error". Accessed: January 17th, 2026. [Online]. Available: https://stackoverflow.com/questions/21695935/how-to-throw-stdinvalid-argument-error    
+[4] RWTH Aachen TCS. "C++ Friend Functions". Accessed: January 18th, 2026. [Online]. Available: https://tcs.rwth-aachen.de/docs/cpp/reference/en.cppreference.com/w/cpp/language/friend.html  
+[5] ChatGPT. "Unit Test Additions". Accessed: January 18th, 2026. [Online]. Available: https://chatgpt.com/share/696dd640-2334-8010-b3d4-837069ea793c                       
+[6] C++ Stories. "Custom std::format in C++20". Accessed: January 19th, 2026. [Online]. Available: https://www.cppstories.com/2022/custom-stdformat-cpp20/                         
+[7] Gregory Aiosa. get_parameter() dynamic update discussion. Jan. 19th, 2026. (January 20)
