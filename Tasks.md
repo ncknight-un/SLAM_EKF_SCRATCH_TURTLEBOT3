@@ -20,4 +20,5 @@ Task B.9
 Task C.1
 Task C.2
 Task C.3
-Task C.6 -> Started, not completed (Need to imlement Config file)
+Task C.4
+Task C.6 -> Started, not completed (Need to set config optionality)

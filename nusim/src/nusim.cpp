@@ -5,9 +5,11 @@
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/u_int64.hpp"
 #include "std_srvs/srv/empty.hpp"
-#include "tf2_ros/transform_broadcaster.h"
-#include <tf2/LinearMath/Quaternion.h>
+#include "tf2_ros/transform_broadcaster.hpp"
+#include <tf2/LinearMath/Quaternion.hpp>
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 using namespace std::chrono_literals;
 
@@ -16,10 +18,93 @@ class Nusimulator : public rclcpp::Node {
     Nusimulator() : Node("nusimulator") {
         // Declare the Parameter: 
         auto rate = this->declare_parameter<double>("rate", 100.0);
-        // Declare the Publisher: 
+        // Initialize the ~/timestep Publisher: 
         publisher_ = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
+        // Declare the ~/real_walls Publisher: 
+        marker_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/real_walls", rclcpp::QoS(10).transient_local());
+
         // Initialize the transform broadcaster
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
+        // Initialize and publish the Real Walls:
+        visualization_msgs::msg::MarkerArray marker_array_walls;
+        for (int i = 0; i < 5; ++i) {
+            visualization_msgs::msg::Marker marker;
+
+            marker.header.frame_id = "nusim/world";
+            marker.header.stamp = rclcpp::Clock().now();
+            marker.ns = "red";
+            marker.id = i;
+            marker.type = visualization_msgs::msg::Marker::CUBE;
+            marker.action = visualization_msgs::msg::Marker::ADD;
+            // Set orientation
+            marker.pose.orientation.w = 1.0;
+
+            // Determine wall locations
+            if (i == 0) {
+                // Bottom Wall
+                marker.pose.position.x = 0.0;
+                marker.pose.position.y = -arena_y_/2 - arena_thick_/2;
+                marker.pose.position.z = arena_thick_/2;
+                marker.scale.x = arena_x_ + arena_thick_*2;
+                marker.scale.y = arena_thick_;
+                marker.scale.z = arena_thick_;
+            }
+            else if (i == 1) {
+                // Left Wall
+                marker.pose.position.x = -arena_x_/2 - arena_thick_/2;
+                marker.pose.position.y = 0.0;
+                marker.pose.position.z = arena_thick_/2;
+                marker.scale.x = arena_thick_;
+                marker.scale.y = arena_y_ + arena_thick_*2;
+                marker.scale.z = arena_thick_;
+            }
+            else if (i == 2) {
+                // Right Wall
+                marker.pose.position.x = arena_x_/2 + arena_thick_/2;
+                marker.pose.position.y = 0.0;
+                marker.pose.position.z = arena_thick_/2;
+                marker.scale.x = arena_thick_;
+                marker.scale.y = arena_y_ + arena_thick_*2;
+                marker.scale.z = arena_thick_;
+            }
+            else if (i == 3) {
+                // Top Wall
+                marker.pose.position.x = 0.0;
+                marker.pose.position.y = arena_y_/2 + arena_thick_/2;
+                marker.pose.position.z = arena_thick_/2;
+                marker.scale.x = arena_x_ + arena_thick_*2;
+                marker.scale.y = arena_thick_;
+                marker.scale.z = arena_thick_;
+            }
+            else if (i == 4) {
+                // Floor
+                marker.pose.position.x = 0.0;
+                marker.pose.position.y = 0.0;
+                marker.pose.position.z = -arena_thick_/2;
+                marker.scale.x = arena_x_;
+                marker.scale.y = arena_y_;
+                marker.scale.z = arena_thick_;
+            }
+            // Colors
+            if (i < 4) {
+                // Arena walls (red)
+                marker.color.r = 1.0f;
+                marker.color.g = 0.0f;
+                marker.color.b = 0.0f;
+                marker.color.a = 1.0f;
+            }
+            else if (i == 4) {
+                // Floor (white)
+                marker.color.r = 1.0f;
+                marker.color.g = 1.0f;
+                marker.color.b = 1.0f;
+                marker.color.a = 1.0f;
+            }
+            marker_array_walls.markers.emplace_back(marker);
+        }
+        // Publish the Markers:
+        marker_pub_->publish(marker_array_walls);
 
         // Create the timer callback:
         auto timer_callback = [this, rate]() -> void {
@@ -80,6 +165,7 @@ class Nusimulator : public rclcpp::Node {
         }
         rclcpp::TimerBase::SharedPtr timer_;
         rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr publisher_;
+        rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_pub_;
         rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
         std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
         uint64_t timestep_;
@@ -87,6 +173,11 @@ class Nusimulator : public rclcpp::Node {
         double x0_ = this->declare_parameter<double>("x0", 0.0);
         double y0_ = this->declare_parameter<double>("y0", 0.0);
         double theta0_ = this->declare_parameter<double>("theta0", 0.0);
+        
+        // Set the Arena Wall Dimensions:
+        double arena_x_ = this->declare_parameter<double>("arena_x_length",8.0);
+        double arena_y_ = this->declare_parameter<double>("arena_y_length",12.0);
+        double arena_thick_ = this->declare_parameter<double>("arena_thickness", 0.25);
 }; 
 
 int main(int argc, char * argv[])
