@@ -5,6 +5,9 @@
 The package includes a launch file to start the simulator with RViz:
 
 * `launch nusim nusim.launch.xml color:=basic_world` to see the robot in rviz with the walls and obstacles.
+* `ros2 service call /nusimulator/reset std_srvs/srv/Empty` to reset the turtle simulation.
+* `ros2 param set /nusimulator x0 5.0` to change the position parameters of the turtlesim.
+
 
 ![](images/nusim1.png)
 

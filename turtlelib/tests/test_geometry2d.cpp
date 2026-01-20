@@ -5,7 +5,7 @@
 #include <format>
 
 using Catch::Matchers::WithinRel;
-constexpr double EPS =  0.001;
+constexpr double EPS = 0.001;
 
 // POINT2D OPERATOR>>:
 TEST_CASE("Point2D instream operator>>", "[operator>>]") {
@@ -14,16 +14,16 @@ TEST_CASE("Point2D instream operator>>", "[operator>>]") {
     SECTION("Parses (x, y) format") {
         std::stringstream ss("(1.5, 2.5)");
         ss >> p;
-        REQUIRE_THAT(p.x, WithinRel(1.5,  EPS));
-        REQUIRE_THAT(p.y, WithinRel(2.5,  EPS));
+        REQUIRE_THAT(p.x, WithinRel(1.5, EPS));
+        REQUIRE_THAT(p.y, WithinRel(2.5, EPS));
         REQUIRE(!ss.fail()); // reading succeeded
     }
 
     SECTION("Parses x y format") {
         std::stringstream ss("3.0 4.0");
         ss >> p;
-        REQUIRE_THAT(p.x, WithinRel(3.0,  EPS));
-        REQUIRE_THAT(p.y, WithinRel(4.0,  EPS));
+        REQUIRE_THAT(p.x, WithinRel(3.0, EPS));
+        REQUIRE_THAT(p.y, WithinRel(4.0, EPS));
         REQUIRE(!ss.fail()); // reading succeeded
     }
 
@@ -56,12 +56,12 @@ TEST_CASE("Point2D operator-", "[operator-]") {
         ss1 >> p1;
         std::stringstream ss2("(1.0, 2.0)");
         ss2 >> p2;
-        // Use operator-: 
+        // Use operator-:
         turtlelib::Vector2D v = p1 - p2;
-        
+
         // Verify that the vector was generated successfully:
-        REQUIRE_THAT(v.x, WithinRel(0.5,  EPS));  // Vector x direction correct
-        REQUIRE_THAT(v.y, WithinRel(0.5,  EPS));  // Vector y direction correct
+        REQUIRE_THAT(v.x, WithinRel(0.5, EPS));   // Vector x direction correct
+        REQUIRE_THAT(v.y, WithinRel(0.5, EPS));   // Vector y direction correct
     }
 }
 
@@ -75,12 +75,12 @@ TEST_CASE("VECTOR2D operator+", "[operator+]") {
         ss1 >> p;
         std::stringstream ss2("[1.0, 2.0]");
         ss2 >> v;
-        // Use operator+: 
+        // Use operator+:
         turtlelib::Point2D p_res = p + v;
-        
+
         // Verify that the vector was generated successfully:
-        REQUIRE_THAT(p_res.x, WithinRel(2.5,  EPS));  // Point x direction correct
-        REQUIRE_THAT(p_res.y, WithinRel(4.5,  EPS));  // Point y direction correct
+        REQUIRE_THAT(p_res.x, WithinRel(2.5, EPS));   // Point x direction correct
+        REQUIRE_THAT(p_res.y, WithinRel(4.5, EPS));   // Point y direction correct
     }
 }
 
@@ -93,9 +93,9 @@ TEST_CASE("Vector2D ostream", "[operator<<]") {
     SECTION("Correctly outputs vector to outstream") {
         std::stringstream ss("[1.0, 2.0]");
         ss >> v;
-        // Use operator>>: 
+        // Use operator>>:
         os << v;
-        
+
         // Verify that the outstream was generated correctly::
         REQUIRE(os.str() == "[1.00000, 2.00000]");              // Output Correct
     }
@@ -103,9 +103,9 @@ TEST_CASE("Vector2D ostream", "[operator<<]") {
     SECTION("Correctly outputs vector precision") {
         std::stringstream ss("[1.53435353, 2.23535353]");
         ss >> v;
-        // Use operator>>: 
+        // Use operator>>:
         os << v;
-        
+
         // Verify that the outstream was generated correctly::
         REQUIRE(os.str() == "[1.53435, 2.23535]");              // Precision Correct
     }
@@ -118,16 +118,16 @@ TEST_CASE("Vector2D instream operator>>", "[operator>>]") {
     SECTION("Parses [x, y] format") {
         std::stringstream ss("[3.5, 1.5]");
         ss >> v;
-        REQUIRE_THAT(v.x, WithinRel(3.5,  EPS));
-        REQUIRE_THAT(v.y, WithinRel(1.5,  EPS));
+        REQUIRE_THAT(v.x, WithinRel(3.5, EPS));
+        REQUIRE_THAT(v.y, WithinRel(1.5, EPS));
         REQUIRE(!ss.fail()); // reading succeeded
     }
 
     SECTION("Parses x y format") {
         std::stringstream ss("5.0 5.0");
         ss >> v;
-        REQUIRE_THAT(v.x, WithinRel(5.0,  EPS));
-        REQUIRE_THAT(v.y, WithinRel(5.0,  EPS));
+        REQUIRE_THAT(v.x, WithinRel(5.0, EPS));
+        REQUIRE_THAT(v.y, WithinRel(5.0, EPS));
         REQUIRE(!ss.fail()); // reading succeeded
     }
 
@@ -158,31 +158,31 @@ TEST_CASE("VECTOR2D normalize", "[normalize]") {
         std::stringstream ss("[3.0, 3.0]");
         ss >> v;
 
-        // Use normalize: 
+        // Use normalize:
         turtlelib::Vector2D v_norm = normalize(v);
-        
+
         // Verify that the vector was generated successfully:
-        REQUIRE_THAT(v_norm.x, WithinRel(0.7071,  EPS));  // norm x direction correct
-        REQUIRE_THAT(v_norm.y, WithinRel(0.7071,  EPS));  // norm y direction correct
+        REQUIRE_THAT(v_norm.x, WithinRel(0.7071, EPS));   // norm x direction correct
+        REQUIRE_THAT(v_norm.y, WithinRel(0.7071, EPS));   // norm y direction correct
         REQUIRE(ss.fail() == false);
     }
 
     SECTION("Correctly Returns Fail for Zero Vector") {
         std::stringstream ss("[0.0, 0.0]");
         ss >> v;
-        
+
         // Verify that the vector was failed:
         REQUIRE_THROWS_AS(
-            // Use normalize: 
+            // Use normalize:
             normalize(v),
             std::invalid_argument       // exception invalid_arguement
-        );    
+        );
         REQUIRE(ss.fail() == false);
     }
 }
 
 TEST_CASE("Point2D formatting Tests", "turtlelib::Point2D p{x, y}") {
-    SECTION("Standard Formating Test"){
+    SECTION("Standard Formating Test") {
         turtlelib::Point2D p{1.5, -2.3};
         std::string s = std::format("{}", p);
         REQUIRE(s == "(1.50000, -2.30000)");
@@ -195,7 +195,7 @@ TEST_CASE("Point2D formatting Tests", "turtlelib::Point2D p{x, y}") {
 }
 
 TEST_CASE("Vector2D formatting Tests", "turtlelib::Vector2D v{x, y}") {
-    SECTION("Standard Formating Test"){
+    SECTION("Standard Formating Test") {
         turtlelib::Vector2D v{1.5, -2.3};
         std::string s = std::format("{}", v);
         REQUIRE(s == "[1.50000, -2.30000]");

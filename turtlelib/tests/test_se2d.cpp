@@ -8,7 +8,7 @@ using Catch::Matchers::WithinRel;
 constexpr double EPS = 0.001;
 
 // turtlelib::Twist2D OPERATOR>>:
-TEST_CASE("turtlelib::Twist2D instream operator>>", "[operator>>]") {       
+TEST_CASE("turtlelib::Twist2D instream operator>>", "[operator>>]") {
     turtlelib::Twist2D tw;
 
     SECTION("Parses <w [units], x, y> format") {
@@ -49,7 +49,7 @@ TEST_CASE("turtlelib::Twist2D instream operator>>", "[operator>>]") {
 }
 
 // CONSTRUCTORS:
-TEST_CASE("Transform2D constructors", "[Transform2D]") {   
+TEST_CASE("Transform2D constructors", "[Transform2D]") {
     SECTION("Default constructor creates identity transform") {
         // Create identity tf:
         turtlelib::Transform2D tf;
@@ -104,7 +104,7 @@ TEST_CASE("Transform2D constructors", "[Transform2D]") {
 }
 
 // APPLIED TRANSFORMS (Translation and Rotation):
-TEST_CASE("Applied Transforms", "[operator()]") {        
+TEST_CASE("Applied Transforms", "[operator()]") {
     // Create tf with translation and rotation:
     turtlelib::Vector2D v{1.0, -1.0};
     double radians = 2.5;
@@ -304,7 +304,7 @@ TEST_CASE("Applied Transforms - Translation Only", "[operator()]") {
 // ########################################## End_Citation [5] ####################################
 
 // TRANSFORM2D Inverse
-TEST_CASE("Transform2D inverse", "[inv()]") {   
+TEST_CASE("Transform2D inverse", "[inv()]") {
     SECTION("Inverse - With Translation and Rotation") {
         turtlelib::Transform2D Tab(turtlelib::Vector2D{1.0, 1.0}, 3.0);
         turtlelib::Transform2D Tba = Tab.inv();
@@ -353,13 +353,13 @@ TEST_CASE("Transform2D inverse", "[inv()]") {
 }
 
 // TRANSFORM2D Multiplication
-TEST_CASE("Transform2D Multiplication", "[operator*]") {  
+TEST_CASE("Transform2D Multiplication", "[operator*]") {
     SECTION("Multiplication - Non-Zero TFs") {
         // Define Transfroms rhs and lhs
         turtlelib::Transform2D lhs(turtlelib::Vector2D{1.0, 10.0});
         turtlelib::Transform2D rhs(turtlelib::Vector2D{5.0, 2.0});
         // operator *=:
-        lhs*= rhs;
+        lhs *= rhs;
 
         // Extract the translation and rotation:
         turtlelib::Vector2D trans = lhs.translation();
@@ -375,7 +375,7 @@ TEST_CASE("Transform2D Multiplication", "[operator*]") {
         turtlelib::Transform2D lhs(turtlelib::Vector2D{0.0, 0.0});
         turtlelib::Transform2D rhs(turtlelib::Vector2D{0.0, 2.0});
         // operator *=:
-        lhs*= rhs;
+        lhs *= rhs;
 
         // Extract the translation and rotation:
         turtlelib::Vector2D trans = lhs.translation();
@@ -391,7 +391,7 @@ TEST_CASE("Transform2D Multiplication", "[operator*]") {
         turtlelib::Transform2D lhs(turtlelib::Vector2D{-1.0, -1.0});
         turtlelib::Transform2D rhs(turtlelib::Vector2D{-4.0, -2.0});
         // operator *=:
-        lhs*= rhs;
+        lhs *= rhs;
 
         // Extract the translation and rotation:
         turtlelib::Vector2D trans = lhs.translation();
@@ -405,7 +405,7 @@ TEST_CASE("Transform2D Multiplication", "[operator*]") {
 }
 
 // TRANSFORM2D Operator>>:
-TEST_CASE("turtlelib::Transform2D instream operator>>", "[operator>>]") {       
+TEST_CASE("turtlelib::Transform2D instream operator>>", "[operator>>]") {
     turtlelib::Transform2D tf;
 
     SECTION("Parses <omega [units], x, y> format") {
@@ -451,7 +451,7 @@ TEST_CASE("turtlelib::Transform2D instream operator>>", "[operator>>]") {
 }
 
 // Transform2D GETTER Functions:
-TEST_CASE("turtlelib::Transform2D Getter() Functions>>", "[.getter()]") {       
+TEST_CASE("turtlelib::Transform2D Getter() Functions>>", "[.getter()]") {
     turtlelib::Transform2D tf;
 
     SECTION("Rotation Getter()") {
@@ -459,7 +459,7 @@ TEST_CASE("turtlelib::Transform2D Getter() Functions>>", "[.getter()]") {
         ss >> tf;
         // Get Rotation Values:
         double rot = tf.rotation();
-        
+
         REQUIRE_THAT(rot, WithinRel(2.0, EPS));
         REQUIRE(ss.fail() == false); //reading passed
     }
@@ -479,7 +479,7 @@ TEST_CASE("turtlelib::Transform2D Getter() Functions>>", "[.getter()]") {
 
 // FORMATING TESTS:
 TEST_CASE("Twist2D formatting Tests", "turtlelib::Twist2D p{x, y}") {
-    SECTION("Standard Formating Test - Default"){
+    SECTION("Standard Formating Test - Default") {
         turtlelib::Twist2D tw{-3.0, 1.0, -1.0};
         std::string s = std::format("{:R}", tw);
         REQUIRE(s == "<-3.00000 rad/s, 1.00000, -1.00000>");
@@ -491,19 +491,19 @@ TEST_CASE("Twist2D formatting Tests", "turtlelib::Twist2D p{x, y}") {
         REQUIRE(s == "<0.00000 rad/s, 0.00000, 0.00000>");
     }
 
-    SECTION("Standard Formating Test - Degrees"){
+    SECTION("Standard Formating Test - Degrees") {
         turtlelib::Twist2D tw{-3.0, 1.0, -1.0};
         std::string s = std::format("{:D}", tw);
         REQUIRE(s == "<-3.00000 deg/s, 1.00000, -1.00000>");
     }
 
-    SECTION("Standard Formating Test - Radians"){
+    SECTION("Standard Formating Test - Radians") {
         turtlelib::Twist2D tw{-3.0, 1.0, -1.0};
         std::string s = std::format("{:R}", tw);
         REQUIRE(s == "<-3.00000 rad/s, 1.00000, -1.00000>");
     }
 
-    SECTION("Standard Formating Test - Radians"){
+    SECTION("Standard Formating Test - Radians") {
         turtlelib::Twist2D tw{-3.0, 1.0, -1.0};
         std::string s = std::format("{:R}", tw);
         REQUIRE(s == "<-3.00000 rad/s, 1.00000, -1.00000>");
