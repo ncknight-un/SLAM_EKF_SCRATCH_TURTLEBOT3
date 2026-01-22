@@ -88,20 +88,24 @@ namespace turtlelib {
         commands_.push_back("</g>\n");
     }
 
-    void Svg::write_to_file(const std::string & filename) const {
-        std::ofstream file(filename);
-        if (!file) {
-            throw std::runtime_error("Failed to open SVG file");
-        }
-
+    std::string Svg::build_file() {
         std::ostringstream ss;
-        // Extract elements in order added:
+        // Extract elements in order added to the vector:
         for (const auto & e : commands_) {ss << e;}
 
         // SVG footer (Needed before write to file!)
         ss << "</svg>\n";
 
-        // Write the output string to the file
-        file << ss.str();
+        // Return the build concatenated string: 
+        return ss.str();
+    }
+
+    void Svg::write_to_file(const std::string & filename, std::string file_contents) const {
+        std::ofstream file(filename);
+        if (!file) {
+            throw std::runtime_error("Failed to open SVG file");
+        }
+
+        file << file_contents;
     }
 } // namespace turtlelib

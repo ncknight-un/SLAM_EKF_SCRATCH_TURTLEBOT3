@@ -16,8 +16,11 @@ int main() {
     turtlelib::Vector2D y_axis{0.0, 1.0};
     svg.draw_frame(x_axis, y_axis, 'a');
 
+    // Build the file: 
+    std::string file_contents = svg.build_file();
+
     // Write to the SVG file
-    svg.write_to_file("test.svg");
+    svg.write_to_file("test.svg", file_contents);
 
     // Let the user know that the function completed and that the file was written.
     std::cout << "SVG file 'test.svg' has been generated." << std::endl;

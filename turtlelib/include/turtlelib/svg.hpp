@@ -36,9 +36,12 @@ namespace turtlelib
             /// \param frame_id -The body of the <text> tag contains the text to display
             void draw_frame(Vector2D v1, Vector2D, char frame_id);
 
-            /// \brief Writes a valid SVG file to an inputted filename
-            /// \param filename - name of file to save the svg.
-            void write_to_file(const std::string & filename) const;
+            /// \brief Builds the file string to be written to a file.
+            std::string build_file();
+
+            /// \brief Writes a valid SVG built file to an inputted filename
+            /// \param filename - name of file to save the built string.
+            void write_to_file(const std::string & filename, std::string file_contents) const;
 
         private:
             // Declare Private variable to hold Vectors, Points, and Frames as a list of strings in SVG Format
