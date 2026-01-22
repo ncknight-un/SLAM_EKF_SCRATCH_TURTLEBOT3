@@ -52,6 +52,7 @@ target_compile_features(turtlelib PUBLIC cxx_std_23)
 # Create an executable from the following source code files
 # The Name of the executable creates a cmake "target"
 add_executable(converter src/converter.cpp)
+add_executable(test_write src/test_write.cpp)
 # add_executable(frame_main src/frame_main.cpp)
 
 # Use target_link_libraries to add dependencies to a "target"
@@ -62,6 +63,7 @@ add_executable(converter src/converter.cpp)
 # Because libname has PUBLIC cxx_std_23 as a compile feature
 # Name will also be compiled with c++23 as the standard.
 target_link_libraries(converter Eigen3::Eigen turtlelib)
+target_link_libraries(test_write turtlelib)
 
 # install the include files by copying the whole include directory
 install(DIRECTORY include/turtlelib DESTINATION include)

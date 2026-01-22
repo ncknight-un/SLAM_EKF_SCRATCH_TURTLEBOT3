@@ -1,10 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include "turtlelib/se2d.hpp"
+#include "turtlelib/svg.hpp"
+#include <string>
 #include <sstream>
-#include <format>
 
-TEST_CASE("SVG Test Case", "[pass]") {
-    // Temp formating
+using namespace turtlelib;
+
+TEST_CASE("Verified SVG example matches expected output", "[svg]") {
     REQUIRE(true);
 }

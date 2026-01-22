@@ -198,7 +198,7 @@ TEST_CASE("Vector2D formatting Tests", "turtlelib::Vector2D v{x, y}") {
     SECTION("Standard Formating Test") {
         turtlelib::Vector2D v{1.5, -2.3};
         std::string s = std::format("{}", v);
-        REQUIRE(s == "[1.50000, -2.3000]");
+        REQUIRE(s == "[1.50000, -2.30000]");
     }
 
     SECTION("Vector2D - Zero Vector") {

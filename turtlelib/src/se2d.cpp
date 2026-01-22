@@ -1,17 +1,6 @@
-/// \file
-/// \brief 2D rigid body transformations for vectors, points, and twists
-/// \namespace turtlelib
 #include "turtlelib/se2d.hpp"
 
-namespace turtlelib
-{
-/// \brief Reads a Twist2D from a stream
-///
-/// Accepts formats: "<omega[<unit>], x, y>" or "omega x y" with optional units 'r' (radians) or 'd' (degrees)
-///
-/// \param is Input stream
-/// \param tw Twist2D object to populate
-/// \returns Reference to input stream
+namespace turtlelib {
 std::istream & operator>>(std::istream & is, Twist2D & tw)
 {
         // First step is to determine the format:
@@ -81,30 +70,15 @@ std::istream & operator>>(std::istream & is, Twist2D & tw)
 
 // Member Initialization Lists:
 // REFER TO: https://en.cppreference.com/w/cpp/language/initializer_list.html
-/// \brief Default constructor, zero translation and rotation
 Transform2D::Transform2D()
 : trans_{0.0, 0.0}, rot_{0.0} {}
-/// \brief Constructor from translation vector
-///
-/// \param trans Initial translation as Vector2D
 Transform2D::Transform2D(Vector2D trans)
 : trans_{trans}, rot_{0.0} {}
-/// \brief Constructor from rotation
-///
-/// \param radians Initial rotation in radians
 Transform2D::Transform2D(double radians)
 : trans_{0.0, 0.0}, rot_{radians} {}
-/// \brief Constructor from translation and rotation
-///
-/// \param trans Initial translation as Vector2D
-/// \param radians Initial rotation in radians
 Transform2D::Transform2D(Vector2D trans, double radians)
 : trans_{trans}, rot_{radians} {}
 
-/// \brief Applies this transform to a Point2D
-///
-/// \param p Point2D to transform
-/// \returns Transformed Point2D
 Point2D Transform2D::operator()(Point2D p) const
 {
         // Establish Cos and Sin:
@@ -117,13 +91,6 @@ Point2D Transform2D::operator()(Point2D p) const
   return Point2D{x_new, y_new};
 }     // End of operator() Point
 
-
-/// \brief Applies this transform to a Vector2D
-///
-/// Only rotation is applied, translation is ignored
-///
-/// \param v Vector2D to rotate
-/// \returns Rotated Vector2D
 Vector2D Transform2D::operator()(Vector2D v) const
 {
         // Establish Cos and Sin:
@@ -136,12 +103,6 @@ Vector2D Transform2D::operator()(Vector2D v) const
   return Vector2D{vx_new, vy_new};
 }     // End of operator() Vector
 
-/// \brief Applies this transform to a Twist2D
-///
-/// Rotates the vector components and adjusts linear velocities according to the translational offset
-///
-/// \param v Twist2D to transform
-/// \returns Transformed Twist2D
 Twist2D Transform2D::operator()(Twist2D v) const
 {
         // Establish Cos and Sin:
@@ -155,9 +116,6 @@ Twist2D Transform2D::operator()(Twist2D v) const
   return Twist2D{vw_new, vx_new, vy_new};
 }     // End of operator() Twist
 
-/// \brief Returns the inverse of this transform
-///
-/// \returns Transform2D representing the inverse transform
 Transform2D Transform2D::inv() const
 {
         // Establish Cos and Sin:
@@ -170,12 +128,6 @@ Transform2D Transform2D::inv() const
   return Transform2D{Vector2D{x_inv, y_inv}, -rot_};
 }     // End of inv()
 
-/// \brief In-place composition of transforms (lhs *= rhs)
-///
-/// Translates and rotates lhs by rhs
-///
-/// \param rhs Transform2D to apply
-/// \returns Reference to this Transform2D after composition
 Transform2D & Transform2D::operator*=(const Transform2D & rhs)
 {
         // Establish Cos and Sin for lhs:
@@ -196,29 +148,17 @@ Transform2D & Transform2D::operator*=(const Transform2D & rhs)
 }     //end of operator*=
 
 // RETURN FUNCTIONS:
-/// \brief Returns the translation component of this transform
-///
-/// \returns Vector2D representing translation
 Vector2D Transform2D::translation() const
 {
   return trans_;
 }     // End of translation()
-/// \brief Returns the rotation component of this transform
-///
-/// \returns Rotation in radians
+
 double Transform2D::rotation() const
 {
   return rot_;
 }     // End of rotation()
 
 // TRANSFORM2D Operator>>:
-/// \brief Reads a Transform2D from a stream
-///
-/// Accepts formats: "<rotation[<unit>], x, y>" or "rotation x y" with optional units 'r' (radians) or 'd' (degrees)
-///
-/// \param is Input stream
-/// \param tf Transform2D object to populate
-/// \returns Reference to input stream
 std::istream & operator>>(std::istream & is, Transform2D & tf)
 {
         // Create temporary transform to parse:
@@ -297,11 +237,6 @@ std::istream & operator>>(std::istream & is, Transform2D & tf)
 }     // End of Transform2D Operator>>
 
 // Transform2D Operator
-/// \brief Composes two transforms (lhs * rhs)
-///
-/// \param lhs Left-hand Transform2D
-/// \param rhs Right-hand Transform2D
-/// \returns Transform2D representing lhs followed by rhs
 Transform2D operator*(Transform2D lhs, const Transform2D & rhs)
 {
         // Return the
