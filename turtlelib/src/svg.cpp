@@ -50,10 +50,10 @@ namespace turtlelib {
     }
 
     void Svg::draw_vector(double x1, double y1, double x2, double y2, std::string color) {
-        double svg_x1 = Svg::to_svg_coords_x(x1);
-        double svg_y1 = Svg::to_svg_coords_y(y1);
-        double svg_x2 = Svg::to_svg_coords_x(x2);
-        double svg_y2 = Svg::to_svg_coords_y(y2);
+        double svg_x1 = Svg::to_svg_coords_x(x2);
+        double svg_y1 = Svg::to_svg_coords_y(y2);
+        double svg_x2 = Svg::to_svg_coords_x(x1);
+        double svg_y2 = Svg::to_svg_coords_y(y1);
 
         // Write the svg command for the vector:
         std::ostringstream ss;
@@ -79,10 +79,10 @@ namespace turtlelib {
         commands_.push_back("<g>\n");
 
         // X-axis (red) from origin
-        draw_vector(origin.x + x_axis.x, origin.y + x_axis.y, origin.x, origin.y, "red");
+        draw_vector(origin.x, origin.y, origin.x + x_axis.x, origin.y + x_axis.y, "red");
 
         // Y-axis (green) from origin
-        draw_vector(origin.x + y_axis.x, origin.y + y_axis.y, origin.x, origin.y, "green");
+        draw_vector(origin.x, origin.y, origin.x + y_axis.x, origin.y + y_axis.y, "green");
 
         // Text label slightly offset from origin
         std::ostringstream ss;

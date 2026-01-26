@@ -1,8 +1,7 @@
 #include "turtlelib/geometry2d.hpp"
 
 namespace turtlelib {
-std::istream & operator>>(std::istream & is, Point2D & p)
-{
+std::istream & operator>>(std::istream & is, Point2D & p) {
         // First step is to determine the format:
   char first = is.peek();
         // Peek to see if the first character is '('
@@ -42,28 +41,24 @@ std::istream & operator>>(std::istream & is, Point2D & p)
   return is;              // return the stream
 }     // End of operator>> (Point)
 
-Vector2D operator-(const Point2D & head, const Point2D & tail)
-{
+Vector2D operator-(const Point2D & head, const Point2D & tail) {
         // Return a 2D vector as the difference from head to tail:
   return Vector2D{head.x - tail.x, head.y - tail.y};
 }     // End of operator-
 
-Point2D operator+(const Point2D & tail, const Vector2D & disp)
-{
+Point2D operator+(const Point2D & tail, const Vector2D & disp) {
         // Return a 2DPoint that is moved by a vector:
   return Point2D{tail.x + disp.x, tail.y + disp.y};
 }     // End of operator+
 
-std::ostream & operator<<(std::ostream & os, const Vector2D & v)
-{
+std::ostream & operator<<(std::ostream & os, const Vector2D & v) {
         // I decided to force the printout to always keep a precision of 5 decimal places:
   os << "[" << std::fixed << std::setprecision(5) << v.x << ", " << std::fixed <<
     std::setprecision(5) << v.y << "]";
   return os;
 }     // End of operator<<
 
-std::istream & operator>>(std::istream & is, Vector2D & v)
-{
+std::istream & operator>>(std::istream & is, Vector2D & v) {
         // First step is to determine the format:
   char first = is.peek();
         // Peek to see if the first character is '['
@@ -103,14 +98,12 @@ std::istream & operator>>(std::istream & is, Vector2D & v)
   return is;              // return the stream
 }     // End of operator>> (Vector)
 
-Vector2D normalize(Vector2D in)
-{
+Vector2D normalize(Vector2D in) {
         // Throw an exception if it is the zero vector:
         // ################################ Begin_Citation [3] ################################
   if (in.x == 0 && in.y == 0) {throw std::invalid_argument("Zero vector - Error");}
         // ################################ End_Citation [3] ##################################
 
-        // Normalize the vector:
   auto norm = std::sqrt(in.x * in.x + in.y * in.y);
   return Vector2D(in.x / norm, in.y / norm);
 }     // End of normalize

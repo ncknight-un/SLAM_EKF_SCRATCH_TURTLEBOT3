@@ -1,0 +1,42 @@
+Tab:
+TF -> x: 1, y: 1
+rot: 1.3
+
+Tba:
+TF -> x: -1.23106, y: 0.696059
+rot: -1.3
+
+Tbc:
+TF -> x: 2, y: 0
+rot: 0
+
+Tcb:
+TF -> x: -2, y: 0
+rot: -0
+
+Tac:
+TF -> x: 1.535, y: 2.92712
+rot: 1.3
+
+Tca:
+TF -> x: -3.23106, y: 0.696059
+rot: -1.3
+
+pa:
+Point -> x: 0.25, y: -0.5
+
+pb:
+Point -> x: 0.25, y: -0.5
+
+pc:
+Point -> x: 0.25, y: -0.5
+
+va:
+Vector -> x: 0.369317, y: 0.208818
+
+vb:
+Vector -> x: 0.3, y: -0.3
+
+vc:
+Vector -> x: 0.3, y: -0.3
+

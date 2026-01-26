@@ -10,16 +10,20 @@
 <text x="398" y="538">{a}</text>
 </g>
 <g>
-<line x1="464.05" y1="344.707" x2="504" y2="432" stroke="red" stroke-width="5" marker-start="url(#Arrow1Sstart)" />
-<line x1="416.707" y1="471.95" x2="504" y2="432" stroke="green" stroke-width="5" marker-start="url(#Arrow1Sstart)" />
-<text x="494" y="442">{b}</text>
+<line x1="600" y1="336" x2="504" y2="336" stroke="red" stroke-width="5" marker-start="url(#Arrow1Sstart)" />
+<line x1="504" y1="240" x2="504" y2="336" stroke="green" stroke-width="5" marker-start="url(#Arrow1Sstart)" />
+<text x="494" y="346">{b}</text>
 </g>
 <g>
-<line x1="384.15" y1="170.122" x2="424.1" y2="257.415" stroke="red" stroke-width="5" marker-start="url(#Arrow1Sstart)" />
-<line x1="336.807" y1="297.365" x2="424.1" y2="257.415" stroke="green" stroke-width="5" marker-start="url(#Arrow1Sstart)" />
-<text x="414.1" y="267.415">{c}</text>
+<line x1="715.2" y1="144" x2="619.2" y2="144" stroke="red" stroke-width="5" marker-start="url(#Arrow1Sstart)" />
+<line x1="619.2" y1="48" x2="619.2" y2="144" stroke="green" stroke-width="5" marker-start="url(#Arrow1Sstart)" />
+<text x="609.2" y="154">{c}</text>
 </g>
-<circle cx="504" cy="432" r="5" stroke="purple" fill="purple" />
-<circle cx="408" cy="528" r="5" stroke="brown" fill="brown" />
-<circle cx="216" cy="528" r="5" stroke="orange" fill="orange" />
+<circle cx="427.2" cy="336" r="5" stroke="purple" fill="purple" />
+<circle cx="427.2" cy="336" r="5" stroke="brown" fill="brown" />
+<circle cx="427.2" cy="336" r="5" stroke="orange" fill="orange" />
+<line x1="600" y1="144" x2="504" y2="336" stroke="brown" stroke-width="5" marker-start="url(#Arrow1Sstart)" />
+<line x1="546.933" y1="250.135" x2="504" y2="336" stroke="black" stroke-width="5" marker-start="url(#Arrow1Sstart)" />
+<line x1="504" y1="336" x2="408" y2="528" stroke="purple" stroke-width="5" marker-start="url(#Arrow1Sstart)" />
+<line x1="504" y1="336" x2="619.2" y2="144" stroke="orange" stroke-width="5" marker-start="url(#Arrow1Sstart)" />
 </svg>
