@@ -42,7 +42,7 @@ namespace turtlelib {
         std::ostringstream ss;
         ss << "<circle cx=\"" << svg_x
             << "\" cy=\"" << svg_y
-            << "\" r=\"3\""
+            << "\" r=\"5\""
             << " stroke=\"" << stroke << "\""
             << " fill=\"" << fill << "\" />\n";
 
@@ -67,20 +67,27 @@ namespace turtlelib {
         commands_.push_back(ss.str());
     }
 
-    void Svg::draw_frame(Vector2D v1, Vector2D v2, char frame_id) {
+    void Svg::draw_frame(Vector2D origin, Vector2D v1, Vector2D v2, char frame_id) {
+        // Normalize v1 and v2 to unit length
+        double len_x = std::sqrt(v1.x * v1.x + v1.y * v1.y);
+        double len_y = std::sqrt(v2.x * v2.x + v2.y * v2.y);
+
+        turtlelib::Vector2D x_axis{ v1.x / len_x, v1.y / len_x };
+        turtlelib::Vector2D y_axis{ v2.x / len_y, v2.y / len_y };
+
         // Open group tag
         commands_.push_back("<g>\n");
 
-        // X-axis (red) vector: from origin to v1
-        draw_vector(v1.x, v1.y, 0.0, 0.0, "red");
+        // X-axis (red) from origin
+        draw_vector(origin.x + x_axis.x, origin.y + x_axis.y, origin.x, origin.y, "red");
 
-        // Y-axis (green) vector: from origin to v2
-        draw_vector(v2.x, v2.y, 0.0, 0.0, "green");
+        // Y-axis (green) from origin
+        draw_vector(origin.x + y_axis.x, origin.y + y_axis.y, origin.x, origin.y, "green");
 
         // Text label slightly offset from origin
         std::ostringstream ss;
-        ss << "<text x=\"" << Svg::to_svg_coords_x(0.0) - 10    // Shift the title 10 pixels back
-        << "\" y=\"" << Svg::to_svg_coords_y(0.0) + 10        // Shift the title 10 pixels down
+        ss << "<text x=\"" << Svg::to_svg_coords_x(origin.x) - 10
+        << "\" y=\"" << Svg::to_svg_coords_y(origin.y) + 10
         << "\">{" << frame_id << "}</text>\n";
         commands_.push_back(ss.str());
 

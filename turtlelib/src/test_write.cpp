@@ -14,7 +14,7 @@ int main() {
     // Draw a frame at the origin with x = (1,0), y = (0,1), id = 'a'
     turtlelib::Vector2D x_axis{1.0, 0.0};
     turtlelib::Vector2D y_axis{0.0, 1.0};
-    svg.draw_frame(x_axis, y_axis, 'a');
+    svg.draw_frame(turtlelib::Vector2D{0.0,0.0}, x_axis, y_axis, 'a');
 
     // Build the file: 
     std::string file_contents = svg.build_file();

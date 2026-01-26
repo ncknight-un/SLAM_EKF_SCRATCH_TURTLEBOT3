@@ -19,7 +19,7 @@ TEST_CASE("Verified SVG example matches expected output", "[svg]") {
     // Draw a frame at the origin with x = (1,0), y = (0,1), id = 'a'
     turtlelib::Vector2D x_axis{1.0, 0.0};
     turtlelib::Vector2D y_axis{0.0, 1.0};
-    svg.draw_frame(x_axis, y_axis, 'a');
+    svg.draw_frame(turtlelib::Vector2D{0.0,0.0}, x_axis, y_axis, 'a');
 
     // Require that the string held by svg is the same as the appropriate output:
     std::string expected_svg =

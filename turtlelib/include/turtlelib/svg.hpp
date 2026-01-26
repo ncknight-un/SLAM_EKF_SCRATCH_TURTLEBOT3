@@ -31,10 +31,11 @@ namespace turtlelib
             void draw_vector(double x1, double y1, double x2, double y2, std::string stroke);
 
             /// \brief Draw a Frame:
+            /// \param origin - the origin in the viewbox
             /// \param v1 - the first vector to draw in the viewbox
             /// \param v2 - the second vector to draw in the viewbox
             /// \param frame_id -The body of the <text> tag contains the text to display
-            void draw_frame(Vector2D v1, Vector2D, char frame_id);
+            void draw_frame(Vector2D origin, Vector2D v1, Vector2D, char frame_id);
 
             /// \brief Builds the file string to be written to a file.
             std::string build_file();
