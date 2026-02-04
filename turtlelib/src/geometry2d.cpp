@@ -114,6 +114,62 @@ Vector2D & Vector2D::operator+=(const Vector2D & v) {
   return *this;
 } // End of operator+= for Vector2D
 
+  Vector2D & Vector2D::operator-=(const Vector2D & v) {
+  x -= v.x;
+  y -= v.y;
+  return *this;
+} // End of operator-= for Vector2D
 
+Vector2D operator+(const Vector2D& lhs, const Vector2D& rhs) {
+  Vector2D result = lhs;
+  result += rhs;
+  return result;
+} // End of operator+ for Vector2D
+
+Vector2D operator-(const Vector2D& lhs, const Vector2D& rhs) {
+  Vector2D result = lhs;
+  result -= rhs;
+  return result;
+} // End of operator- for Vector2D
+
+Vector2D operator*(double scalar, const Vector2D & v) {
+  Vector2D result;
+  result.x = v.x * scalar;
+  result.y = v.y * scalar;
+  return result;
+} // End of operator* for scalar on lhs
+
+Vector2D operator*(const Vector2D & v, double scalar) {
+  Vector2D result;
+  result.x = v.x * scalar;
+  result.y = v.y * scalar;
+  return result;
+} // End of operator* for scalar on rhs
+
+Vector2D & Vector2D::operator*=(double scalar) {
+  this->x *= scalar;
+  this->y *= scalar;
+  return *this;
+} // End of operator*= for Vector2D
+
+double dot(const Vector2D & v1, const Vector2D & v2){
+  return v1.x * v2.x + v1.y * v2.y;
+} // End of dot for Vector2D
+
+double magnitude(const Vector2D & v){
+  return std::sqrt(v.x * v.x + v.y * v.y);
+} // End of magnitude for Vector2D
+
+double angle(const Vector2D & v1, const Vector2D & v2){
+  // Dot product divided by magnitudes, then acos of result
+  double mag1 = magnitude(v1);
+  double mag2 = magnitude(v2);
+  if (mag1 == 0.0 || mag2 == 0.0) { return 0.0;} // Avoids division by zero
+
+  double dot_product = dot(v1, v2);
+  double magnitudes = magnitude(v1) * magnitude(v2);
+  double angle = std::acos(dot_product / magnitudes);
+  return angle;
+} // End of angle for Vector2D
 
 } // End ofnamespace turtlelib

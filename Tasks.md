@@ -24,4 +24,4 @@ Task C.4
 Task C.5
 Task C.6
 Task C.7
-NOTE: I have an issue with my Doxygen Formater in CMAKE in turtlelib. It crashes for the .hpp you provided. I will try to follow up and ask about this in office hours. Currently everything at the head of main is working for all tasks.
+Task B.8.2

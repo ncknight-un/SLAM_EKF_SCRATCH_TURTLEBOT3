@@ -3,6 +3,7 @@
 #include "turtlelib/geometry2d.hpp"
 #include <sstream>
 #include <format>
+#include <numbers>
 
 using Catch::Matchers::WithinRel;
 constexpr double EPS = 0.001;
@@ -178,6 +179,139 @@ TEST_CASE("VECTOR2D normalize", "[normalize]") {
             std::invalid_argument       // exception invalid_arguement
         );
         REQUIRE(ss.fail() == false);
+    }
+}
+
+// VECTOR2D Addition:
+TEST_CASE("Vector2D Addition Tests", "operator+ and operator+=") {
+    turtlelib::Vector2D v1{1.0, 2.0};
+    turtlelib::Vector2D v2{3.5, -1.0};
+
+    // Test operator+=
+    v1 += v2;                   // V1 is now {4.5, 1.0}
+    // Test operator+
+    turtlelib::Vector2D result2 = v1 + v2;          // Result2 is now {8.0, 0.0}
+
+    SECTION("Components are added correctly for operator+=") {
+        REQUIRE_THAT(v1.x, WithinRel(4.5, EPS));
+        REQUIRE_THAT(v1.y, WithinRel(1.0, EPS));
+    }
+
+    SECTION("Components are added correctly for operator+") {
+        REQUIRE_THAT(result2.x, WithinRel(8.0, EPS));
+        REQUIRE_THAT(result2.y, WithinRel(0.0, EPS));
+    }
+}
+
+// VECTOR2D Subtraction:
+TEST_CASE("Vector2D Subtraction Tests", "operator- and operator-=") {
+    turtlelib::Vector2D v1{1.0, 2.0};
+    turtlelib::Vector2D v2{3.5, -1.0};
+
+    // Test operator-=
+    v1 -= v2;               // V1 is now {-2.5, 3.0}
+    // Test operator-
+    turtlelib::Vector2D result2 = v1 - v2;  // Result2 is now {-6.0, 4.0}
+
+    SECTION("Components are subtracted correctly for operator-=") {
+        REQUIRE_THAT(v1.x, WithinRel(-2.5, EPS));
+        REQUIRE_THAT(v1.y, WithinRel(3.0, EPS));
+    }
+
+    SECTION("Components are subtracted correctly for operator+") {
+        REQUIRE_THAT(result2.x, WithinRel(-6.0, EPS));
+        REQUIRE_THAT(result2.y, WithinRel(4.0, EPS));
+    }
+}
+
+// VECTOR2D Multiplication by Scalar:
+TEST_CASE("Vector2D Multiplication by Scalar Tests", "operator* and operator*=") {
+    turtlelib::Vector2D v1{2.0, -3.0};
+    turtlelib::Vector2D v2{2.0, -3.0};
+    double scalar = 4.0;
+    // Test operator*=
+    v1 *= scalar;           // V1 is now {8.0, -12.0}
+    // Test operator* scalar on rhs
+    turtlelib::Vector2D result1 = v2 * scalar;  // Result1 is now {8.0, -12.0}
+    // Test operator* scalar on lhs
+    turtlelib::Vector2D result2 = scalar * v2;  // Result2 is now {8.0, -12.0}
+
+    SECTION("Components are multiplied correctly for operator*=") {
+        REQUIRE_THAT(v1.x, WithinRel(8.0, EPS));
+        REQUIRE_THAT(v1.y, WithinRel(-12.0, EPS));
+    }
+
+    SECTION("Components are multiplied correctly for operator+ with scalar on rhs") {
+        REQUIRE_THAT(result1.x, WithinRel(8.0, EPS));
+        REQUIRE_THAT(result1.y, WithinRel(-12.0, EPS));
+    }
+
+    SECTION("Components are multiplied correctly for operator+ with scalar on lhs") {
+        REQUIRE_THAT(result2.x, WithinRel(8.0, EPS));
+        REQUIRE_THAT(result2.y, WithinRel(-12.0, EPS));
+    }
+}
+
+// VECTOR2D Dot Product:
+TEST_CASE("Vector2D Dot Product Tests", "dot()") {
+    turtlelib::Vector2D v1{2.0, 3.0};
+    turtlelib::Vector2D v2{-4.0, -4.0};
+    // Test dot()
+    double result1 = dot(v1, v1);  // Result is now -20.0
+    double result2 = dot(v1, v2);  // Result is now 13.0
+    
+    SECTION("Dot product with itself is computed correctly") {
+        REQUIRE_THAT(result1, WithinRel(13.0, EPS));
+    }
+    SECTION("Dot product is computed correctly between two vectors") {
+        REQUIRE_THAT(result2, WithinRel(-20.0, EPS));
+    }
+}
+
+// VECTOR2D Magnitude:
+TEST_CASE("Vector2D Magnitude Tests", "magnitude()") {
+    turtlelib::Vector2D v1{3.0, 4.0};
+    turtlelib::Vector2D v2{-1.0, -1.0};
+    turtlelib::Vector2D v3{0.0, 0.0};
+    // Test magnitude()
+    double result1 = magnitude(v1);  // Result is now 5.0
+    double result2 = magnitude(v2);  // Result is now sqrt(2)
+    double result3 = magnitude(v3);  // Result is now 0.0
+    
+    SECTION("Magnitude of vector with positive components is computed correctly") {
+        REQUIRE_THAT(result1, WithinRel(5.0, EPS));
+    }
+        
+    SECTION("Magnitude of vector with negative components is computed correctly") {
+        REQUIRE_THAT(result2, WithinRel(sqrt(2.0), EPS));
+    }
+
+    SECTION("Magnitude of zero vector is computed correctly") {
+        REQUIRE_THAT(result3, WithinRel(0.0, EPS));
+    }
+}
+
+// VECTOR2D Angles:
+TEST_CASE("Vector2D Angle Tests", "angle()") {
+    turtlelib::Vector2D v1{2.0, 2.0};
+    turtlelib::Vector2D v2{-1.0, -1.0};
+    turtlelib::Vector2D v3{3.0, 2.0};
+    turtlelib::Vector2D v4{0.0, 0.0};
+    // Test angle()
+    double result1 = angle(v1, v2);  // Result is now pi
+    double result2 = angle(v2, v3);  // Result is now ~2.944
+    double result3 = angle(v1, v4);  // Result is now 0.0
+    
+    SECTION("Angle of vector with positive components is computed correctly") {
+        REQUIRE_THAT(result1, WithinRel(std::numbers::pi, EPS));
+    }
+        
+    SECTION("Angle of vector with negative components is computed correctly") {
+        REQUIRE_THAT(result2, WithinRel(2.944, EPS));
+    }
+
+    SECTION("Angle of zero magnitude vector is computed correctly") {
+        REQUIRE_THAT(result3, WithinRel(0.0, EPS));
     }
 }
 

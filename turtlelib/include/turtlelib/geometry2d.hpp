@@ -35,7 +35,7 @@ struct Point2D
 std::istream & operator>>(std::istream & is, Point2D & p);
 
 
-    /// \brief A 2-Dimensional Vector
+/// \brief A 2-Dimensional Vector
 struct Vector2D
 {
   /// \brief the x coordinate
@@ -48,6 +48,28 @@ struct Vector2D
   /// \param in The vector to be added to the referenced vector. 
   /// \return A reference to the modified vector
   Vector2D & operator+=(const Vector2D & v);
+
+  /// \brief Return a difference of two vectors added to itself.
+  /// \param in The vector to be subtracted from the referenced vector. 
+  /// \return A reference to the modified vector
+  Vector2D & operator-=(const Vector2D & v);
+
+  /// \brief Return a product of of a scalar and vector where scalar is on the rhs.
+  /// \param lhs The left hand side vector to be multiplied.
+  /// \param scalar The scalar to multiply the vector by.
+  /// \return The product of the vector and scalar as a Vector2D.
+  friend Vector2D operator*(const Vector2D& v, double scalar);
+
+  /// \brief Return a product of of a scalar and vector where scalar is on the lhs.
+  /// \param scalar The scalar to multiply the vector by.
+  /// \param v The right hand side vector to be multiplied.
+  /// \return The product of the vector and scalar as a Vector2D.
+  friend Vector2D operator*(double scalar, const Vector2D& v);
+
+  /// \brief Return a product of a scalar and the referenced vector added to itself.
+  /// \param scalar The left hand side scalar to be multiplied to the referenced vector.
+  /// \return The product of the two  as a Vector2D.
+  Vector2D & operator*=(double scalar);
 };
 
     /// \brief Subtracting one point from another yields a vector
@@ -87,17 +109,36 @@ std::istream & operator>>(std::istream & is, Vector2D & v);
     /// \throws std::invalid_input if it is the zero vector
 Vector2D normalize(Vector2D in);
 
-
 /// \brief Return a sum of two vectors.
 /// \param lhs The left hand side vector to be added.
 /// \param rhs The right hand side vector to be added.
 /// \return The sum of the two vectors as a Vector2D.
-Vector2D operator+(Vector2D lhs, const Vector2D& rhs) {
-    lhs += rhs;
-    return lhs;
-}
+Vector2D operator+(const Vector2D & lhs, const Vector2D& rhs);
 
-}
+/// \brief Return a difference of two vectors.
+/// \param lhs The left hand side vector to be subtracted.
+/// \param rhs The right hand side vector to be subtracted.
+/// \return The difference of the two vectors as a Vector2D.
+Vector2D operator-(const Vector2D & lhs, const Vector2D& rhs);
+
+/// \brief Return the dot product of two vectors.
+/// \param v1 The first vector.
+/// \param v2 The second vector.
+/// \return The dot product as a double.
+double dot(const Vector2D & v1, const Vector2D & v2);
+
+/// \brief Return the magnitude of a vector.
+/// \param v The vector.
+/// \return The magnitude as a double.
+double magnitude(const Vector2D & v);
+
+/// \brief Return the shortest angle between two vectors in radians.
+/// \param v1 The first vector.
+/// \param v2 The second vector.
+/// \return The angle between the two vectors as a double in radians.
+double angle(const Vector2D & v1, const Vector2D & v2);
+
+} // namespace turtlelib
 
 /// \brief A Formatter for 2D points
 /// The output is "(x, y)"
