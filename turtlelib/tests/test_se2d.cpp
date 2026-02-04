@@ -510,15 +510,94 @@ TEST_CASE("Twist2D formatting Tests", "turtlelib::Twist2D p{x, y}") {
     }
 }
 
-// TEST_CASE("Transform2D formatting Tests", "turtlelib::Transform2D v{x, y}") {
-//     SECTION("Standard Formating Test"){
-//         turtlelib::Vector2D v{1.5, -2.3};
-//         std::string s = std::format("{}", v);
-//         REQUIRE(s == "[1.5, -2.3]");
-//     }
+// Twist2D Scalar Multiplication
+TEST_CASE("turtlelib::Twist2D Scalar Multiplication", "[operator*= and operator*]") {
+    turtlelib::Twist2D tw1{2.0, -3.0, 1.0};         // omega, x, y  
 
-//     SECTION("Vector2D - Zero Vector") {
-//         turtlelib::Vector2D v{0.0, 0.0};
-//         REQUIRE(std::format("{}", v) == "[0, 0]");
-//     }
-// }
+    SECTION("Scalar Multiplication - Positive Scalar") {
+        double scalar = 3.0;
+        tw1 *= scalar; // Multiply vector by pos scalar
+        REQUIRE_THAT(tw1.omega, WithinRel(6.0, EPS));
+        REQUIRE_THAT(tw1.x, WithinRel(-9.0, EPS));
+        REQUIRE_THAT(tw1.y, WithinRel(3.0, EPS));
+    }
+    SECTION("Scalar Multiplication - Negative Scalar") {
+        double scalar = -2.0;
+        tw1 *= scalar; // Multiply vector by neg scalar
+        REQUIRE_THAT(tw1.omega, WithinRel(-4.0, EPS));
+        REQUIRE_THAT(tw1.x, WithinRel(6.0, EPS));
+        REQUIRE_THAT(tw1.y, WithinRel(-2.0, EPS));     
+    }
+    SECTION("Scalar Multiplication - Zero Scalar") {
+        double scalar = 0.0;
+        tw1 *= scalar; // Multiply vector by 0 scalar
+        REQUIRE_THAT(tw1.omega, WithinRel(0.0, EPS));
+        REQUIRE_THAT(tw1.x, WithinRel(0.0, EPS));
+        REQUIRE_THAT(tw1.y, WithinRel(0.0, EPS));
+    }
+
+    SECTION("Components are multiplied correctly for operator* with scalar on rhs") {
+        double scalar = 3.0;
+        turtlelib::Twist2D result1 = tw1 * scalar;                      // Result should be (6.0, -9.0, 3.0)     
+        REQUIRE_THAT(result1.omega, WithinRel(6.0, EPS)); 
+        REQUIRE_THAT(result1.x, WithinRel(-9.0, EPS));
+        REQUIRE_THAT(result1.y, WithinRel(3.0, EPS));  
+    }
+
+    SECTION("Components are multiplied correctly for operator* with scalar on lhs") {
+        double scalar = 3.0;
+        turtlelib::Twist2D result2 = scalar * tw1;                      // Result should be (6.0, -9.0, 3.0)      
+        REQUIRE_THAT(result2.omega, WithinRel(6.0, EPS)); 
+        REQUIRE_THAT(result2.x, WithinRel(-9.0, EPS));
+        REQUIRE_THAT(result2.y, WithinRel(3.0, EPS));    
+    }
+}
+
+// Twist2D Integration to Transform2D:
+TEST_CASE("turtlelib::Twist2D Integration to Transform2D", "[integrate_twist()]") {
+
+    SECTION("Integration - Translation Only") {
+        turtlelib::Twist2D tw{0.0, 2.0, 3.0};            // omega, x, y
+        // Integrate the twist:
+        turtlelib::Transform2D tf = turtlelib::integrate_twist(tw);
+
+        // Extract the resulting Transform translation and rotation:
+        double trans_x = tf.translation().x;
+        double trans_y = tf.translation().y;
+        double rot = tf.rotation();
+
+        REQUIRE_THAT(trans_x, WithinRel(2.0, EPS));
+        REQUIRE_THAT(trans_y, WithinRel(3.0, EPS));
+        REQUIRE_THAT(rot, WithinRel(0.0, EPS));
+    }
+
+    SECTION("Integration - Rotation Only - no translation") {
+        turtlelib::Twist2D tw{std::numbers::pi, 0.0, 0.0};            // omega, x, y
+        // Integrate the twist:
+        turtlelib::Transform2D tf = turtlelib::integrate_twist(tw);
+
+        // Extract the translation and rotation:
+        double trans_x = tf.translation().x;
+        double trans_y = tf.translation().y;
+        double rot = tf.rotation();
+        
+        REQUIRE_THAT(rot, WithinRel(std::numbers::pi, EPS));
+        REQUIRE_THAT(trans_x, WithinRel(0.0, EPS));
+        REQUIRE_THAT(trans_y, WithinRel(0.0, EPS));
+    }
+
+    SECTION("Integration - Rotation and Translation") {
+        turtlelib::Twist2D tw{std::numbers::pi, 1.0, 2.0};            // omega, x, y
+        // Integrate the twist:
+        turtlelib::Transform2D tf = turtlelib::integrate_twist(tw);
+
+        // Extract the translation and rotation:
+        double trans_x = tf.translation().x;
+        double trans_y = tf.translation().y;
+        double rot = tf.rotation();
+        
+        REQUIRE_THAT(rot, WithinRel(std::numbers::pi, EPS));
+        REQUIRE_THAT(trans_x, WithinRel(1.273, EPS));
+        REQUIRE_THAT(trans_y, WithinRel(-0.637, EPS));
+    }
+} 

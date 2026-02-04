@@ -105,10 +105,10 @@ Vector2D Transform2D::operator()(Vector2D v) const
 
 Twist2D Transform2D::operator()(Twist2D v) const
 {
-        // Establish Cos and Sin:
+  // Establish Cos and Sin:
   double c = std::cos(rot_);
   double s = std::sin(rot_);
-        // Multiply Adj_ij by V_j:
+  // Multiply Adj_ij by V_j:
   double vw_new = v.omega;
   double vx_new = (trans_.y * v.omega) + (c * v.x) - (s * v.y);
   double vy_new = (-1 * trans_.x * v.omega) + (s * v.x) + (c * v.y);
@@ -242,4 +242,53 @@ Transform2D operator*(Transform2D lhs, const Transform2D & rhs)
         // Return the
   return lhs *= rhs;
 }     // End of Transform2D Operator*
-}
+
+// Opearator* for Twist2D (scalar on rhs):
+Twist2D operator*(const Twist2D& tw, double scalar) {
+  Twist2D result;
+  // Multiply each component by scalar:
+  result.omega = tw.omega * scalar;
+  result.x = tw.x * scalar;
+  result.y = tw.y * scalar;
+  return result;
+} // end of operator*
+
+// Opearator* for Twist2D (scalar on lhs):
+Twist2D operator*(double scalar, const Twist2D& tw) {
+  return tw * scalar;  // utilize the other operator*
+} // end of operator*
+
+// Opearator*= for Twist2D:
+Twist2D & Twist2D::operator*=(double scalar) {
+  // Multiply each component by scalar:
+  omega *= scalar;
+  x *= scalar;
+  y *= scalar;
+  return *this;
+} // end of operator*=
+
+// Integrate Twist Function:
+Transform2D integrate_twist(Twist2D tw) {
+  // Initialize Result Transform: (Assumed dt = 1)
+  Transform2D result;
+  double theta = tw.omega;
+  double dx = tw.x;
+  double dy = tw.y;
+
+  if (std::abs(theta) < 1e-9) {
+    // Case 1: Pure translation - Establish a Transform with only translation
+    result = Transform2D(Vector2D{dx, dy});
+  } else {
+    // Case 2: With rotation
+    // Calculate translational displacement due to rotation:
+    // ##################################### Begin_Citation [7] ###########################
+    double trans_x = (dx * std::sin(theta) + dy * (1 - std::cos(theta))) / theta;
+    double trans_y = (dy * std::sin(theta) + dx * (std::cos(theta) - 1)) / theta;
+    // ########################################## End_Citation [7] ####################################
+    // Build resulting Transform2D
+    result = Transform2D(Vector2D{trans_x, trans_y}, theta);
+  }
+  return result;
+} // End of integrate_twist() 
+
+} // end of namespace turtlelib

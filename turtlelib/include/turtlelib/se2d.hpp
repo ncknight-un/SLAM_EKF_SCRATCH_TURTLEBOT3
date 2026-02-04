@@ -9,20 +9,36 @@
 #include <limits>
 #include <sstream>
 
-namespace turtlelib
-{
+namespace turtlelib {
 
-    /// \brief represent a 2-Dimensional twist
+/// \brief represent a 2-Dimensional twist
 struct Twist2D
 {
-        /// \brief the angular velocity
+  /// \brief the angular velocity
   double omega = 0.0;
 
-        /// \brief the linear x  2-Dimensional twistvelocity
+  /// \brief the linear x  2-Dimensional twistvelocity
   double x = 0.0;
 
-        /// \brief the linear y velocity
+  /// \brief the linear y velocity
   double y = 0.0;
+
+  /// \brief Return a product of of a scalar and twise where scalar is on the rhs.
+  /// \param lhs The left hand side twist to be multiplied.
+  /// \param scalar The scalar to multiply the twist by.
+  /// \return The product of the twist and scalar as a Twist2D.
+  friend Twist2D operator*(const Twist2D& tw, double scalar);
+
+  /// \brief Return a product of of a scalar and twist where scalar is on the lhs.
+  /// \param scalar The scalar to multiply the twist by.
+  /// \param v The right hand side twist to be multiplied.
+  /// \return The product of the twist and scalar as a Twist2D.
+  friend Twist2D operator*(double scalar, const Twist2D& v);
+
+  /// \brief Return a product of a scalar and the referenced twise applied to itself.
+  /// \param scalar The left hand side scalar to be multiplied to the referenced twist.
+  /// \return The product of the two  as a Twist2D.
+  Twist2D & operator*=(double scalar);
 };
 
 /// \brief read the Twist2D in the format "<w [<unit>], x, y>" or as "w [<unit>] x y"
@@ -35,91 +51,95 @@ struct Twist2D
 /// \returns the istream is with the twist characters removed
 std::istream & operator>>(std::istream & is, Twist2D & tw);
 
-    /// \brief a rigid body transformation in 2 dimensions
+/// \brief a rigid body transformation in 2 dimensions
 class Transform2D {
 public:
-            /// \brief Create an identity transformation
+  /// \brief Create an identity transformation
   Transform2D();
 
-            /// \brief create a transformation that is a pure translation
-            /// \param trans - the vector by which to translate
+  /// \brief create a transformation that is a pure translation
+  /// \param trans - the vector by which to translate
   explicit Transform2D(Vector2D trans);
 
-            /// \brief create a pure rotation
-            /// \param radians - angle of the rotation, in radians
+  /// \brief create a pure rotation
+  /// \param radians - angle of the rotation, in radians
   explicit Transform2D(double radians);
 
-            /// \brief Create a transformation with a translational and rotational
-            /// component
-            /// \param trans - the translation
-            /// \param radians - the rotation, in radians
+  /// \brief Create a transformation with a translational and rotational
+  /// component
+  /// \param trans - the translation
+  /// \param radians - the rotation, in radians
   Transform2D(Vector2D trans, double radians);
 
-            /// \brief apply a transformation to a 2D Point
-            /// \param p the point to transform
-            /// \return a point in the new coordinate system
+  /// \brief apply a transformation to a 2D Point
+  /// \param p the point to transform
+  /// \return a point in the new coordinate system
   Point2D operator()(Point2D p) const;
 
-            /// \brief apply a transformation to a 2D Vector
-            /// \param v - the vector to transform
-            /// \return a vector in the new coordinate system
+  /// \brief apply a transformation to a 2D Vector
+  /// \param v - the vector to transform
+  /// \return a vector in the new coordinate system
   Vector2D operator()(Vector2D v) const;
 
-            /// \brief apply a transformation to a Twist2D (e.g. using the adjoint)
-            /// \param v - the twist to transform
-            /// \return a twist in the new coordinate system
+  /// \brief apply a transformation to a Twist2D (e.g. using the adjoint)
+  /// \param v - the twist to transform
+  /// \return a twist in the new coordinate system
   Twist2D operator()(Twist2D v) const;
 
-            /// \brief invert the transformation
-            /// \return the inverse transformation.
+  /// \brief invert the transformation
+  /// \return the inverse transformation.
   Transform2D inv() const;
 
-            /// \brief compose this transform with another and store the result
-            /// in this object
-            /// \param rhs - the first transform to apply
-            /// \return a reference to the newly transformed operator
+  /// \brief compose this transform with another and store the result
+  /// in this object
+  /// \param rhs - the first transform to apply
+  /// \return a reference to the newly transformed operator
   Transform2D & operator*=(const Transform2D & rhs);
 
-            /// \brief the translational component of the transform
-            /// \return the x,y translation
+  /// \brief the translational component of the transform
+  /// \return the x,y translation
   Vector2D translation() const;
 
-            /// \brief get the angular displacement of the transform
-            /// \return the angular displacement, in radians
+  /// \brief get the angular displacement of the transform
+  /// \return the angular displacement, in radians
   double rotation() const;
 
-            /// \brief see std::formatter for the Transform2D
-            // Primary friend template access:
-            // ################################## Begin_Citation [4] #########################
-            // The source discusses inheritance of struct for friends. A class can't create a subclass inside itself, so we must use the
-            // primary representation of the formater as a friend that our custom formatter will inherit.
+  /// \brief see std::formatter for the Transform2D
+  // Primary friend template access:
+  // ################################## Begin_Citation [4] #########################
+  // The source discusses inheritance of struct for friends. A class can't create a subclass inside itself, so we must use the
+  // primary representation of the formater as a friend that our custom formatter will inherit.
   template<class CharT>
   friend struct std::formatter;
-            // ################################## End_Citation [4] ############################
+  // ################################## End_Citation [4] ############################
 
 private:
-        // Definition of private variables ot hold transofrm translation and rotation:
+  // Definition of private variables ot hold transofrm translation and rotation:
   Vector2D trans_;
   double rot_;
 };
 
-
-    /// \brief Read a transformation from stdin
-    /// Should be able to read input either as:
-    ///  "theta [<unit>] dx dy" (i.e., three numbers separated by whitespace, angle assumed to be radians)
-    //   "{<angle> [<unit>], <x>, <y>}" (as output by std::format)
-    ///  [<unit>] is optional and can be any string without spaces that starts with a d for deg or r for rad
-    ///  If [<unit>] is omitted, assume the unit is radians
+/// \brief Read a transformation from stdin
+/// Should be able to read input either as:
+///  "theta [<unit>] dx dy" (i.e., three numbers separated by whitespace, angle assumed to be radians)
+//   "{<angle> [<unit>], <x>, <y>}" (as output by std::format)
+///  [<unit>] is optional and can be any string without spaces that starts with a d for deg or r for rad
+///  If [<unit>] is omitted, assume the unit is radians
 std::istream & operator>>(std::istream & is, Transform2D & tf);
 
-    /// \brief multiply two transforms together, returning their composition
-    /// \param lhs - the left hand operand
-    /// \param rhs - the right hand operand
-    /// \return the composition of the two transforms
-    /// HINT: This function should be implemented in terms of *=
+/// \brief multiply two transforms together, returning their composition
+/// \param lhs - the left hand operand
+/// \param rhs - the right hand operand
+/// \return the composition of the two transforms
+/// HINT: This function should be implemented in terms of *=
 Transform2D operator*(Transform2D lhs, const Transform2D & rhs);
 
-}
+/// \brief compute the transformation corresponding to a rigid body following a constant twist (in its original body frame) for one time-unit:
+/// \param twist The twist to integrate
+/// \return The resulting transformation as a Transform2D
+Transform2D integrate_twist(Twist2D);
+
+} // namespace turtlelib
 
 // ########################################### Begin_Citation [6] ###########################
 /// \brief A formatter for Transform2D

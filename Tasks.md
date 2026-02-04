@@ -24,4 +24,5 @@ Task C.4
 Task C.5
 Task C.6
 Task C.7
-Task B.8.2
+Task B.8.2 - Question on Mag 0,0 return
+Task B.9
