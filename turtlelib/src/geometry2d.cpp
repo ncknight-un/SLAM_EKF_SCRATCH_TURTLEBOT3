@@ -107,4 +107,13 @@ Vector2D normalize(Vector2D in) {
   auto norm = std::sqrt(in.x * in.x + in.y * in.y);
   return Vector2D(in.x / norm, in.y / norm);
 }     // End of normalize
-}
+
+Vector2D & Vector2D::operator+=(const Vector2D & v) {
+  x += v.x;
+  y += v.y;
+  return *this;
+} // End of operator+= for Vector2D
+
+
+
+} // End ofnamespace turtlelib

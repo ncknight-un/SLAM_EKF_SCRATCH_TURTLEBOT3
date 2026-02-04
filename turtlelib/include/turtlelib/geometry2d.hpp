@@ -38,11 +38,16 @@ std::istream & operator>>(std::istream & is, Point2D & p);
     /// \brief A 2-Dimensional Vector
 struct Vector2D
 {
-        /// \brief the x coordinate
+  /// \brief the x coordinate
   double x = 0.0;
 
-        /// \brief the y coordinate
+  /// \brief the y coordinate
   double y = 0.0;
+
+  /// \brief Return a sum of two vectors added to itself.
+  /// \param in The vector to be added to the referenced vector. 
+  /// \return A reference to the modified vector
+  Vector2D & operator+=(const Vector2D & v);
 };
 
     /// \brief Subtracting one point from another yields a vector
@@ -52,6 +57,7 @@ struct Vector2D
     /// NOTE: this operator is not implemented in terms of -=
     /// because subtracting two Point2D yields a Vector2D not a Point2D
 Vector2D operator-(const Point2D & head, const Point2D & tail);
+
 
     /// \brief Adding a vector to a point yields a new point displaced by the vector
     /// \param tail The origin of the vector's tail
@@ -80,6 +86,17 @@ std::istream & operator>>(std::istream & is, Vector2D & v);
     /// \return The normalized vector.
     /// \throws std::invalid_input if it is the zero vector
 Vector2D normalize(Vector2D in);
+
+
+/// \brief Return a sum of two vectors.
+/// \param lhs The left hand side vector to be added.
+/// \param rhs The right hand side vector to be added.
+/// \return The sum of the two vectors as a Vector2D.
+Vector2D operator+(Vector2D lhs, const Vector2D& rhs) {
+    lhs += rhs;
+    return lhs;
+}
+
 }
 
 /// \brief A Formatter for 2D points
