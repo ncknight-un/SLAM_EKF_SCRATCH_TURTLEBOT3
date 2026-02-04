@@ -19,6 +19,11 @@ Defines SE(2) 2D rigid body transforms, allowing:
 - Transformations of Points, Vectors, and Twists.  
 - Inversion of transforms.
 
+#### `diff_drive.hpp`
+Models the kinematics of a differential drive robot with a given wheel track and wheel radius. 
+- Forward Kinematics  
+- Inverse Kinematics
+
 ## Executables: 
 #### `converter.cpp`
 Command-line program that prompts the user for an angle and unit (`deg` or `rad`), converts it to the other unit, normalizes it, and outputs the result. Loops until EOF (CTRL-D) is entered.

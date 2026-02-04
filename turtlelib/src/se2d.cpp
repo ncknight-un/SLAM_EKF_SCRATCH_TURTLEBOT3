@@ -281,10 +281,10 @@ Transform2D integrate_twist(Twist2D tw) {
   } else {
     // Case 2: With rotation
     // Calculate translational displacement due to rotation:
-    // ##################################### Begin_Citation [7] ###########################
+    // ##################################### Begin_Citation [8] ###########################
     double trans_x = (dx * std::sin(theta) + dy * (1 - std::cos(theta))) / theta;
     double trans_y = (dy * std::sin(theta) + dx * (std::cos(theta) - 1)) / theta;
-    // ########################################## End_Citation [7] ####################################
+    // ########################################## End_Citation [8] ########################
     // Build resulting Transform2D
     result = Transform2D(Vector2D{trans_x, trans_y}, theta);
   }

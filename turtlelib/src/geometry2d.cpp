@@ -164,7 +164,7 @@ double angle(const Vector2D & v1, const Vector2D & v2){
   // Dot product divided by magnitudes, then acos of result
   double mag1 = magnitude(v1);
   double mag2 = magnitude(v2);
-  if (mag1 == 0.0 || mag2 == 0.0) { return 0.0;} // Avoids division by zero
+  if (mag1 == 0.0 || mag2 == 0.0) { throw std::invalid_argument("Zero Magnitude - Error");} // Avoids division by zero
 
   double dot_product = dot(v1, v2);
   double magnitudes = magnitude(v1) * magnitude(v2);

@@ -17,7 +17,7 @@ struct Twist2D
   /// \brief the angular velocity
   double omega = 0.0;
 
-  /// \brief the linear x  2-Dimensional twistvelocity
+  /// \brief the linear x  2-Dimensional twist velocity
   double x = 0.0;
 
   /// \brief the linear y velocity
