@@ -21,8 +21,8 @@ Defines SE(2) 2D rigid body transforms, allowing:
 
 #### `diff_drive.hpp`
 Models the kinematics of a differential drive robot with a given wheel track and wheel radius. 
-- Forward Kinematics  
-- Inverse Kinematics
+- Forward Kinematics of diffdrive vehicle with 2 wheels.
+- Inverse Kinematics of diffdrive vehicle with 2 wheels.
 
 ## Executables: 
 #### `converter.cpp`
