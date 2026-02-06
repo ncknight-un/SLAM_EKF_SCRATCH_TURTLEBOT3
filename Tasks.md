@@ -26,5 +26,5 @@ Task C.6
 Task C.7
 Task B.8.2
 Task B.9
-Task D.1 - In Progress
-Task D.3 - Added Equation pdf to doc
+Task D.1
+Task D.3

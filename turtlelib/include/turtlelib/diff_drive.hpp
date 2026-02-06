@@ -6,8 +6,18 @@
 #include <iosfwd>
 #include "turtlelib/geometry2d.hpp"
 #include "turtlelib/se2d.hpp"
+#include "turtlelib/angle.hpp"
 
 namespace turtlelib {
+/// \brief a custom struct to hold and return the wheel velocities:
+struct wheel_vel {
+    /// \brief the right wheel velocity
+    double v_rw = 0.0;
+
+    /// \brief the left wheel velocity
+    double v_lw = 0.0;
+}
+
 /// \brief a diff drive kinematics model for a two wheeled differential drive robot.
 class DiffDrive{
     public:
@@ -28,7 +38,7 @@ class DiffDrive{
         /// \brief get the position of the robot base
         /// \return the current Transform2D of the robot base
         turtlelib::Transform2D q_() const;
-
+ 
         /// \brief update the robot base transform based on new wheel positions - Forward Kinematics
         /// \param phi_right - the new right wheel angular displacement, in radians
         /// \param phi_left - the new left wheel angular displacement, in radians
