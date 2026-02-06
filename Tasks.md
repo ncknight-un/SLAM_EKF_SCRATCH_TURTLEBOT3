@@ -27,4 +27,5 @@ Task C.7
 Task B.8.2
 Task B.9
 Task D.1
+Task D.2
 Task D.3

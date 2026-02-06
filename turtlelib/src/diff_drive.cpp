@@ -7,8 +7,8 @@ namespace turtlelib {
         wheel_radius_ = wheel_radius;
 
         // Initialize wheel positions and robot base transform:
-        phi_right_ = 0.0;
         phi_left_ = 0.0;
+        phi_right_ = 0.0;
         q_ = Transform2D(Vector2D{0.0, 0.0}, 0.0);  // Initialize q_ to identity transform
     } // End of DiffDrive Constructor
 
@@ -26,7 +26,7 @@ namespace turtlelib {
     } // End of get_q()
 
     // Kinematics Functions:
-    void DiffDrive::update_fk(double phi_right, double phi_left) {
+    void DiffDrive::update_fk(double phi_left, double phi_right) {
         // Compute the new robot base transform based on the updated wheel positions:
         // Assumptions:
         //
@@ -42,7 +42,7 @@ namespace turtlelib {
         double delta_phi_left = phi_left - phi_left_;       // Change in left wheel angle since last update.
 
         // Determine the body's rotation due to the change in wheel angles (Equation 1 - See doc/Kinematics.pdf):
-        double delta_theta = (wheel_radius_ / wheel_track_) * (delta_phi_right - delta_phi_left);
+        double delta_theta = (wheel_radius_ / wheel_track_) * (delta_phi_left - delta_phi_right);
 
         // Determine the change in x position due to the change in wheel angles in the body frame (Equation 2 - See doc/Kinematics.pdf):
         double delta_x = (wheel_radius_ / 2.0) * (delta_phi_right + delta_phi_left);
@@ -79,6 +79,6 @@ namespace turtlelib {
         // Convert linear velocities to angular velocities for the wheels (Equation 5 & 6 - See doc/Kinematics.pdf):
         double v_rw = v_right / wheel_radius_;
         double v_lw = v_left / wheel_radius_;
-        return turtlelib::wheel_vel{v_rw, v_lw}; 
+        return turtlelib::wheel_vel{v_lw, v_rw};  
     } // End of compute_ik()
 } // namespace turtlelib
