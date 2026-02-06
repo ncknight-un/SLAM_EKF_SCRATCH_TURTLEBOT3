@@ -96,13 +96,21 @@ public:
   /// \return a reference to the newly transformed operator
   Transform2D & operator*=(const Transform2D & rhs);
 
-  /// \brief the translational component of the transform
+  /// \brief Get the translational component of the transform
   /// \return the x,y translation
   Vector2D translation() const;
 
-  /// \brief get the angular displacement of the transform
+  /// \brief Get the angular displacement of the transform
   /// \return the angular displacement, in radians
   double rotation() const;
+
+  /// \brief Set the translational component of the transform
+  /// \param trans - the new translation
+  void set_translation(Vector2D trans);
+
+  /// \brief Set the angular displacement of the transform
+  /// \param radians - the new angular displacement, in radians
+  void set_rotation(double radians);
 
   /// \brief see std::formatter for the Transform2D
   // Primary friend template access:

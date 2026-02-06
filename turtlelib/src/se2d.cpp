@@ -158,6 +158,15 @@ double Transform2D::rotation() const
   return rot_;
 }     // End of rotation()
 
+// Setter Functions:
+void Transform2D::set_translation(Vector2D trans) {
+  trans_ = trans;
+}
+
+void Transform2D::set_rotation(double radians){
+  rot_ = radians;
+}
+
 // TRANSFORM2D Operator>>:
 std::istream & operator>>(std::istream & is, Transform2D & tf)
 {

@@ -1,7 +1,7 @@
 #include "turtlelib/diff_drive.hpp"
 
 namespace turtlelib {
-    DiffDrive(double wheel_track, double wheel_radius){
+    DiffDrive::DiffDrive(double wheel_track, double wheel_radius){
         // Set the wheel track and wheel radius for the diff drive model:
         wheel_track_ = wheel_track;
         wheel_radius_ = wheel_radius;
@@ -10,23 +10,23 @@ namespace turtlelib {
         phi_right_ = 0.0;
         phi_left_ = 0.0;
         q_ = Transform2D(Vector2D{0.0, 0.0}, 0.0);  // Initialize q_ to identity transform
-    } // End of DiffDrive Constructo
+    } // End of DiffDrive Constructor
 
     // Return Functions:
-    double phi_right_() const{
+    double DiffDrive::get_phi_right() const{
         return phi_right_;
-    } // End of phi_right_()
+    } // End of get_phi_right)
 
-    double phi_left_() const{
+    double DiffDrive::get_phi_left() const{
         return phi_left_;
-    } // End of phi_left_()
+    } // End of get_phi_left()
 
-    turtlelib::Transform2D q_() const{
+    turtlelib::Transform2D DiffDrive::get_q() const{
         return q_;
-    } // End of q_()
+    } // End of get_q()
 
     // Kinematics Functions:
-    void DiffDrive::update_fk(double phi_right, double phi_left){
+    void DiffDrive::update_fk(double phi_right, double phi_left) {
         // Compute the new robot base transform based on the updated wheel positions:
         // Assumptions:
         //
@@ -48,18 +48,20 @@ namespace turtlelib {
         double delta_x = (wheel_radius_ / 2.0) * (delta_phi_right + delta_phi_left);
 
         // Update the robot base transform q_ based on the change in position and orientation due to the new wheel positions:
-        q_.x += delta_x;
-        q_.y += 0.0;    // We assume no change in y position since the robot is a differential drive and cannot move sideways.
-        q_.theta += delta_theta;
+        Vector2D t = q_.translation();
+        t.x += delta_x;
+        t.y += 0.0;    // We assume no change in y position since the robot is a differential drive and cannot move sideways.
+        q_.set_translation(Vector2D{t.x, t.y});
+
         // Normalize the theta change to get the shortest dist possible:
-        q_.theta = turtlelib::normalize_angle(q_.theta);
+        q_.set_rotation(turtlelib::normalize_angle(q_.rotation() + delta_theta));
 
         // Update the wheel configuration with the new values:
         phi_right_ = phi_right;
         phi_left_ = phi_left;
     } // End of update_fk()
 
-    turtlelib::wheel_vel DiffDrive::compute_ik(const Twist2D & twist) const{
+    turtlelib::wheel_vel DiffDrive::compute_ik(const Twist2D & twist) {
         // Compute the required wheel angular velocities based on the desired twist for the robot base:
         double v_x = twist.x;  // Linear velocity in x direction
         double v_y = twist.y;  // Linear velocity in y direction (should be zero for a diff drive)

@@ -25,6 +25,7 @@ add_library(turtlelib
     src/se2d.cpp
     src/svg.cpp
     src/frame_main.cpp
+    src/diff_drive.cpp
 )
 
 # Use target_include_directories so that #include"mylibrary/header.hpp" works
@@ -118,12 +119,15 @@ if(BUILD_TESTING)
     add_executable(test_2d tests/test_geometry2d.cpp)
     add_executable(test_se2d tests/test_se2d.cpp)
     add_executable(test_svg tests/test_svg.cpp)
+    add_executable(test_ddrive tests/test_diff_drive.cpp)
     target_link_libraries(test_2d Catch2::Catch2WithMain turtlelib)
     target_link_libraries(test_se2d Catch2::Catch2WithMain turtlelib)
     target_link_libraries(test_svg Catch2::Catch2WithMain turtlelib)
+    target_link_libraries(test_ddrive Catch2::Catch2WithMain turtlelib)
 
     # register the test with CTest, telling it what executable to run
     add_test(NAME Test2d COMMAND test_2d)
     add_test(NAME Testse2 COMMAND test_se2d)
     add_test(NAME Testsvg COMMAND test_svg)
+    add_test(NAME Testddrive COMMAND test_ddrive)
 endif()
