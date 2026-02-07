@@ -1,10 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <!-- Arguement to launch Rviz -->
-    <arg name="use_rviz" default="true" 
-        description="The user can control whether the turtlebot3 is shown in Rviz or not at launch. This is false for localhost"/>
-
-    <!-- Arguement to launch the robot simulation type -->
+   <!-- Arguement to launch the robot simulation type -->
     <arg name="robot" default="nusim" 
         description="The user can control which robot simulation to launch.">
         <choice value="nusim" />
@@ -13,32 +9,68 @@
     </arg>
 
     <!-- Arguement to launch the command vel type -->
-    <arg name="cmd_src" default="circle" 
+    <arg name="cmd_src" default="teleop" 
         description="The user can control which command velocity source to launch.">
-        <choice value="nusim" />
-        <choice value="localhost" />
+        <choice value="circle" />
+        <choice value="teleop" />
         <choice value="none" />
     </arg>
-        
-    <!-- Set the namespace for all nodes -->
-    <group>
-        <!-- push_ros_namespace to set namespace of included nodes -->
-        <push_ros_namespace namespace="$(var color)" />
 
-        <!-- Robot state publisher -->
-        <node pkg="robot_state_publisher" exec="robot_state_publisher">
-        <param name="robot_description" value="$(command '$(exec-in-pkg xacro xacro) $(find-pkg-share nuturtle_description)/urdf/turtlebot3_burger.urdf.xacro color:=$(var color)')"/>
-        <param name="frame_prefix" value='$(var color)/'/>
+    <!-- Arguement to launch Rviz -->
+    <arg name="use_rviz" default="true" 
+        description="The user can control whether the turtlebot3 is shown in Rviz or not at launch. This is false for localhost">
+        <choice value="true"/>
+        <choice value="false"/>
+    </arg>
+
+    <!-- ########################## Robot Siumulation Type ############################ -->
+    <group if="$(eval '\'$(var robot)\'==\'nusim\'')">
+        <!-- Launch the Nusim Node if robot arg is nusim-->
+        <node pkg="nusim" exec="nusimulator" if="$(eval '\'$(var robot)\'==\'nusim\'')">
+            <param from = "$(find-pkg-share nusim)/config/basic_world.yaml"/>
         </node>
 
-        <!-- Joint state publisher -->
-        <node pkg="joint_state_publisher" exec="joint_state_publisher" if="$(eval '\'$(var use_jsp)\'==\'true\'')"/>
+        <!-- ########################### cmd_src launch arguements ######################## -->
+        <!-- Launch the circle Node if cmd_src arg is circle -->
+        <node pkg="nuturtle_control" exec="circle" if="$(eval '\'$(var cmd_src)\'==\'circle\'')">
+            <param name="velocity" value="0.5"/>
+            <param name="radius" value="1.0"/>
+            <param name="frequency" value="100"/>
+        </node>
 
-        <!-- RViz - If RViz is launched and closed, the launchfile will terminate-->
-        <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nuturtle_description)/config/load_one_$(var color).rviz" if="$(eval '\'$(var use_rviz)\'==\'true\'')" on_exit="shutdown"/>
+        <!-- Launch the teleop Node if cmd_src arg is teleop -->
+        <node pkg="nuturtle_control" exec="teleop" if="$(eval '\'$(var cmd_src)\'==\'teleop\'')"/>
+
+        <!-- Load the Redbot for Ground-->
+        <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
+            <arg name="color" value="red"/>
+            <arg name="use_rviz" value="false"/>
+            <arg name="use_jsp" value="true"/>
+        </include>
+
+        <!-- Load the Bluebot for odometry -->
+        <include file='$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml'>
+            <arg name='color' value='blue'/>
+            <!-- Launch Rviz for the red and blue turtlebots if the arguement is true. -->
+            <arg name='use_rviz' value='$(var use_rviz)'/>      
+            <arg name='use_jsp' value='true'/>
+        </include>
+
+        <!-- Publish the odometry node -->
+        <node pkg="nuturtle_control" exec="odometry" name="odometry">
+            <param name="body_id" value="blue/base_footprint"/>
+            <param name="odom_id" value="odom"/>
+            <param name="left_wheel_id" value="blue/left_wheel_link"/>
+            <param name="right_wheel_id" value="blue/right_wheel_link"/>
+        </node>
+
+        <!-- Set the Identity transform between nusim/world and odom -->
+        <node pkg="tf2_ros" exec="static_transform_publisher" name="Odometry"
+            args="0.0 0.0 0.0 0.0 0.0 0.0 nusim/world odom"/>
     </group>
 
-    <!-- Set the Static Transforms to set the robots at their initial positions -->
-    <node pkg="tf2_ros" exec="static_transform_publisher" name="PurpleBot"
-          args="0.0 -1.0 0.0 0.0 0.0 0.0 nusim/world purple/base_footprint"/>
+        <!-- Forces Rviz to be false. -->
+        <arg name="use_rviz" value="false"/>
+        <!-- Place holder for LocalHost Node -->
+    </group>
 </launch>

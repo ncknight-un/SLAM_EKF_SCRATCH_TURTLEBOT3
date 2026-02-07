@@ -31,5 +31,5 @@ Task D.2
 Task D.3
 Task E.1
 Task E.2
-Task E.3 - Set up structure for Circle Node. Still need to finish implementation.
-Task E.5 - Began set up for simulation launch
+Task E.3
+Task E.5 - Set up for Simulation, will come back and finish local_host at later implementation.

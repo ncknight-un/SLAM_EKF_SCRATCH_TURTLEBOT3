@@ -29,10 +29,11 @@ public:
     : Node("circle") {
         // Initialize the Parameters:
         auto frequency = declare_parameter<int>("frequency", 100);
+        auto velocity = declare_parameter<double>("velocity", 0.5);
+        auto radius = declare_parameter<double>("radius", 1.0);
 
         // Construct the publisher for cmd_vel:
         cmd_vel_publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
-        
     }
 
     // Create the timer callback:
@@ -42,12 +43,19 @@ public:
 
         // Publish the cmd_vel message:
         auto message = geometry_msgs::msg::Twist();
-        message.linear.x = 0.0;
+        // Check to make sure that the radius is not zero: 
+        if (radius == 0.0) {
+            RCLCPP_WARN(this->get_logger(), "Radius was set to zero, drive in a circle not possible! Setting velocity to 0.0.");
+            velocity = 0.0;
+        }
+        // linear velocity speed in x direction for robot body frame.
+        message.linear.x = velocity;       
         message.linear.y = 0.0;
         message.linear.z = 0.0;
         message.angular.x = 0.0;
         message.angular.y = 0.0;
-        message.angular.z = 0.0;
+        // Note: Counter clockwise is positive and clockwise is negative.
+        message.angular.z = velocity / radius;      // omega = v / r
         cmd_vel_publisher_->publish(message);
     };
 
@@ -65,10 +73,49 @@ public:
             "~/reverse",
             std::bind(&Circle::handle_service_reverse, this, std::placeholders::_1, std::placeholders::_2)
     );
+    // Stop service
+    stop_service_ = this->create_service<std_srvs::srv::Empty>(
+            "~/stop",
+            std::bind(&Circle::handle_service_stop, this, std::placeholders::_1, std::placeholders::_2)
+    );
 private:
+    // Control service callback
+    void handle_service_control(
+        const std::shared_ptr<nuturtle_control_interfaces::srv::Control::Request> request,
+        const std::shared_ptr<nuturtle_control_interfaces::srv::Control::Response> response)
+    {
+        RCLCPP_INFO(this->get_logger(), "New Circle Control Parameters Set!");
+        // Set the velocity and radius parameters to the values specified in the service request
+        velocity = request->velocity;
+        radius = request->radius;
+        // Set the response to indicate success
+        response->success = true;
+    }
+    // Reverse service callback
+    void handle_service_reverse(
+        const std::shared_ptr<std_srvs::srv::Empty::Request> request,
+        const std::shared_ptr<std_srvs::srv::Empty::Response> response)
+    {        
+        (void)request;
+        (void)response; 
+        // Reverse the direction of the circle drive by negating the velocity parameter
+        RCLCPP_INFO(this->get_logger(), "Circle Direction Reversed!");
+        velocity = -velocity;
+    }
+    // Stop service callback
+    void handle_service_stop(
+        const std::shared_ptr<std_srvs::srv::Empty::Request> request,
+        const std::shared_ptr<std_srvs::srv::Empty::Response> response)
+    {        
+        (void)request;
+        (void)response; 
+        RCLCPP_INFO(this->get_logger(), "Circle Path Stopped!");
+        // Stop the robot from moving by setting the velocity parameter to 0.0:
+        velocity = 0.0;
+    }
+
     // Initialize ROS 2 Infrustructure:
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_publisher_;
-
 };
 
 int main(int argc, char * argv[])
