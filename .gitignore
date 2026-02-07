@@ -35,3 +35,6 @@ __pycache__/
 *.pyd
 .env
 .venv/
+
+# Ros2 packages to ignore:
+nuturtlebot_msgs/
