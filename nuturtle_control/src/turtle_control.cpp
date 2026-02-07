@@ -32,11 +32,11 @@ public:
     TurtleControl()
     : Node("turtle_control") {
         // Initialize the Parameters:
-        wheel_radius_ = declare_parameter<double>("wheel_radius", 0.033);
-        track_width_ = declare_parameter<double>("track_width", 0.033);
-        motor_cmd_max_ = declare_parameter<int>("motor_cmd_max", 265);
-        motor_cmd_per_rad_sec_ = declare_parameter<double>("motor_cmd_per_rad_sec", 41.67);
-        encode_ticks_per_rad_ = declare_parameter<int>("encode_ticks_per_rad", 652);
+        wheel_radius_ = declare_parameter<double>("wheel_radius");
+        track_width_ = declare_parameter<double>("track_width");
+        motor_cmd_max_ = declare_parameter<int>("motor_cmd_max");
+        motor_cmd_per_rad_sec_ = declare_parameter<double>("motor_cmd_per_rad_sec");
+        encode_ticks_per_rad_ = declare_parameter<int>("encode_ticks_per_rad");
         
         // Check to make sure  that all parameters are valid:
         if (wheel_radius_ <= 0 || track_width_ <= 0 || motor_cmd_max_ <= 0 || motor_cmd_per_rad_sec_ <= 0 || encode_ticks_per_rad_ <= 0) {
@@ -44,7 +44,7 @@ public:
             RCLCPP_ERROR_STREAM_ONCE(this->get_logger(), "Not all parameters were initialized:" <<  
             " wheel_radius=" << wheel_radius_ << ", track_width=" << track_width_ << ", motor_cmd_max=" << motor_cmd_max_
             << ", motor_cmd_per_rad_sec=" << motor_cmd_per_rad_sec_ << ", encode_ticks_per_rad=" << encode_ticks_per_rad_);
-            throw std::runtime_error("Parameters not initialized"); // Stops the node from launching if parameters are not valid.
+            rclcpp::shutdown();  // terminate the node
         }
 
         // Contruct the DiffDrive model using the wheel radius and track width parameters:
@@ -81,12 +81,13 @@ public:
             // Publish the joint state for the left and right wheel joints:
             sensor_msgs::msg::JointState joint_state_msg;
             joint_state_msg.header.stamp = msg->stamp;
+            // Set joint positions:
             joint_state_msg.name.push_back("wheel_left_joint");
             joint_state_msg.position.push_back(phi_left);
             joint_state_msg.name.push_back("wheel_right_joint");
             joint_state_msg.position.push_back(phi_right);
             joint_state_publisher_->publish(joint_state_msg);
-    });
+        });
     }
 
 private:
@@ -102,9 +103,6 @@ private:
     int motor_cmd_max_;
     double motor_cmd_per_rad_sec_;
     int encode_ticks_per_rad_;
-
-    // Initialize the DiffDrive model:
-    turtlelib::DiffDrive diff_drive_;
 };
 
 int main(int argc, char * argv[])
