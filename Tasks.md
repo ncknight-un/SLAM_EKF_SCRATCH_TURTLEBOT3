@@ -31,3 +31,4 @@ Task D.2
 Task D.3
 Task E.1
 Task E.2
+Task E.3 - Set up structure for Circle Node. Still need to finish implementation.

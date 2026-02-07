@@ -45,7 +45,7 @@ public:
   : Node("nusimulator")
   {
     // Initialize the Parameter:
-    auto rate = this->declare_parameter<double>("rate", 100.0);
+    auto rate = declare_parameter<double>("rate", 100.0);
     // Initialize the ~/timestep Publisher:
     publisher_ = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
     // Initialize the ~/real_walls and ~/real_obstacles Publishers:
