@@ -32,3 +32,4 @@ Task D.3
 Task E.1
 Task E.2
 Task E.3 - Set up structure for Circle Node. Still need to finish implementation.
+Task E.5 - Began set up for simulation launch
