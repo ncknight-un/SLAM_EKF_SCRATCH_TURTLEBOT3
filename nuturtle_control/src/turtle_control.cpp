@@ -30,7 +30,7 @@
 class TurtleControl : public rclcpp::Node {
 public:
     TurtleControl()
-    : Node("turtle_control") {        
+    : Node("turtle_control") {     
         // Check to make sure  that all parameters are valid:
         if (wheel_radius_ <= 0 || track_width_ <= 0 || motor_cmd_max_ <= 0 || motor_cmd_per_rad_sec_ <= 0 || encode_ticks_per_rad_ <= 0) {
             // Log an error message and throw an exception if any parameter is invalid

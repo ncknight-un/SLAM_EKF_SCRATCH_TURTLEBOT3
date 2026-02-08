@@ -37,21 +37,6 @@ class Odometry : public rclcpp::Node {
 public:
     Odometry()
     : Node("odometry") {
-        // Declare the parameters: 
-        declare_parameter<std::string>("body_id", "blue/base_footprint");
-        declare_parameter<std::string>("odom_id", "odom");
-        declare_parameter<std::string>("wheel_left");
-        declare_parameter<std::string>("wheel_right");
-        declare_parameter<double>("wheel_radius", 0.033);
-        declare_parameter<double>("track_width", 0.033);
-        // Get the parameters: 
-        this->get_parameter("body_id", body_id_);
-        this->get_parameter("odom_id", odom_id_);
-        this->get_parameter("wheel_left", wheel_left_);
-        this->get_parameter("wheel_right", wheel_right_);
-        this->get_parameter("wheel_radius", wheel_radius_);
-        this->get_parameter("track_width", track_width_);
-        
         // Check required parameters:
         if (wheel_left_.empty()) {
             RCLCPP_ERROR_STREAM_ONCE(this->get_logger(), "Parameter 'wheel_left' is required but not set. Exiting...");
@@ -69,7 +54,7 @@ public:
 
         // Construct the publisher for odometry:
         odometry_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
-
+        
         // Construct the subscriber for joint states:
         joint_state_subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>("joint_states", 10, [this](const sensor_msgs::msg::JointState::SharedPtr msg) {
             // Update the internal odemetry state every time a new joint state message is received, and publish the current odometry message and transform:            
@@ -200,12 +185,12 @@ private:
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
     // Initialize the Parameters:
-    std::string body_id_;
-    std::string odom_id_;
-    std::string wheel_left_;
-    std::string wheel_right_;
-    double wheel_radius_;
-    double track_width_;
+    std::string body_id_ = declare_parameter<std::string>("body_id", "blue/base_footprint");
+    std::string odom_id_ = declare_parameter<std::string>("odom_id", "odom");
+    std::string wheel_left_ = declare_parameter<std::string>("wheel_left");
+    std::string wheel_right_ = declare_parameter<std::string>("wheel_right");
+    double wheel_radius_ = declare_parameter<double>("wheel_radius", 0.033);
+    double track_width_ = declare_parameter<double>("track_width", 0.033);
 
     // Initialize the DiffDrive model for internal odometry state:
     turtlelib::DiffDrive diff_drive_{wheel_radius_, track_width_};

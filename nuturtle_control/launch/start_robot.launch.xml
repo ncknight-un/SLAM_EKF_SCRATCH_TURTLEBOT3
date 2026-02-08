@@ -30,6 +30,14 @@
             <param from = "$(find-pkg-share nusim)/config/basic_world.yaml"/>
         </node>
 
+        <!-- Launch Turtle Control -->
+        <node pkg="nuturtle_control" exec="turtle_control">
+            <param from = "$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+            <remap from = "joint_states" to = "blue/joint_states"/>
+            <remap from = "wheel_left_joint" to = "blue/wheel_left_joint"/>
+            <remap from = "wheel_right_joint" to = "blue/wheel_right_joint"/>
+        </node>
+
         <!-- ########################### cmd_src launch arguements ######################## -->
         <!-- Launch the circle Node if cmd_src arg is circle -->
         <node pkg="nuturtle_control" exec="circle" if="$(eval '\'$(var cmd_src)\'==\'circle\'')">
@@ -69,6 +77,7 @@
             <param name="wheel_left" value="blue/left_wheel_link"/>
             <param name="wheel_right" value="blue/right_wheel_link"/>
             <param from = "$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+            <remap from="joint_states" to="blue/joint_states"/>
         </node>
 
         <!-- Set the Identity transform between nusim/world and odom -->

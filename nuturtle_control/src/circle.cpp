@@ -28,6 +28,16 @@ class Circle : public rclcpp::Node {
 public:
     Circle()
     : Node("circle") {
+        // Declare the parameters:
+        declare_parameter<int>("frequency", 10);
+        declare_parameter<double>("velocity", 0.2);
+        declare_parameter<double>("radius", 0.5);
+
+        // Get the Parameters:
+        this->get_parameter("frequency", frequency_);
+        this->get_parameter("velocity", velocity_);
+        this->get_parameter("radius", radius_);
+        
         // Construct the publisher for cmd_vel:
         cmd_vel_publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
     
@@ -118,9 +128,9 @@ private:
     rclcpp::Service<nuturtle_control_interfaces::srv::Control>::SharedPtr control_service_;
 
     // Initialize the Parameters:
-    int frequency_ = declare_parameter<int>("frequency", 100);
-    double velocity_ = declare_parameter<double>("velocity", 0.5);
-    double radius_ = declare_parameter<double>("radius", 1.0);
+    int frequency_;
+    double velocity_;
+    double radius_;
 };
 
 int main(int argc, char * argv[])
