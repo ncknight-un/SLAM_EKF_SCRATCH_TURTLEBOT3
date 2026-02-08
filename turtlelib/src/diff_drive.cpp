@@ -43,18 +43,16 @@ namespace turtlelib {
 
         // Determine the body's rotation due to the change in wheel angles (Equation 1 - See doc/Kinematics.pdf):
         double delta_theta = (wheel_radius_ / wheel_track_) * (delta_phi_left - delta_phi_right);
+        delta_theta = turtlelib::normalize_angle(delta_theta); // Normalize the angle change to get the shortest distance possible.
 
         // Determine the change in x position due to the change in wheel angles in the body frame (Equation 2 - See doc/Kinematics.pdf):
         double delta_x = (wheel_radius_ / 2.0) * (delta_phi_right + delta_phi_left);
 
-        // Update the robot base transform q_ based on the change in position and orientation due to the new wheel positions:
-        Vector2D t = q_.translation();
-        t.x += delta_x;
-        t.y += 0.0;    // We assume no change in y position since the robot is a differential drive and cannot move sideways.
-        q_.set_translation(Vector2D{t.x, t.y});
+        // Update the robot base transform q_ based on the change in position and orientation due to the new wheel positions: omega, x, y
+        turtlelib::Twist2D tw = Twist2D{delta_theta, delta_x, 0.0}; // We assume no change in y position.
 
-        // Normalize the theta change to get the shortest dist possible:
-        q_.set_rotation(turtlelib::normalize_angle(q_.rotation() + delta_theta));
+        // Integrate the twist to get the change in pose and then apply it to the current pose to get the new pose:
+        q_ = q_ * turtlelib::integrate_twist(tw);
 
         // Update the wheel configuration with the new values:
         phi_right_ = phi_right;

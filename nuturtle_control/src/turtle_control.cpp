@@ -67,6 +67,8 @@ public:
             auto phi_left = static_cast<double>(msg->left_encoder) / this->encode_ticks_per_rad_;
             auto phi_right = static_cast<double>(msg->right_encoder) / this->encode_ticks_per_rad_;
             this->diff_drive_.update_fk(phi_left, phi_right);
+            RCLCPP_INFO_STREAM(this->get_logger(),"phi_left: " << phi_left << " phi_right: " << phi_right);
+
             // Publish the joint state for the left and right wheel joints:
             sensor_msgs::msg::JointState joint_state_msg;
             joint_state_msg.header.stamp = msg->stamp;
@@ -94,7 +96,7 @@ private:
     int encode_ticks_per_rad_ = declare_parameter<int>("encode_ticks_per_rad");
 
     // Initialize the DiffDrive model:
-    turtlelib::DiffDrive diff_drive_{wheel_radius_, track_width_};
+    turtlelib::DiffDrive diff_drive_{track_width_, wheel_radius_};
 };
 
 int main(int argc, char * argv[])

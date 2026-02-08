@@ -18,7 +18,7 @@
 ///     ~/real_walls (visualization_msgs::msg::MarkerArray): Markers representing arena walls
 ///     ~/real_obstacles (visualization_msgs::msg::MarkerArray): Markers representing obstacles
 /// SUBSCRIBES:
-///     None
+///     ~/cmd_vel (geometry_msgs::msg::Twist): Velocity commands for the robot
 /// SERVERS:
 ///     ~/reset (std_srvs::srv::Empty): Resets the simulation timestep and robot initial pose
 /// CLIENTS:
@@ -36,6 +36,10 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <vector>
 #include "geometry_msgs/msg/twist.hpp"
+#include "nuturtlebot_msgs/msg/wheel_commands.hpp"
+#include "nuturtlebot_msgs/msg/sensor_data.hpp"
+#include "turtlelib/diff_drive.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
 
 using namespace std::chrono_literals;
 
@@ -45,7 +49,7 @@ public:
   Nusimulator()
   : Node("nusimulator")
   {
-    // Initialize the Parameter:
+    // Initialize the timer Parameter:
     auto rate = declare_parameter<double>("rate", 100.0);
     // Initialize the ~/timestep Publisher:
     publisher_ = this->create_publisher<std_msgs::msg::UInt64>("~/timestep", 10);
@@ -56,23 +60,59 @@ public:
       rclcpp::QoS(10).transient_local());
     // Initialize the transform broadcaster
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+    // Initialize the Publisher for Sensor Data:
+    sensor_data_publisher_ = this->create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
+    // Initialize the Publisher for Joint States:
+    joint_state_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
 
     // Initialize and publish the Real Walls:
     auto marker_array_walls = createWalls();
     marker_pub_->publish(marker_array_walls);
+
     // Initialize and publish the Real Obstacles:
     auto marker_array_obstacles = createObstacles();
     obst_pub_->publish(marker_array_obstacles);
-
+    
     // Create the timer callback:
     auto timer_callback = [this, rate]() -> void {
         // Print a Message Once:
-        RCLCPP_INFO_ONCE(this->get_logger(), "The Timer rate is %f!", rate);
-        // Publisher:
+        RCLCPP_INFO_STREAM_ONCE(this->get_logger(), "The Timer rate is " << rate << " Hz!");
+
+        // Timerate Publisher:
         auto message = std_msgs::msg::UInt64();
         message.data = timestep_++;
-        RCLCPP_DEBUG(this->get_logger(), "Timestep: '%lu'", message.data);
+        RCLCPP_DEBUG_STREAM_ONCE(this->get_logger(), "Timestep:" << message.data);
         this->publisher_->publish(message);
+
+        // Update the wheel positions and publish them on red/sensor_data topic:
+        auto dt = 1.0 / rate; // Change in time since last publish.
+
+        // Update the DiffDrive model using the current wheel velocities:
+        double phi_left = diff_drive_.get_phi_left() + wheel_vel_.v_lw * dt;
+        double phi_right = diff_drive_.get_phi_right() + wheel_vel_.v_rw * dt;
+        diff_drive_.update_fk(phi_left, phi_right);
+
+        // Publish the SensorData message update:
+        nuturtlebot_msgs::msg::SensorData sensor_data_msg;
+        sensor_data_msg.stamp = this->get_clock()->now();
+        sensor_data_msg.left_encoder = static_cast<int>(diff_drive_.get_phi_left() * encode_ticks_per_rad_);
+        sensor_data_msg.right_encoder = static_cast<int>(diff_drive_.get_phi_right() * encode_ticks_per_rad_);
+        sensor_data_publisher_->publish(sensor_data_msg);
+
+        // Publish the JointState message update:
+        sensor_msgs::msg::JointState joint_state_msg;
+        joint_state_msg.header.stamp = sensor_data_msg.stamp;
+        // Set joint positions:
+        joint_state_msg.name.push_back("red/wheel_left_joint");
+        joint_state_msg.position.push_back(phi_left);
+        joint_state_msg.name.push_back("red/wheel_right_joint");
+        joint_state_msg.position.push_back(phi_right);
+        joint_state_publisher_->publish(joint_state_msg);
+
+        // Update the robot positions based on the internal diffdrive:
+        x0_ = diff_drive_.get_q().translation().x;
+        y0_ = diff_drive_.get_q().translation().y;
+        theta0_ = diff_drive_.get_q().rotation();
 
         // Assign parameters to corresponding tf variables and broadcast:
         geometry_msgs::msg::TransformStamped t;
@@ -106,6 +146,18 @@ public:
             std::bind(&Nusimulator::handle_service_reset, this, std::placeholders::_1,
       std::placeholders::_2)
     );
+  
+    // Construct the subscriber for Wheel Commands to the red Ground Robot:
+    wheel_cmd_subscriber_ = this->create_subscription<nuturtlebot_msgs::msg::WheelCommands>("red/wheel_cmd", 10, [this](const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg) {
+        // Log the received wheel commands:
+        RCLCPP_INFO_STREAM_ONCE(this->get_logger(), "Received wheel commands - Left: " << msg->left_velocity << ", Right: " << msg->right_velocity);
+        // Update internal wheel velocities:
+        wheel_vel_.v_lw = static_cast<double>(msg->left_velocity) / this->motor_cmd_per_rad_sec_;
+        wheel_vel_.v_rw = static_cast<double>(msg->right_velocity) / this->motor_cmd_per_rad_sec_;
+        // Original Thought - Remove if other idea works fine:
+        // wheel_vel_.v_lw = std::clamp(static_cast<double>(msg->left_velocity) / this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_/this->motor_cmd_per_rad_sec_), (this->motor_cmd_max_/this->motor_cmd_per_rad_sec_));
+        // wheel_vel_.v_rw = std::clamp(static_cast<double>(msg->right_velocity) / this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_/this->motor_cmd_per_rad_sec_), (this->motor_cmd_max_/this->motor_cmd_per_rad_sec_));
+    });
   }
 
 private:
@@ -174,16 +226,16 @@ private:
       // Colors
       if (i < 4) {
         // Arena walls (red)
-        marker.color.r = 1.0f;
-        marker.color.g = 0.0f;
-        marker.color.b = 0.0f;
-        marker.color.a = 1.0f;
+        marker.color.r = 1.0;
+        marker.color.g = 0.0;
+        marker.color.b = 0.0;
+        marker.color.a = 1.0;
       } else if (i == 4) {
         // Floor (white)
-        marker.color.r = 1.0f;
-        marker.color.g = 1.0f;
-        marker.color.b = 1.0f;
-        marker.color.a = 1.0f;
+        marker.color.r = 1.0;
+        marker.color.g = 1.0;
+        marker.color.b = 1.0;
+        marker.color.a = 1.0;
       }
       marker_array_walls.markers.emplace_back(marker);
     }
@@ -223,10 +275,10 @@ private:
       marker.scale.y = obstacles_r_.at(i) * 2;
       marker.scale.z = obst_height_;
       // Color Obstacles (Red)
-      marker.color.r = 1.0f;
-      marker.color.g = 0.0f;
-      marker.color.b = 0.0f;
-      marker.color.a = 1.0f;
+      marker.color.r = 1.0;
+      marker.color.g = 0.0;
+      marker.color.b = 0.0;
+      marker.color.a = 1.0;
       // Add obstacle to marker array
       marker_array_obstacles.markers.emplace_back(marker);
     }
@@ -261,6 +313,9 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obst_pub_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscriber_;
+  rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_subscriber_;
+  rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_publisher_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
@@ -285,6 +340,19 @@ private:
   std::vector<double> obstacles_r_ = this->declare_parameter<std::vector<double>>("obstacles_r",
     std::vector<double>{});
   double obst_height_ = this->declare_parameter<double>("obstacle_height", 0.25);
+
+  // Initialize the parameters:
+  double wheel_radius_ = declare_parameter<double>("wheel_radius", 0.033);
+  double track_width_ = declare_parameter<double>("track_width", 0.16);
+  int motor_cmd_max_ = declare_parameter<int>("motor_cmd_max", 265);
+  double motor_cmd_per_rad_sec_ = declare_parameter<double>("motor_cmd_per_rad_sec", 41.67);
+  int encode_ticks_per_rad_ = declare_parameter<int>("encode_ticks_per_rad", 652);
+
+  // Initialize the DiffDrive model:
+  turtlelib::DiffDrive diff_drive_{track_width_, wheel_radius_};
+
+  // Store Wheel velocities:
+  turtlelib::wheel_vel wheel_vel_{0.0, 0.0};
 };
 
 int main(int argc, char * argv[])

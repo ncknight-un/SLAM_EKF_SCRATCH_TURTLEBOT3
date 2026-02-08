@@ -54,13 +54,13 @@ public:
                 velocity_ = 0.0;
             }
             // linear velocity speed in x direction for robot body frame.
-            message.linear.x = velocity_;       
+            message.linear.x = radius_ * velocity_;       
             message.linear.y = 0.0;
             message.linear.z = 0.0;
             message.angular.x = 0.0;
             message.angular.y = 0.0;
             // Note: Counter clockwise is positive and clockwise is negative.
-            message.angular.z = velocity_ / radius_;      // omega = v / r
+            message.angular.z = velocity_;
             cmd_vel_publisher_->publish(message);
         };
 

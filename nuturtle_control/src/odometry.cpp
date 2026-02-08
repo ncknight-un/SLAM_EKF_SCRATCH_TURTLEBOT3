@@ -72,30 +72,32 @@ public:
 
             // Time and position change since last message:
             rclcpp::Time current_time(msg->header.stamp);
-            double dt = std::clamp((current_time - prev_time_).seconds(), 1e-9, 1.0);
-
+            double dt = (current_time - prev_time_).seconds();
+            
             // Update forward kinematics:
             diff_drive_.update_fk(phi_left, phi_right);
 
-            // Get the Body-frame twist:
-            auto delta_x_body = diff_drive_.get_q().translation().x - prev_pose_x_;
-            auto delta_y_body = 0.0; // diff drive cannot move sideways, so we assume no change in y position in the body frame.
-            auto delta_theta_body = turtlelib::normalize_angle(diff_drive_.get_q().rotation() - prev_pose_theta_);
-            // Set body-frame twist:
-            turtlelib::Twist2D twist_body{delta_theta_body / dt, delta_x_body / dt, delta_y_body / dt};
+            // Get the new pose directly from diff_drive_
+            auto pose_x = diff_drive_.get_q().translation().x;
+            auto pose_y = 0.0;  // Diff drive cannot move sideways
+            auto pose_theta = turtlelib::normalize_angle(diff_drive_.get_q().rotation());
 
-            // Transform and Integrate to world-frame pose:
-            turtlelib::Twist2D delta_twist_world; 
-            delta_twist_world.x = twist_body.x * std::cos(prev_pose_theta_) - twist_body.y * std::sin(prev_pose_theta_);
-            delta_twist_world.y = twist_body.x * std::sin(prev_pose_theta_) + twist_body.y * std::cos(prev_pose_theta_);
-            delta_twist_world.omega = twist_body.omega;
-            // Integrtate to get the change in pose in the world frame:
-            turtlelib::Transform2D delta_pose_world = turtlelib::integrate_twist(delta_twist_world);
+            // Compute body-frame positions:
+            auto delta_x_body = pose_x - prev_pose_x_;
+            auto delta_y_body = pose_y - prev_pose_y_;
+            auto delta_theta_body = turtlelib::normalize_angle(pose_theta - prev_pose_theta_);
 
-            // Get the new pose in the world frame by applying the change in pose to the previous pose:
-            double pose_x = prev_pose_x_ + delta_pose_world.translation().x;
-            double pose_y = prev_pose_y_ + delta_pose_world.translation().y;
-            double pose_theta = turtlelib::normalize_angle(prev_pose_theta_ + delta_pose_world.rotation());
+            // Transform to world-frame pose:
+            auto delta_x_world = delta_x_body * std::cos(prev_pose_theta_) - delta_y_body * std::sin(prev_pose_theta_);
+            auto delta_y_world = delta_x_body * std::sin(prev_pose_theta_) + delta_y_body * std::cos(prev_pose_theta_);
+            auto delta_theta_world = delta_theta_body;
+            
+            // Set the Twist in the world frame:
+            turtlelib::Twist2D twist_world{
+                delta_theta_world / dt, // angular velocity in world frame
+                delta_x_world / dt,     // linear x in world frame
+                delta_y_world / dt      // linear y in world frame
+            };
 
             // Update the internal odometry state:
             prev_phi_left_ = phi_left;
@@ -115,6 +117,7 @@ public:
             // Set pose in world frame:
             odometry_msg.pose.pose.position.x = pose_x;
             odometry_msg.pose.pose.position.y = pose_y;
+            odometry_msg.pose.pose.position.z = 0.0;
             tf2::Quaternion q;
             q.setRPY(0, 0, pose_theta);
             odometry_msg.pose.pose.orientation.x = q.x();
@@ -125,9 +128,9 @@ public:
 
             // Set the Linear and angular velocity relative to body frame:
             // Get the current twist from the DiffDrive model:
-            odometry_msg.twist.twist.linear.x = twist_body.x;
-            odometry_msg.twist.twist.linear.y = twist_body.y;
-            odometry_msg.twist.twist.angular.z = twist_body.omega;
+            odometry_msg.twist.twist.linear.x = twist_world.x;
+            odometry_msg.twist.twist.linear.y = twist_world.y;
+            odometry_msg.twist.twist.angular.z = twist_world.omega;
             odometry_msg.twist.covariance = {0.0}; // Set covariance to 0.
             // Publish the odometry message:
             odometry_publisher_->publish(odometry_msg);
@@ -140,7 +143,6 @@ public:
             t.transform.translation.x = pose_x;
             t.transform.translation.y = pose_y;
             t.transform.translation.z = 0.0;
-            q.setRPY(0, 0, pose_theta);
             t.transform.rotation.x = q.x();
             t.transform.rotation.y = q.y();
             t.transform.rotation.z = q.z();
@@ -190,10 +192,10 @@ private:
     std::string wheel_left_ = declare_parameter<std::string>("wheel_left");
     std::string wheel_right_ = declare_parameter<std::string>("wheel_right");
     double wheel_radius_ = declare_parameter<double>("wheel_radius", 0.033);
-    double track_width_ = declare_parameter<double>("track_width", 0.033);
+    double track_width_ = declare_parameter<double>("track_width", 0.16);
 
     // Initialize the DiffDrive model for internal odometry state:
-    turtlelib::DiffDrive diff_drive_{wheel_radius_, track_width_};
+    turtlelib::DiffDrive diff_drive_{track_width_, wheel_radius_};
 
     // Internal odometry state:
     double prev_phi_left_ = 0.0;
