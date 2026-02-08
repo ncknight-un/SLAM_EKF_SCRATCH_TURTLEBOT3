@@ -41,36 +41,43 @@
         <!-- Launch the teleop Node if cmd_src arg is teleop -->
         <node pkg="nuturtle_control" exec="teleop" if="$(eval '\'$(var cmd_src)\'==\'teleop\'')"/>
 
-        <!-- Load the Redbot for Ground-->
-        <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
-            <arg name="color" value="red"/>
-            <arg name="use_rviz" value="false"/>
-            <arg name="use_jsp" value="true"/>
-        </include>
+        <!-- RViz - If RViz is launched and closed, the launchfile will terminate-->
+        <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nuturtle_control)/config/load_nusim_odometry.rviz" 
+            if="$(eval '\'$(var use_rviz)\'==\'true\'')" on_exit="shutdown">
+            <remap from='map' to='nusim/world'/>
+        </node>
 
         <!-- Load the Bluebot for odometry -->
         <include file='$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml'>
             <arg name='color' value='blue'/>
             <!-- Launch Rviz for the red and blue turtlebots if the arguement is true. -->
-            <arg name='use_rviz' value='$(var use_rviz)'/>      
+            <arg name='use_rviz' value='$false'/>      
             <arg name='use_jsp' value='true'/>
+        </include>
+
+        <!-- Load the Redbot for Ground-->
+        <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
+            <arg name="color" value="red"/>
+            <arg name="use_rviz" value="$false"/>
+            <arg name="use_jsp" value="true"/>
         </include>
 
         <!-- Publish the odometry node -->
         <node pkg="nuturtle_control" exec="odometry" name="odometry">
             <param name="body_id" value="blue/base_footprint"/>
             <param name="odom_id" value="odom"/>
-            <param name="left_wheel_id" value="blue/left_wheel_link"/>
-            <param name="right_wheel_id" value="blue/right_wheel_link"/>
+            <param name="wheel_left" value="blue/left_wheel_link"/>
+            <param name="wheel_right" value="blue/right_wheel_link"/>
+            <param from = "$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
         </node>
 
         <!-- Set the Identity transform between nusim/world and odom -->
-        <node pkg="tf2_ros" exec="static_transform_publisher" name="Odometry"
+        <node pkg="tf2_ros" exec="static_transform_publisher" name="world_to_odom"
             args="0.0 0.0 0.0 0.0 0.0 0.0 nusim/world odom"/>
     </group>
-
+    <group if="$(eval '\'$(var robot)\'==\'localhost\'')">
         <!-- Forces Rviz to be false. -->
-        <arg name="use_rviz" value="false"/>
+        <!-- <arg name="use_rviz" ="false"/> -->
         <!-- Place holder for LocalHost Node -->
     </group>
 </launch>

@@ -23,25 +23,34 @@
 #include "tf2_ros/transform_broadcaster.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "turtlelib/diff_drive.hpp"
-#include <geometry_msgs/PoseWithCovariance.h>
-#include <geometry_msgs/TwistWithCovariance.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/Point.h>
-#include <geometry_msgs/Quaternion.h>
+#include "geometry_msgs/msg/pose_with_covariance.hpp"
+#include "geometry_msgs/msg/twist_with_covariance.hpp"
+#include "geometry_msgs/msg/pose.hpp"
+#include "geometry_msgs/msg/point.hpp"
+#include "geometry_msgs/msg/quaternion.hpp"
 #include "nuturtle_control_interfaces/srv/initial_pose.hpp"
+#include "tf2/LinearMath/Quaternion.hpp"
+#include "std_srvs/srv/empty.hpp"
 
 /// \brief A class to launch a Simulator Node
 class Odometry : public rclcpp::Node {
 public:
     Odometry()
     : Node("odometry") {
-        // Initialize the Parameters:
-        body_id_ = declare_parameter<std::string>("body_id", "base_footprint");
-        odom_id_ = declare_parameter<std::string>("odom_id", "odom");
-        wheel_left_ = declare_parameter<std::string>("wheel_left");
-        wheel_right_ = declare_parameter<std::string>("wheel_right");
-        wheel_radius_ = declare_parameter<double>("wheel_radius", 0.033);
-        track_width_ = declare_parameter<double>("track_width", 0.033);
+        // Declare the parameters: 
+        declare_parameter<std::string>("body_id", "blue/base_footprint");
+        declare_parameter<std::string>("odom_id", "odom");
+        declare_parameter<std::string>("wheel_left");
+        declare_parameter<std::string>("wheel_right");
+        declare_parameter<double>("wheel_radius", 0.033);
+        declare_parameter<double>("track_width", 0.033);
+        // Get the parameters: 
+        this->get_parameter("body_id", body_id_);
+        this->get_parameter("odom_id", odom_id_);
+        this->get_parameter("wheel_left", wheel_left_);
+        this->get_parameter("wheel_right", wheel_right_);
+        this->get_parameter("wheel_radius", wheel_radius_);
+        this->get_parameter("track_width", track_width_);
         
         // Check required parameters:
         if (wheel_left_.empty()) {
@@ -55,15 +64,12 @@ public:
             return;
         }
 
-        // Initialize the DiffDrive model for internal odometry state:
-        diff_drive_ = turtlelib::DiffDrive(wheel_radius_, track_width_);
-
         // Initialize the transform broadcaster
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
         // Construct the publisher for odometry:
         odometry_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
-        
+
         // Construct the subscriber for joint states:
         joint_state_subscriber_ = this->create_subscription<sensor_msgs::msg::JointState>("joint_states", 10, [this](const sensor_msgs::msg::JointState::SharedPtr msg) {
             // Update the internal odemetry state every time a new joint state message is received, and publish the current odometry message and transform:            
@@ -80,7 +86,8 @@ public:
             double phi_right = msg->position[joint_map[wheel_right_]];
 
             // Time and position change since last message:
-            double dt = std::clamp((msg->header.stamp - prev_time_).seconds(), 1e-9, 1.0); // Clamp dt to avoid negatives and large start up values.
+            rclcpp::Time current_time(msg->header.stamp);
+            double dt = std::clamp((current_time - prev_time_).seconds(), 1e-9, 1.0);
 
             // Update forward kinematics:
             diff_drive_.update_fk(phi_left, phi_right);
@@ -90,7 +97,7 @@ public:
             auto delta_y_body = 0.0; // diff drive cannot move sideways, so we assume no change in y position in the body frame.
             auto delta_theta_body = turtlelib::normalize_angle(diff_drive_.get_q().rotation() - prev_pose_theta_);
             // Set body-frame twist:
-            turtlelib::Twist2D twist_body{turtlelib::Vector2D{delta_x_body / dt, delta_y_body / dt}, delta_theta_body / dt};
+            turtlelib::Twist2D twist_body{delta_theta_body / dt, delta_x_body / dt, delta_y_body / dt};
 
             // Transform and Integrate to world-frame pose:
             turtlelib::Twist2D delta_twist_world; 
@@ -121,17 +128,22 @@ public:
             odometry_msg.child_frame_id = body_id_;
 
             // Set pose in world frame:
-            odometry_msg.PoseWithCovariance.pose.position.x = pose_x;
-            odometry_msg.PoseWithCovariance.pose.position.y = pose_y;
-            odometry_msg.PoseWithCovariance.pose.orientation = tf2::toMsg(tf2::Quaternion(0, 0, pose_theta));
-            odometry_msg.PoseWithCovariance.covariance = {0.0}; // Set covariance to 0.
+            odometry_msg.pose.pose.position.x = pose_x;
+            odometry_msg.pose.pose.position.y = pose_y;
+            tf2::Quaternion q;
+            q.setRPY(0, 0, pose_theta);
+            odometry_msg.pose.pose.orientation.x = q.x();
+            odometry_msg.pose.pose.orientation.y = q.y();
+            odometry_msg.pose.pose.orientation.z = q.z();
+            odometry_msg.pose.pose.orientation.w = q.w();
+            odometry_msg.pose.covariance = {0.0}; // Set covariance to 0.
 
             // Set the Linear and angular velocity relative to body frame:
             // Get the current twist from the DiffDrive model:
-            odometry_msg.TwistWithCovariance.twist.linear.x = twist_body.x;
-            odometry_msg.TwistWithCovariance.twist.linear.y = twist_body.y;
-            odometry_msg.TwistWithCovariance.twist.angular.z = twist_body.omega;
-            odometry_msg.TwistWithCovariance.covariance = {0.0}; // Set covariance to 0.
+            odometry_msg.twist.twist.linear.x = twist_body.x;
+            odometry_msg.twist.twist.linear.y = twist_body.y;
+            odometry_msg.twist.twist.angular.z = twist_body.omega;
+            odometry_msg.twist.covariance = {0.0}; // Set covariance to 0.
             // Publish the odometry message:
             odometry_publisher_->publish(odometry_msg);
 
@@ -143,7 +155,6 @@ public:
             t.transform.translation.x = pose_x;
             t.transform.translation.y = pose_y;
             t.transform.translation.z = 0.0;
-            tf2::Quaternion q;
             q.setRPY(0, 0, pose_theta);
             t.transform.rotation.x = q.x();
             t.transform.rotation.y = q.y();
@@ -155,7 +166,7 @@ public:
         // Initialize Reset service
         reset_service_ = this->create_service<nuturtle_control_interfaces::srv::InitialPose>(
                 "~/initial_pose",
-                std::bind(&Nusimulator::handle_service_initial_pose, this, std::placeholders::_1, std::placeholders::_2)
+                std::bind(&Odometry::handle_service_initial_pose, this, std::placeholders::_1, std::placeholders::_2)
         );
     }
 
@@ -168,14 +179,14 @@ private:
     /// \param response - bool success value indicating whether the reset was successful.
     /// \returns void
     void handle_service_initial_pose(
-        const std::shared_ptr<nuturtle_control::srv::InitialPose::Request> request,
-        const std::shared_ptr<nuturtle_control::srv::InitialPose::Response> response)
+        const std::shared_ptr<nuturtle_control_interfaces::srv::InitialPose::Request> request,
+        const std::shared_ptr<nuturtle_control_interfaces::srv::InitialPose::Response> response)
     {
         RCLCPP_INFO(this->get_logger(), "Initial Pose Reset!");
         // Reset the internal odometry state with the requested configuration:
         prev_pose_x_ = request->pose.position.x;
         prev_pose_y_ = request->pose.position.y;
-        prev_pose_theta_ = tf2::getYaw(request->pose.orientation); // These is orienation about z in 2D.
+        prev_pose_theta_ = request->pose.orientation.z; // These is orienation about z in 2D.
         prev_time_ = this->get_clock()->now(); // Reset the time to now at
         
         // Return success for reset:
@@ -185,8 +196,10 @@ private:
     // Initialize ROS 2 Infrustructure:
     rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joint_state_subscriber_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odometry_publisher_;
+    rclcpp::Service<nuturtle_control_interfaces::srv::InitialPose>::SharedPtr reset_service_;
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
-    // Initialize the parameters:
+    // Initialize the Parameters:
     std::string body_id_;
     std::string odom_id_;
     std::string wheel_left_;
@@ -194,8 +207,10 @@ private:
     double wheel_radius_;
     double track_width_;
 
+    // Initialize the DiffDrive model for internal odometry state:
+    turtlelib::DiffDrive diff_drive_{wheel_radius_, track_width_};
+
     // Internal odometry state:
-    turtlelib::DiffDrive diff_drive_;
     double prev_phi_left_ = 0.0;
     double prev_phi_right_ = 0.0;
     double prev_pose_x_ = 0.0;

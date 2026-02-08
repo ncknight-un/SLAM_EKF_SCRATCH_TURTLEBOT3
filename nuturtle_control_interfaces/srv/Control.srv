@@ -1,6 +1,6 @@
 # Request
-double velocity
-double radius 
+float64 velocity
+float64 radius 
 
 ---
 # Response

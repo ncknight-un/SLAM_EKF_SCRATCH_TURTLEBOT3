@@ -16,6 +16,8 @@
   <test_depend>ament_pep257</test_depend>
   <test_depend>ament_xmllint</test_depend>
   <test_depend>launch_testing_ros</test_depend>
+  <test_depend>nuturtle_control_interfaces</test_depend>
+  <test_depend>nuturtlebot_msgs</test_depend>
 
   <build_depend>rosidl_default_generators</build_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
@@ -27,6 +29,12 @@
   <depend>tf2_ros</depend>
   <depend>geometry_msgs</depend>
   <depend>visualization_msgs</depend>
+  <depend>nuturtle_control_interfaces</depend>
+  <depend>nuturtlebot_msgs</depend>
+  <depend>catch_ros2</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>turtlelib</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

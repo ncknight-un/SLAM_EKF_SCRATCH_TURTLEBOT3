@@ -23,6 +23,7 @@ if(BUILD_TESTING)
 endif()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "srv/Control.srv"
   "srv/InitialPose.srv"
   DEPENDENCIES geometry_msgs
 )
