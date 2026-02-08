@@ -67,55 +67,46 @@ turtle_control
 
 if(BUILD_TESTING)
   ############################################### Begin_Citation [11] #########################
-  # find_package(catch_ros2 REQUIRED)
-  # find_package(Catch2 3 REQUIRED)
-  # include (CTest)
+  find_package(catch_ros2 REQUIRED)
+  include (CTest)
 
-  # # Set each test executable's dependencies:
-  # add_executable(turtle_control_test test/turtle_control_test.cpp)
-  # target_link_libraries(circle PUBLIC
-  #   ${geometry_msgs_TARGETS}
-  #   ${nav_msgs_TARGETS}
-  #   ${nuturtlebot_msgs_TARGETS}
-  #   ${nuturtle_control_interfaces_TARGETS}
-  #   ${std_srvs_TARGETS}
-  #   ${sensor_msgs_TARGETS}
-  #   rclcpp::rclcpp
-  #   turtlelib::turtlelib
-  #   catch_ros2::catch_ros2
-  #   catch_ros2::catch_ros2_with_main
-  #   catch_ros2::catch_ros2_with_node_main
-  # )
+  # Set each test executable's dependencies:
+  add_executable(turtle_control_test test/turtle_control_test.cpp)
+  target_link_libraries(turtle_control_test PUBLIC
+    ${geometry_msgs_TARGETS}
+    ${nav_msgs_TARGETS}
+    ${nuturtlebot_msgs_TARGETS}
+    ${nuturtle_control_interfaces_TARGETS}
+    ${std_srvs_TARGETS}
+    ${sensor_msgs_TARGETS}
+    rclcpp::rclcpp
+    turtlelib::turtlelib
+    catch_ros2::catch_ros2_with_node_main
+  )
 
-  # # Include directories
-  # target_include_directories(turtle_control PUBLIC
-  #   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  #   $<INSTALL_INTERFACE:include>
-  # )
+  install(TARGETS 
+    turtle_control_test
+    DESTINATION lib/${PROJECT_NAME}
+  )
 
-  # install(
-  #   TARGETS turtle_control odometry circle
-  #   DESTINATION lib/${PROJECT_NAME}
-  # )
+  install(FILES
+    test/turtle_control_test.launch.xml
+    DESTINATION share/${PROJECT_NAME}
+  )
+  ############################################### End_Citation [11] #########################
 
-  # install(FILES
-  #   test/turtle_control_test.launch.xml
-  #   DESTINATION share/${PROJECT_NAME}
-  # )
-  # ############################################### End_Citation [11] #########################
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # comment the line when a copyright and license is added to all source files
+  set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # comment the line when this package is in a git repo and when
+  # a copyright and license is added to all source files
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
 
-  # find_package(ament_lint_auto REQUIRED)
-  # # the following line skips the linter which checks for copyrights
-  # # comment the line when a copyright and license is added to all source files
-  # set(ament_cmake_copyright_FOUND TRUE)
-  # # the following line skips cpplint (only works in a git repo)
-  # # comment the line when this package is in a git repo and when
-  # # a copyright and license is added to all source files
-  # set(ament_cmake_cpplint_FOUND TRUE)
-  # ament_lint_auto_find_test_dependencies()
-
-  # # Add the ros2 integration tests:
-  # catch_ros2_add_integration_test(ControlTest LAUNCH_FILE turtle_control_test.launch.xml TIMEOUT 60)
+  # Add the ros2 integration tests:
+  catch_ros2_add_integration_test(ControlTest LAUNCH_FILE turtle_control_test.launch.xml)
 endif()
 
 # Set up Install Directories:
@@ -123,12 +114,6 @@ install(DIRECTORY
   launch
   config
   DESTINATION share/${PROJECT_NAME}
-)
-
-# Install test launch files
-install(DIRECTORY tests/
-  DESTINATION share/${PROJECT_NAME}/tests
-  FILES_MATCHING PATTERN "*.launch.xml"
 )
 
 ament_package()
