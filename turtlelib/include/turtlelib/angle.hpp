@@ -15,12 +15,8 @@ namespace turtlelib
     /// \return true if abs(d1 - d2) < epsilon
 constexpr bool almost_equal(double d1, double d2, double epsilon = 1.0e-12)
 {
-        // If the abs value of the distance is less than the epsilon value, then return true:
-  if(std::abs(d1 - d2) < epsilon) {
-    return true;
-  } else {
-    return false;
-  }
+    // If the abs value of the distance is less than the epsilon value, then return true:
+    return std::abs(d1 - d2) < epsilon;
 }
 
     /// \brief Convert degrees to radians

@@ -4,6 +4,10 @@
 #include <sstream>
 #include <stdexcept>
 
+const double SVG_ORIGIN_X = 408.0;
+const double SVG_ORIGIN_Y = 528.0;
+const double SVG_SCALE = 96.0; // 1 meter in sim corresponds to 96 pixels in SVG
+
 namespace turtlelib {
     Svg::Svg() {
         // Initialize the SVG with the required Headers at the top of the file string:
@@ -26,11 +30,11 @@ namespace turtlelib {
 
     double Svg::to_svg_coords_x(const double & x) const {
         // Conversion rate from 1 meter in sim to SVG is 96 pixels. (Origin at 408:528)
-        return 408 + x*96;
+        return SVG_ORIGIN_X + x*SVG_SCALE;
     }
     double Svg::to_svg_coords_y(const double & y) const {
         // Conversion rate from 1 meter in sim to SVG is 96 pixels. (Origin at 408:528)
-        return 528 - y*96;      // y axis is flipped
+        return SVG_ORIGIN_Y - y*SVG_SCALE;      // y axis is flipped
     }
 
     void Svg::draw_point(double cx, double cy, std::string stroke, std::string fill) {
@@ -95,7 +99,7 @@ namespace turtlelib {
         commands_.push_back("</g>\n");
     }
 
-    std::string Svg::build_file() {
+    std::string Svg::build_file() const{
         std::ostringstream ss;
         // Extract elements in order added to the vector:
         for (const auto & e : commands_) {ss << e;}

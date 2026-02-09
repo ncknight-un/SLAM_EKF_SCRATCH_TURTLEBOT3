@@ -10,10 +10,6 @@ project(turtlelib)
 # Many libraries ship with files that allow CMake to find them
 # Then general behavior is to call "find_package" but the options
 # provided are package specific.  Usually there is then a CMAKE variable
-# That is defined to reference the library
-# here: we find the eigen library as per the instruction
-# https://eigen.tuxfamily.org/dox/TopicCMakeGuide.html
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(Doxygen)
 
 # Create a library.  Can specify if it is shared or static but usually
@@ -63,7 +59,7 @@ add_executable(frame_main src/frame_main.cpp)
 # and paths to the locations of header files.
 # Because libname has PUBLIC cxx_std_23 as a compile feature
 # Name will also be compiled with c++23 as the standard.
-target_link_libraries(converter Eigen3::Eigen turtlelib)
+target_link_libraries(converter  turtlelib)
 target_link_libraries(test_write turtlelib)
 target_link_libraries(frame_main turtlelib)
 

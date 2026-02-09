@@ -6,7 +6,7 @@ std::istream & operator>>(std::istream & is, Point2D & p) {
   char first = is.peek();
         // Peek to see if the first character is '('
   if (first == '(') {               // Format (x, y)
-    char ignore;
+    char ignore = ' ';
     is.get(ignore);                     // ignore '('
     if (!(is >> p.x)) {                // try to read x, fail if invalid.
       is.setstate(std::ios::failbit);
@@ -43,7 +43,7 @@ std::istream & operator>>(std::istream & is, Point2D & p) {
 
 Vector2D operator-(const Point2D & head, const Point2D & tail) {
         // Return a 2D vector as the difference from head to tail:
-  return Vector2D{head.x - tail.x, head.y - tail.y};
+  return {head.x - tail.x, head.y - tail.y};
 }     // End of operator-
 
 Point2D operator+(const Point2D & tail, const Vector2D & disp) {
@@ -63,7 +63,7 @@ std::istream & operator>>(std::istream & is, Vector2D & v) {
   char first = is.peek();
         // Peek to see if the first character is '['
   if (first == '[') {               // Format [x, y]
-    char ignore;
+    char ignore = ' ';
     is.get(ignore);                     // ignore '['
     if (!(is >> v.x)) {                // try to read x, fail if invalid.
       is.setstate(std::ios::failbit);
@@ -105,7 +105,7 @@ Vector2D normalize(Vector2D in) {
         // ################################ End_Citation [3] ##################################
 
   auto norm = std::sqrt(in.x * in.x + in.y * in.y);
-  return Vector2D(in.x / norm, in.y / norm);
+  return {in.x / norm, in.y / norm};
 }     // End of normalize
 
 Vector2D & Vector2D::operator+=(const Vector2D & v) {

@@ -8,7 +8,7 @@ std::istream & operator>>(std::istream & is, Twist2D & tw)
         // Peek to see if the first character is '<'
   if (first == '<') {               // Format <omega[<unit>], x, y>
     is >> std::ws;                  // remove whitespace if it exists
-    char ignore;
+    char ignore = ' ';
     is.get(ignore);                     // ignore '<'
     if (!(is >> tw.omega)) {                // try to read w, fail if invalid.
       is.setstate(std::ios::failbit);
@@ -81,58 +81,58 @@ Transform2D::Transform2D(Vector2D trans, double radians)
 
 Point2D Transform2D::operator()(Point2D p) const
 {
-        // Establish Cos and Sin:
-  double c = std::cos(rot_);
-  double s = std::sin(rot_);
+  // Establish Cos and Sin:
+  auto c = std::cos(rot_);
+  auto s = std::sin(rot_);
         // Multiply R_ab by p_b:
   double x_new = (c * p.x) - (s * p.y) + trans_.x;
   double y_new = (s * p.x) + (c * p.y) + trans_.y;
         // Return the new transformed position:
-  return Point2D{x_new, y_new};
+  return {x_new, y_new};
 }     // End of operator() Point
 
 Vector2D Transform2D::operator()(Vector2D v) const
 {
         // Establish Cos and Sin:
-  double c = std::cos(rot_);
-  double s = std::sin(rot_);
+  auto c = std::cos(rot_);
+  auto s = std::sin(rot_);
         // Rotate the vector only: (Vector not affected by translation)
   double vx_new = (c * v.x) - (s * v.y);
   double vy_new = (s * v.x) + (c * v.y);
         // Return the new transformed position:
-  return Vector2D{vx_new, vy_new};
+  return {vx_new, vy_new};
 }     // End of operator() Vector
 
 Twist2D Transform2D::operator()(Twist2D v) const
 {
   // Establish Cos and Sin:
-  double c = std::cos(rot_);
-  double s = std::sin(rot_);
+  auto c = std::cos(rot_);
+  auto s = std::sin(rot_);
   // Multiply Adj_ij by V_j:
   double vw_new = v.omega;
   double vx_new = (trans_.y * v.omega) + (c * v.x) - (s * v.y);
   double vy_new = (-1 * trans_.x * v.omega) + (s * v.x) + (c * v.y);
         // Return the Twist in the new frame:
-  return Twist2D{vw_new, vx_new, vy_new};
+  return {vw_new, vx_new, vy_new};
 }     // End of operator() Twist
 
 Transform2D Transform2D::inv() const
 {
         // Establish Cos and Sin:
-  double c = std::cos(rot_);
-  double s = std::sin(rot_);
+  auto c = std::cos(rot_);
+  auto  s = std::sin(rot_);
         // Multiply R_ab inverse by trans_:
   double x_inv = (-1 * c * trans_.x) - (s * trans_.y);
   double y_inv = (s * trans_.x) - (c * trans_.y);
         // Return the Inverse Transform:
-  return Transform2D{Vector2D{x_inv, y_inv}, -rot_};
+  return {Vector2D{x_inv, y_inv}, -rot_};
 }     // End of inv()
 
 Transform2D & Transform2D::operator*=(const Transform2D & rhs)
 {
         // Establish Cos and Sin for lhs:
-  double lhs_c = std::cos(rot_);
-  double lhs_s = std::sin(rot_);
+  auto lhs_c = std::cos(rot_);
+  auto lhs_s = std::sin(rot_);
         // Establish Translation for rhs:
   double rhs_x = rhs.translation().x;
   double rhs_y = rhs.translation().y;
@@ -181,7 +181,7 @@ std::istream & operator>>(std::istream & is, Transform2D & tf)
         // Peek to see if the first character is '<'
   if (first == '<') {               // Format <omega[<unit>], x, y>
     is >> std::ws;                  // remove whitespace if it exists
-    char ignore;
+    char ignore = ' ';
     is.get(ignore);                     // ignore '<'
     if (!(is >> temp_rot)) {                // try to rot, fail if invalid.
       is.setstate(std::ios::failbit);
@@ -248,9 +248,11 @@ std::istream & operator>>(std::istream & is, Transform2D & tf)
 // Transform2D Operator
 Transform2D operator*(Transform2D lhs, const Transform2D & rhs)
 {
-        // Return the
-  return lhs *= rhs;
-}     // End of Transform2D Operator*
+  // Return a New Transform2D that is the result of lhs * rhs:
+  Transform2D result = lhs;
+  result *= rhs;  // Utilize the operator*= function
+  return result;
+}  // End of Transform2D Operator*
 
 // Opearator* for Twist2D (scalar on rhs):
 Twist2D operator*(const Twist2D& tw, double scalar) {

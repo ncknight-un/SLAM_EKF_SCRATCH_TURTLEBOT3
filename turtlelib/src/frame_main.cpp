@@ -13,7 +13,7 @@
 /// \param name A string used to identify the transform in the user prompt.
 /// \return A `turtlelib::Transform2D` object corresponding to the user's input.
 turtlelib::Transform2D input_transform(const std::string &name) {
-    double trans_x, trans_y, rot;
+    double trans_x, trans_y, rot = 0.0;
 
     // Get the data from the user:
     std::cerr << "Enter the transform " << name << ":\n";
@@ -30,7 +30,7 @@ turtlelib::Transform2D input_transform(const std::string &name) {
 /// \param name A string used to identify the point in the user prompt.
 /// \return A `turtlelib::Point2D` object corresponding to the user's input.
 turtlelib::Point2D input_point(const std::string &name) {
-    double p_x, p_y;
+    double p_x, p_y = 0.0;
 
     // Get the data from the user:
     std::cerr << "Please Enter Point " << name << ":\n";
@@ -45,7 +45,7 @@ turtlelib::Point2D input_point(const std::string &name) {
 /// \param name A string used to identify the vector in the user prompt.
 /// \return A `turtlelib::Vector2D` object corresponding to the user's input.
 turtlelib::Vector2D input_vector(const std::string &name) {
-    double v_x, v_y;
+    double v_x, v_y = 0.0;
 
     // Get the data from the user:
     std::cerr << "Please Enter Vector " << name << ":\n";

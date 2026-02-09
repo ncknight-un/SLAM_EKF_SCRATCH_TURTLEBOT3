@@ -182,40 +182,40 @@ private:
       if (i == 0) {
         // Bottom Wall
         marker.pose.position.x = 0.0;
-        marker.pose.position.y = -arena_y_ / 2 - arena_thick_ / 2;
-        marker.pose.position.z = arena_thick_ / 2;
-        marker.scale.x = arena_x_ + arena_thick_ * 2;
+        marker.pose.position.y = -arena_y_ / 2.0 - arena_thick_ / 2.0;
+        marker.pose.position.z = arena_thick_ / 2.0;
+        marker.scale.x = arena_x_ + arena_thick_ * 2.0;
         marker.scale.y = arena_thick_;
         marker.scale.z = arena_thick_;
       } else if (i == 1) {
         // Left Wall
-        marker.pose.position.x = -arena_x_ / 2 - arena_thick_ / 2;
+        marker.pose.position.x = -arena_x_ / 2.0 - arena_thick_ / 2.0;
         marker.pose.position.y = 0.0;
-        marker.pose.position.z = arena_thick_ / 2;
+        marker.pose.position.z = arena_thick_ / 2.0;
         marker.scale.x = arena_thick_;
-        marker.scale.y = arena_y_ + arena_thick_ * 2;
+        marker.scale.y = arena_y_ + arena_thick_ * 2.0;
         marker.scale.z = arena_thick_;
       } else if (i == 2) {
         // Right Wall
-        marker.pose.position.x = arena_x_ / 2 + arena_thick_ / 2;
+        marker.pose.position.x = arena_x_ / 2.0 + arena_thick_ / 2.0;
         marker.pose.position.y = 0.0;
-        marker.pose.position.z = arena_thick_ / 2;
+        marker.pose.position.z = arena_thick_ / 2.0;
         marker.scale.x = arena_thick_;
-        marker.scale.y = arena_y_ + arena_thick_ * 2;
+        marker.scale.y = arena_y_ + arena_thick_ * 2.0;
         marker.scale.z = arena_thick_;
       } else if (i == 3) {
         // Top Wall
         marker.pose.position.x = 0.0;
-        marker.pose.position.y = arena_y_ / 2 + arena_thick_ / 2;
-        marker.pose.position.z = arena_thick_ / 2;
-        marker.scale.x = arena_x_ + arena_thick_ * 2;
+        marker.pose.position.y = arena_y_ / 2.0 + arena_thick_ / 2.0;
+        marker.pose.position.z = arena_thick_ / 2.0;
+        marker.scale.x = arena_x_ + arena_thick_ * 2.0;
         marker.scale.y = arena_thick_;
         marker.scale.z = arena_thick_;
       } else if (i == 4) {
         // Floor
         marker.pose.position.x = 0.0;
         marker.pose.position.y = 0.0;
-        marker.pose.position.z = -arena_thick_ / 2;
+        marker.pose.position.z = -arena_thick_ / 2.0;
         marker.scale.x = arena_x_;
         marker.scale.y = arena_y_;
         marker.scale.z = arena_thick_;

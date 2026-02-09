@@ -38,7 +38,7 @@ namespace turtlelib
             void draw_frame(Vector2D origin, Vector2D v1, Vector2D, char frame_id);
 
             /// \brief Builds the file string to be written to a file.
-            std::string build_file();
+            std::string build_file() const;
 
             /// \brief Writes a valid SVG built file to an inputted filename
             /// \param filename - name of file to save the built string.
