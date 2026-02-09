@@ -38,3 +38,4 @@ __pycache__/
 
 # Ros2 packages to ignore:
 nuturtlebot_msgs/
+catch_ros2/

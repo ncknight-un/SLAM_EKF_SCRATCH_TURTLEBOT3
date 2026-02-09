@@ -16,6 +16,7 @@
     Specific parameters and other arguments can also be passed, like the "test_duration" example below. -->
     <catch2_integration_test_node pkg='catch_ros2' exec='turtle_control_test'>
         <param name='test_duration' value='$(var test_duration)'/>
+        <arg name="result_file" value="$(var result_file)" />
     </catch2_integration_test_node>
     <!-- ################################### End_Citation [10] ############################ -->
 </launch>

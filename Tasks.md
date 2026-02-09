@@ -33,5 +33,6 @@ Task E.1
 Task E.2
 Task E.3
 Task E.4 - Having trouble with the CMAKE, going to come back to it.
-Task E.5 - Set up for Simulation, will come back and finish local_host at later implementation.
-Task C.8 - Starting 
+Task E.5
+Task C.8
+Task F.1 - Settign up on Robot

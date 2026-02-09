@@ -72,26 +72,18 @@ if(BUILD_TESTING)
 
   # Set each test executable's dependencies:
   add_executable(turtle_control_test test/turtle_control_test.cpp)
-  target_link_libraries(turtle_control_test PUBLIC
-    ${geometry_msgs_TARGETS}
-    ${nav_msgs_TARGETS}
-    ${nuturtlebot_msgs_TARGETS}
-    ${nuturtle_control_interfaces_TARGETS}
-    ${std_srvs_TARGETS}
-    ${sensor_msgs_TARGETS}
+  target_link_libraries(turtle_control_test PRIVATE
     rclcpp::rclcpp
     turtlelib::turtlelib
     catch_ros2::catch_ros2_with_node_main
+    geometry_msgs::geometry_msgs__rosidl_typesupport_cpp
+    nuturtlebot_msgs::nuturtlebot_msgs__rosidl_typesupport_cpp
+    sensor_msgs::sensor_msgs__rosidl_typesupport_cpp
   )
 
   install(TARGETS 
     turtle_control_test
     DESTINATION lib/${PROJECT_NAME}
-  )
-
-  install(FILES
-    test/turtle_control_test.launch.xml
-    DESTINATION share/${PROJECT_NAME}
   )
   ############################################### End_Citation [11] #########################
 
@@ -106,7 +98,7 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   # Add the ros2 integration tests:
-  catch_ros2_add_integration_test(ControlTest LAUNCH_FILE turtle_control_test.launch.xml)
+  catch_ros2_add_integration_test(turtle_control_test LAUNCH_FILE turtle_control_test.launch.xml)
 endif()
 
 # Set up Install Directories:
@@ -115,5 +107,4 @@ install(DIRECTORY
   config
   DESTINATION share/${PROJECT_NAME}
 )
-
 ament_package()
