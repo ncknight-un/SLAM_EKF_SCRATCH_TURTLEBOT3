@@ -32,7 +32,7 @@ Task D.3
 Task E.1
 Task E.2
 Task E.3
-Task E.4 - Having trouble with the CMAKE, going to come back to it.
+Task E.4 - Having trouble with the CMAKE, going to come back to it/Ask in Office Hours.
 Task E.5
 Task C.8
 Task F.1

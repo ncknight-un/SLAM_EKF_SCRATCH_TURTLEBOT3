@@ -7,7 +7,7 @@
 [6] C++ Stories. "Custom std::format in C++20". Accessed: January 19th, 2026. [Online]. Available: https://www.cppstories.com/2022/custom-stdformat-cpp20/                         
 [7] Gregory Aiosa. get_parameter() dynamic update discussion. Jan. 19th, 2026.
 [8] ChatGPT. "se(2) Twist Integration Equations". Accessed: February 4th, 2026. Available:https://chatgpt.com/share/69834d42-990c-8010-9386-7f9f5d0ff8ce
-[9] https://github.com/ngmor/catch_ros2/blob/main/examples/integration_test/integration_test_node.cpp - February 7th
-[10] https://github.com/ngmor/catch_ros2/blob/main/examples/integration_test/example_integration_test.launch.xml - February 7th
+[9] Nick Morales. "catch_ros2 - integration_test_node.cpp" Accessed: January 7th, 2026. [Online]. Available: https://github.com/ngmor/catch_ros2/blob/main/examples/integration_test/integration_test_node.cpp - February 7th
+[10] Nick Morales. "catch_ros2 - CMakeLists.txt" Accessed: January 7th, 2026. [Online]. Available: https://github.com/ngmor/catch_ros2/blob/main/examples/integration_test/example_integration_test.launch.xml - February 7th
 [11] Derick Dietz. CMAKE discussion on requirements for Integration Testing. February 7th, 2026.
 [12] Derick Dietz. Circular Arc issue with update fk. February 8th, 2026.
