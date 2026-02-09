@@ -88,8 +88,8 @@ public:
         auto dt = 1.0 / rate; // Change in time since last publish.
 
         // Update the DiffDrive model using the current wheel positions:
-        double phi_left = diff_drive_.get_phi_left() + wheel_vel_.v_lw * dt;
-        double phi_right = diff_drive_.get_phi_right() + wheel_vel_.v_rw * dt;
+        double phi_left = turtlelib::normalize_angle(diff_drive_.get_phi_left() + wheel_vel_.v_lw * dt);
+        double phi_right = turtlelib::normalize_angle(diff_drive_.get_phi_right() + wheel_vel_.v_rw * dt);
         diff_drive_.update_fk(phi_left, phi_right);
 
         // Publish the SensorData message update:
@@ -103,11 +103,13 @@ public:
         sensor_msgs::msg::JointState joint_state_msg;
         joint_state_msg.header.stamp = sensor_data_msg.stamp;
         // Set joint positions:
-        joint_state_msg.name.push_back("red/wheel_left_joint");
+        joint_state_msg.name.push_back("wheel_left_joint");
         joint_state_msg.position.push_back(phi_left);
-        joint_state_msg.name.push_back("red/wheel_right_joint");
+        joint_state_msg.name.push_back("wheel_right_joint");
         joint_state_msg.position.push_back(phi_right);
         joint_state_publisher_->publish(joint_state_msg);
+
+        RCLCPP_DEBUG_STREAM(this->get_logger(), "The phi_left is " << phi_left << " and phi_right is " << phi_right << " at rate " << rate << " Hz!");
 
         // Update the robot positions based on the internal diffdrive:
         x0_ = diff_drive_.get_q().translation().x;
