@@ -4,6 +4,7 @@
     <!-- catch2_launch_file - A required tag which will add a "result_file" argument for the launch file.
     This file will hold the results of the test. Description attribute of this tag is optional for XML launch files. -->
     <catch2_launch_file description='Launch file for turtle_control tests'/>
+    <arg name="result_file" default="/tmp/turtle_control_test.xml"/>
 
     <!-- Specific launch arguments can also be included at the user's discretion -->
     <arg name='test_duration' default='10.0' description='Max length of test in seconds.'/>
