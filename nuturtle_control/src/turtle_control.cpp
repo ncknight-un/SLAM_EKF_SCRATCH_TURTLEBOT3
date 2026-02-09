@@ -47,7 +47,7 @@ public:
         // Construct the subscriber and publisher for cmd_vel:
         cmd_vel_subscriber_ = this->create_subscription<geometry_msgs::msg::Twist> ("cmd_vel", 10, [this](const geometry_msgs::msg::Twist::SharedPtr msg) {
             // Convert the Twist message to wheel commands:
-            turtlelib::Twist2D twist{msg->angular.z, msg->linear.x, msg->linear.y};
+            turtlelib::Twist2D twist{msg->angular.z, msg->linear.x, 0.0};
             turtlelib::wheel_vel wheel_vel = this->diff_drive_.compute_ik(twist);
 
             // Convert the wheel speeds to motor commands and clamp them to the maximum allowed value:
@@ -63,20 +63,46 @@ public:
         
         // Construct the subscriber for sensor data to joint state publisher:
         sensor_data_subscriber_ = this->create_subscription<nuturtlebot_msgs::msg::SensorData>("sensor_data", 10, [this](const nuturtlebot_msgs::msg::SensorData::SharedPtr msg) {
-            // Update the DiffDrive model with the new wheel encoder data using forward kinematics:
+            // Calculate the change in wheel positions from encoder ticks:
             auto phi_left = static_cast<double>(msg->left_encoder) / this->encode_ticks_per_rad_;
             auto phi_right = static_cast<double>(msg->right_encoder) / this->encode_ticks_per_rad_;
-            this->diff_drive_.update_fk(phi_left, phi_right);
-            RCLCPP_INFO_STREAM(this->get_logger(),"phi_left: " << phi_left << " phi_right: " << phi_right);
+            
+            // Caluate dt: 
+            if (prev_time_.nanoseconds() == 0) {
+                prev_time_ = msg->stamp;
+                prev_phi_left_ = phi_left;
+                prev_phi_right_ = phi_right;
+                return;
+            }
+            curr_time_ = msg->stamp;
+            rclcpp::Duration delta = curr_time_ - prev_time_;
+            double dt = delta.seconds();
 
+            // Error control for dt of zero.
+            if (dt <= 0.0) {
+                return;
+            }
+            
+            auto delta_phi_left = turtlelib::normalize_angle(phi_left - prev_phi_left_);
+            auto delta_phi_right = turtlelib::normalize_angle(phi_right - prev_phi_right_);
+            auto dphi_left = delta_phi_left / dt;
+            auto dphi_right = delta_phi_right / dt; 
+
+            // Update the DiffDrive model with new wheel positions:
+            diff_drive_.update_fk(phi_left, phi_right);
+
+            // Update internal tracking:
+            prev_time_ = curr_time_;
+            prev_phi_left_ = phi_left;
+            prev_phi_right_ = phi_right;
+            
             // Publish the joint state for the left and right wheel joints:
             sensor_msgs::msg::JointState joint_state_msg;
             joint_state_msg.header.stamp = msg->stamp;
             // Set joint positions:
-            joint_state_msg.name.push_back("wheel_left_joint");
-            joint_state_msg.position.push_back(phi_left);
-            joint_state_msg.name.push_back("wheel_right_joint");
-            joint_state_msg.position.push_back(phi_right);
+            joint_state_msg.name = {"wheel_left_joint", "wheel_right_joint"};
+            joint_state_msg.position = {phi_left, phi_right};
+            joint_state_msg.velocity = {dphi_left, dphi_right};
             joint_state_publisher_->publish(joint_state_msg);
         });
     }
@@ -95,6 +121,11 @@ private:
     double motor_cmd_per_rad_sec_ = declare_parameter<double>("motor_cmd_per_rad_sec");
     int encode_ticks_per_rad_ = declare_parameter<int>("encode_ticks_per_rad");
 
+    // Internal Tracking for dt positioning: 
+    rclcpp::Time prev_time_;
+    rclcpp::Time curr_time_;
+    double prev_phi_left_ = 0.0;
+    double prev_phi_right_ = 0.0;
     // Initialize the DiffDrive model:
     turtlelib::DiffDrive diff_drive_{track_width_, wheel_radius_};
 };

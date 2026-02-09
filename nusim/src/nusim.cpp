@@ -87,7 +87,7 @@ public:
         // Update the wheel positions and publish them on red/sensor_data topic:
         auto dt = 1.0 / rate; // Change in time since last publish.
 
-        // Update the DiffDrive model using the current wheel velocities:
+        // Update the DiffDrive model using the current wheel positions:
         double phi_left = diff_drive_.get_phi_left() + wheel_vel_.v_lw * dt;
         double phi_right = diff_drive_.get_phi_right() + wheel_vel_.v_rw * dt;
         diff_drive_.update_fk(phi_left, phi_right);
@@ -116,7 +116,7 @@ public:
 
         // Assign parameters to corresponding tf variables and broadcast:
         geometry_msgs::msg::TransformStamped t;
-        t.header.stamp = this->get_clock()->now();
+        t.header.stamp = sensor_data_msg.stamp;
         t.header.frame_id = "nusim/world";
         t.child_frame_id = "red/base_footprint";
         // Turtlebot only exists in 2D, thus we get x and y translation
@@ -151,12 +151,9 @@ public:
     wheel_cmd_subscriber_ = this->create_subscription<nuturtlebot_msgs::msg::WheelCommands>("red/wheel_cmd", 10, [this](const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg) {
         // Log the received wheel commands:
         RCLCPP_INFO_STREAM_ONCE(this->get_logger(), "Received wheel commands - Left: " << msg->left_velocity << ", Right: " << msg->right_velocity);
-        // Update internal wheel velocities:
-        wheel_vel_.v_lw = static_cast<double>(msg->left_velocity) / this->motor_cmd_per_rad_sec_;
-        wheel_vel_.v_rw = static_cast<double>(msg->right_velocity) / this->motor_cmd_per_rad_sec_;
         // Original Thought - Remove if other idea works fine:
-        // wheel_vel_.v_lw = std::clamp(static_cast<double>(msg->left_velocity) / this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_/this->motor_cmd_per_rad_sec_), (this->motor_cmd_max_/this->motor_cmd_per_rad_sec_));
-        // wheel_vel_.v_rw = std::clamp(static_cast<double>(msg->right_velocity) / this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_/this->motor_cmd_per_rad_sec_), (this->motor_cmd_max_/this->motor_cmd_per_rad_sec_));
+        wheel_vel_.v_lw = std::clamp(static_cast<double>(msg->left_velocity) / this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_/this->motor_cmd_per_rad_sec_), (this->motor_cmd_max_/this->motor_cmd_per_rad_sec_));
+        wheel_vel_.v_rw = std::clamp(static_cast<double>(msg->right_velocity) / this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_/this->motor_cmd_per_rad_sec_), (this->motor_cmd_max_/this->motor_cmd_per_rad_sec_));
     });
   }
 

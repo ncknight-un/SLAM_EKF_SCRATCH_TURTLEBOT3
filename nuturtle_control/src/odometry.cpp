@@ -66,46 +66,14 @@ public:
                     joint_map[msg->name[i]] = i;
                 }
             }
-            // Current wheel positions:
             double phi_left  = msg->position[joint_map[wheel_left_]];
             double phi_right = msg->position[joint_map[wheel_right_]];
 
-            // Time and position change since last message:
-            rclcpp::Time current_time(msg->header.stamp);
-            double dt = (current_time - prev_time_).seconds();
-            
+            // Compute Twist
+            turtlelib::Twist2D tw = diff_drive_.compute_twist(turtlelib::Vector2D{phi_left, phi_right});
+
             // Update forward kinematics:
             diff_drive_.update_fk(phi_left, phi_right);
-
-            // Get the new pose directly from diff_drive_
-            auto pose_x = diff_drive_.get_q().translation().x;
-            auto pose_y = 0.0;  // Diff drive cannot move sideways
-            auto pose_theta = turtlelib::normalize_angle(diff_drive_.get_q().rotation());
-
-            // Compute body-frame positions:
-            auto delta_x_body = pose_x - prev_pose_x_;
-            auto delta_y_body = pose_y - prev_pose_y_;
-            auto delta_theta_body = turtlelib::normalize_angle(pose_theta - prev_pose_theta_);
-
-            // Transform to world-frame pose:
-            auto delta_x_world = delta_x_body * std::cos(prev_pose_theta_) - delta_y_body * std::sin(prev_pose_theta_);
-            auto delta_y_world = delta_x_body * std::sin(prev_pose_theta_) + delta_y_body * std::cos(prev_pose_theta_);
-            auto delta_theta_world = delta_theta_body;
-            
-            // Set the Twist in the world frame:
-            turtlelib::Twist2D twist_world{
-                delta_theta_world / dt, // angular velocity in world frame
-                delta_x_world / dt,     // linear x in world frame
-                delta_y_world / dt      // linear y in world frame
-            };
-
-            // Update the internal odometry state:
-            prev_phi_left_ = phi_left;
-            prev_phi_right_ = phi_right;
-            prev_pose_x_ = pose_x;
-            prev_pose_y_ = pose_y;
-            prev_pose_theta_ = pose_theta;
-            prev_time_ = msg->header.stamp;
 
             // ------------------------------------------------------------------------------
             // Build and publish Odometry and TF:
@@ -114,12 +82,12 @@ public:
             odometry_msg.header.frame_id = odom_id_;
             odometry_msg.child_frame_id = body_id_;
 
-            // Set pose in world frame:
-            odometry_msg.pose.pose.position.x = pose_x;
-            odometry_msg.pose.pose.position.y = pose_y;
+            // Set pose in body frame:
+            odometry_msg.pose.pose.position.x = diff_drive_.get_q().translation().x;
+            odometry_msg.pose.pose.position.y = diff_drive_.get_q().translation().y;
             odometry_msg.pose.pose.position.z = 0.0;
             tf2::Quaternion q;
-            q.setRPY(0, 0, pose_theta);
+            q.setRPY(0, 0, diff_drive_.get_q().rotation());
             odometry_msg.pose.pose.orientation.x = q.x();
             odometry_msg.pose.pose.orientation.y = q.y();
             odometry_msg.pose.pose.orientation.z = q.z();
@@ -128,9 +96,9 @@ public:
 
             // Set the Linear and angular velocity relative to body frame:
             // Get the current twist from the DiffDrive model:
-            odometry_msg.twist.twist.linear.x = twist_world.x;
-            odometry_msg.twist.twist.linear.y = twist_world.y;
-            odometry_msg.twist.twist.angular.z = twist_world.omega;
+            odometry_msg.twist.twist.linear.x = tw.x;
+            odometry_msg.twist.twist.linear.y = tw.y;
+            odometry_msg.twist.twist.angular.z = tw.omega;
             odometry_msg.twist.covariance = {0.0}; // Set covariance to 0.
             // Publish the odometry message:
             odometry_publisher_->publish(odometry_msg);
@@ -140,13 +108,13 @@ public:
             t.header.stamp = msg->header.stamp;
             t.header.frame_id = odom_id_;
             t.child_frame_id = body_id_;
-            t.transform.translation.x = pose_x;
-            t.transform.translation.y = pose_y;
+            t.transform.translation.x = odometry_msg.pose.pose.position.x;
+            t.transform.translation.y = odometry_msg.pose.pose.position.y;
             t.transform.translation.z = 0.0;
-            t.transform.rotation.x = q.x();
-            t.transform.rotation.y = q.y();
-            t.transform.rotation.z = q.z();
-            t.transform.rotation.w = q.w();
+            t.transform.rotation.x = odometry_msg.pose.pose.orientation.x;
+            t.transform.rotation.y = odometry_msg.pose.pose.orientation.y;
+            t.transform.rotation.z = odometry_msg.pose.pose.orientation.z;
+            t.transform.rotation.w = odometry_msg.pose.pose.orientation.w;
             tf_broadcaster_->sendTransform(t);
         });
 
@@ -171,11 +139,7 @@ private:
     {
         RCLCPP_INFO(this->get_logger(), "Initial Pose Reset!");
         // Reset the internal odometry state with the requested configuration:
-        prev_pose_x_ = request->pose.position.x;
-        prev_pose_y_ = request->pose.position.y;
-        prev_pose_theta_ = request->pose.orientation.z; // These is orienation about z in 2D.
-        prev_time_ = this->get_clock()->now(); // Reset the time to now at
-        
+        diff_drive_.set_q(turtlelib::Transform2D(turtlelib::Vector2D{request->pose.position.x, request->pose.position.y}, request->pose.orientation.z));
         // Return success for reset:
         response->success = true;
     }
@@ -196,14 +160,6 @@ private:
 
     // Initialize the DiffDrive model for internal odometry state:
     turtlelib::DiffDrive diff_drive_{track_width_, wheel_radius_};
-
-    // Internal odometry state:
-    double prev_phi_left_ = 0.0;
-    double prev_phi_right_ = 0.0;
-    double prev_pose_x_ = 0.0;
-    double prev_pose_y_ = 0.0;
-    double prev_pose_theta_ = 0.0;
-    rclcpp::Time prev_time_ = this->get_clock()->now();     // Set the time to now at init.
 };
 
 int main(int argc, char * argv[])

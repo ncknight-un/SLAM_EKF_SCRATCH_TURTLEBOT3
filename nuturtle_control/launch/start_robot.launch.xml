@@ -39,8 +39,8 @@
         <!-- Load the Redbot for Ground-->
         <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
             <arg name="color" value="red"/>
-            <arg name="use_rviz" value="$false"/>
-            <arg name="use_jsp" value="true"/>
+            <arg name="use_rviz" value="false"/>
+            <arg name="use_jsp" value="false"/>
         </include>
 
         <!-- Launch Turtle Control -->
@@ -49,6 +49,7 @@
             <remap from = "joint_states" to = "blue/joint_states"/>
             <remap from = "wheel_left_joint" to = "blue/wheel_left_joint"/>
             <remap from = "wheel_right_joint" to = "blue/wheel_right_joint"/>
+            <remap from = "base_footprint" to = "blue/base_footprint"/>
             <remap from = "sensor_data" to = "red/sensor_data"/>
             <remap from = "wheel_cmd" to = "red/wheel_cmd"/>
         </node>
@@ -56,8 +57,8 @@
         <!-- ########################### cmd_src launch arguements ######################## -->
         <!-- Launch the circle Node if cmd_src arg is circle -->
         <node pkg="nuturtle_control" exec="circle" if="$(eval '\'$(var cmd_src)\'==\'circle\'')">
-            <param name="velocity" value="0.25"/>
-            <param name="radius" value="1.0"/>
+            <param name="velocity" value="0.1"/>
+            <param name="radius" value="0.25"/>
             <param name="frequency" value="100"/>
         </node>
 

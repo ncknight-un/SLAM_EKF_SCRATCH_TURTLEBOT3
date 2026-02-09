@@ -38,6 +38,10 @@ namespace turtlelib {
             /// \brief get the position of the robot base
             /// \return the current Transform2D of the robot base
             turtlelib::Transform2D get_q() const;
+            
+            /// \brief set the position of the robot base
+            /// \param q - the new Transform2D of the robot base
+            void set_q(const turtlelib::Transform2D & q);
     
             /// \brief update the robot base transform based on new wheel positions - Forward Kinematics
             /// \param phi_left - the new left wheel angular displacement, in radians
@@ -49,6 +53,10 @@ namespace turtlelib {
             /// \return the required wheel angular velocities as a Twist2D where omega is unused, 
             // x is the right wheel angular velocity, and y is the left wheel angular velocity
             turtlelib::wheel_vel compute_ik(const Twist2D & twist);
+
+            /// \brief Compute the Twist for the robot given tthe change in positions:
+            /// \param v - The left and wright wheel angular displacements as a Vector2D where x is the left wheel angular displacement and y is the right wheel angular displacement
+            turtlelib::Twist2D compute_twist(turtlelib::Vector2D v) const;
 
         private:
             double wheel_track_;        // distance between the wheels

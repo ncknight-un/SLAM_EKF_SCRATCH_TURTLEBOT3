@@ -17,7 +17,6 @@
 #include <string>
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/twist.hpp"
-#include "sensor_msgs/msg/joint_state.hpp"
 #include "nuturtle_control_interfaces/srv/control.hpp"
 #include "std_srvs/srv/empty.hpp"
 
@@ -30,7 +29,7 @@ public:
     : Node("circle") {
         // Declare the parameters:
         declare_parameter<int>("frequency", 10);
-        declare_parameter<double>("velocity", 0.2);
+        declare_parameter<double>("velocity", 0.05);
         declare_parameter<double>("radius", 0.5);
 
         // Get the Parameters:
@@ -52,15 +51,20 @@ public:
             if (radius_ == 0.0) {
                 RCLCPP_WARN(this->get_logger(), "Radius was set to zero, drive in a circle not possible! Setting velocity to 0.0.");
                 velocity_ = 0.0;
+                // Note: Counter clockwise is positive and clockwise is negative.
+                message.angular.z = 0.0;
+            }
+            else {
+                // Note: Counter clockwise is positive and clockwise is negative.
+                message.angular.z = velocity_ / radius_;
             }
             // linear velocity speed in x direction for robot body frame.
-            message.linear.x = radius_ * velocity_;       
+            message.linear.x = velocity_;       
             message.linear.y = 0.0;
             message.linear.z = 0.0;
             message.angular.x = 0.0;
             message.angular.y = 0.0;
-            // Note: Counter clockwise is positive and clockwise is negative.
-            message.angular.z = velocity_;
+
             cmd_vel_publisher_->publish(message);
         };
 

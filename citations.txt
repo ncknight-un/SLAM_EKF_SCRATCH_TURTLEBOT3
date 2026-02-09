@@ -1,4 +1,4 @@
-[Colaborators] Worked with: Greg Aiosa, Theo Coulson
+[Colaborators] Worked with: Greg Aiosa, Theo Coulson, Derick Dietz, Jyothi Swaroop
 [1] ROS 2 Design. "ROS 2 Launch XML Format". design.ros2.org. Accessed: January 12th, 2026. [Online]. Available: https://design.ros2.org/articles/roslaunch_xml.html
 [2] GeeksforGeeks. "How to Handle Wrong Data Type Input in C++"". geeksforgeeks.org. Accessed: January 17th, 2026. [Online]. Available: https://www.geeksforgeeks.org/cpp/how-to-handle-wrong-data-type-input-in-cpp/.
 [3] Stack Overflow. "How to throw std::invalid_arguement error". Accessed: January 17th, 2026. [Online]. Available: https://stackoverflow.com/questions/21695935/how-to-throw-stdinvalid-argument-error    
@@ -10,3 +10,4 @@
 [9] https://github.com/ngmor/catch_ros2/blob/main/examples/integration_test/integration_test_node.cpp - February 7th
 [10] https://github.com/ngmor/catch_ros2/blob/main/examples/integration_test/example_integration_test.launch.xml - February 7th
 [11] Derick Dietz. CMAKE discussion on requirements for Integration Testing. February 7th, 2026.
+[12] Derick Dietz. Circular Arc issue with update fk. February 8th, 2026.
