@@ -82,7 +82,7 @@ install(TARGETS turtlelib converter EXPORT turtlelib-targets)
 install(EXPORT turtlelib-targets
         FILE turtlelib-config.cmake
         NAMESPACE turtlelib::
-        DESTINATION lib/cmake/${PROJECT_NAME})
+        DESTINATION share/${PROJECT_NAME}/cmake)
 
 # THIS Doxygen formater has been removed due to compiling issue, but is an example of how to set up.
 # # Building documentation should be optional.

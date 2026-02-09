@@ -56,8 +56,6 @@
         <!-- ########################### cmd_src launch arguements ######################## -->
         <!-- Launch the circle Node if cmd_src arg is circle -->
         <node pkg="nuturtle_control" exec="circle" if="$(eval '\'$(var cmd_src)\'==\'circle\'')">
-            <param name="velocity" value="0.1"/>
-            <param name="radius" value="0.25"/>
             <param name="frequency" value="100"/>
         </node>
 
@@ -98,5 +96,12 @@
             <remap from="joint_states" to="blue/joint_states"/>
         </node>
         <node pkg="numsr_turtlebot" exec="numsr_turtlebot" name="numsr_turtlebot"/>
+
+        <!-- Launch the circle Node if cmd_src arg is circle -->
+        <node pkg="nuturtle_control" exec="circle" if="$(eval '\'$(var cmd_src)\'==\'circle\'')">
+            <param name="velocity" value="0.1"/>
+            <param name="radius" value="0.25"/>
+            <param name="frequency" value="100"/>
+        </node>
     </group>
 </launch>

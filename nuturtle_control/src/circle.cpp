@@ -29,13 +29,8 @@ public:
     : Node("circle") {
         // Declare the parameters:
         declare_parameter<int>("frequency", 10);
-        declare_parameter<double>("velocity", 0.05);
-        declare_parameter<double>("radius", 0.5);
-
         // Get the Parameters:
         this->get_parameter("frequency", frequency_);
-        this->get_parameter("velocity", velocity_);
-        this->get_parameter("radius", radius_);
         
         // Construct the publisher for cmd_vel:
         cmd_vel_publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
@@ -133,8 +128,8 @@ private:
 
     // Initialize the Parameters:
     int frequency_;
-    double velocity_;
-    double radius_;
+    double velocity_ = 0.0;
+    double radius_ = 0.0;
 };
 
 int main(int argc, char * argv[])

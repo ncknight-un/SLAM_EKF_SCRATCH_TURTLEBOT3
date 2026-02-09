@@ -35,4 +35,6 @@ Task E.3
 Task E.4 - Having trouble with the CMAKE, going to come back to it.
 Task E.5
 Task C.8
-Task F.1 - Settign up on Robot
+Task F.1
+Task F.2
+Task F.3
