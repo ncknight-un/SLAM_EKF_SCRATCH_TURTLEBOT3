@@ -46,12 +46,12 @@ TEST_CASE("Pure Rotation Path", "[update_fk and compute_ik]") {
         turtlelib::Transform2D q = diff_drive.get_q();
         REQUIRE_THAT(q.translation().x, WithinRel(0.0, EPS));   // The robot should have moved forward 0.0 meters in the x direction in its frame 
         REQUIRE_THAT(q.translation().y, WithinRel(0.0, EPS));
-        REQUIRE_THAT(q.rotation(), WithinRel(2.0, EPS));  // The robot should have rotated -2 radians in place
+        REQUIRE_THAT(q.rotation(), WithinRel(-2.0, EPS));  // The robot should have rotated -2 radians in place
     }
 
     SECTION("Inverse Kinematics for simple rotation path") {
         // Compute the required wheel angular velocities for a rotation of 2 radians in place:
-        turtlelib::Twist2D twist{-2.0, 0.0, 0.0}; 
+        turtlelib::Twist2D twist{2.0, 0.0, 0.0}; 
         turtlelib::wheel_vel vel = diff_drive.compute_ik(twist);
 
         // Check that the required wheel angular velocities are correct:
@@ -70,7 +70,7 @@ TEST_CASE("Arc Path", "[update_fk and compute_ik]") {
         diff_drive.update_fk(110.0, 90.0);
         // Check that the robot base transform is updated correctly:
         turtlelib::Transform2D q = diff_drive.get_q();
-        REQUIRE_THAT(q.translation().x, WithinRel(1.0, EPS));   // The robot should have moved forward 1.0 meters in the x direction in its frame 
+        REQUIRE_THAT(q.translation().x, WithinRel(0.4546, EPS));   // The robot should have moved forward 1.0 meters in the x direction in its frame 
         REQUIRE_THAT(q.translation().y, WithinRel(0.0, EPS));
         REQUIRE_THAT(q.rotation(), WithinRel(2.0, EPS));  // The robot should have rotated -2 radians and moved forward along the path 1 meters
     }

@@ -300,7 +300,6 @@ TEST_CASE("Vector2D Angle Tests", "angle()") {
     // Test angle()
     double result1 = angle(v1, v2);  // Result is now pi
     double result2 = angle(v2, v3);  // Result is now ~2.944
-    double result3 = angle(v1, v4);  // Result is now 0.0
     
     SECTION("Angle of vector with positive components is computed correctly") {
         REQUIRE_THAT(result1, WithinRel(std::numbers::pi, EPS));
@@ -311,7 +310,7 @@ TEST_CASE("Vector2D Angle Tests", "angle()") {
     }
 
     SECTION("Angle of zero magnitude vector is computed correctly") {
-        REQUIRE_THAT(result3, WithinRel(0.0, EPS));
+        REQUIRE_THROWS_AS(angle(v1, v4), std::invalid_argument);
     }
 }
 

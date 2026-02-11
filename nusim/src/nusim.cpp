@@ -61,9 +61,11 @@ public:
     // Initialize the transform broadcaster
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     // Initialize the Publisher for Sensor Data:
-    sensor_data_publisher_ = this->create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
+    sensor_data_publisher_ =
+      this->create_publisher<nuturtlebot_msgs::msg::SensorData>("red/sensor_data", 10);
     // Initialize the Publisher for Joint States:
-    joint_state_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
+    joint_state_publisher_ =
+      this->create_publisher<sensor_msgs::msg::JointState>("red/joint_states", 10);
 
     // Initialize and publish the Real Walls:
     auto marker_array_walls = createWalls();
@@ -72,7 +74,7 @@ public:
     // Initialize and publish the Real Obstacles:
     auto marker_array_obstacles = createObstacles();
     obst_pub_->publish(marker_array_obstacles);
-    
+
     // Create the timer callback:
     auto timer_callback = [this, rate]() -> void {
         // Print a Message Once:
@@ -88,15 +90,19 @@ public:
         auto dt = 1.0 / rate; // Change in time since last publish.
 
         // Update the DiffDrive model using the current wheel positions:
-        double phi_left = turtlelib::normalize_angle(diff_drive_.get_phi_left() + wheel_vel_.v_lw * dt);
-        double phi_right = turtlelib::normalize_angle(diff_drive_.get_phi_right() + wheel_vel_.v_rw * dt);
+        double phi_left = turtlelib::normalize_angle(diff_drive_.get_phi_left() + wheel_vel_.v_lw *
+        dt);
+        double phi_right = turtlelib::normalize_angle(diff_drive_.get_phi_right() +
+        wheel_vel_.v_rw * dt);
         diff_drive_.update_fk(phi_left, phi_right);
 
         // Publish the SensorData message update:
         nuturtlebot_msgs::msg::SensorData sensor_data_msg;
         sensor_data_msg.stamp = this->get_clock()->now();
-        sensor_data_msg.left_encoder = static_cast<int>(diff_drive_.get_phi_left() * encode_ticks_per_rad_);
-        sensor_data_msg.right_encoder = static_cast<int>(diff_drive_.get_phi_right() * encode_ticks_per_rad_);
+        sensor_data_msg.left_encoder = static_cast<int>(diff_drive_.get_phi_left() *
+          encode_ticks_per_rad_);
+        sensor_data_msg.right_encoder = static_cast<int>(diff_drive_.get_phi_right() *
+          encode_ticks_per_rad_);
         sensor_data_publisher_->publish(sensor_data_msg);
 
         // Publish the JointState message update:
@@ -109,7 +115,9 @@ public:
         joint_state_msg.position.push_back(phi_right);
         joint_state_publisher_->publish(joint_state_msg);
 
-        RCLCPP_DEBUG_STREAM(this->get_logger(), "The phi_left is " << phi_left << " and phi_right is " << phi_right << " at rate " << rate << " Hz!");
+        RCLCPP_DEBUG_STREAM(this->get_logger(),
+        "The phi_left is " << phi_left << " and phi_right is " << phi_right << " at rate " <<
+          rate << " Hz!");
 
         // Update the robot positions based on the internal diffdrive:
         x0_ = diff_drive_.get_q().translation().x;
@@ -148,14 +156,22 @@ public:
             std::bind(&Nusimulator::handle_service_reset, this, std::placeholders::_1,
       std::placeholders::_2)
     );
-  
+
     // Construct the subscriber for Wheel Commands to the red Ground Robot:
-    wheel_cmd_subscriber_ = this->create_subscription<nuturtlebot_msgs::msg::WheelCommands>("red/wheel_cmd", 10, [this](const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg) {
+    wheel_cmd_subscriber_ =
+      this->create_subscription<nuturtlebot_msgs::msg::WheelCommands>("red/wheel_cmd", 10,
+        [this](const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg) {
         // Log the received wheel commands:
-        RCLCPP_INFO_STREAM_ONCE(this->get_logger(), "Received wheel commands - Left: " << msg->left_velocity << ", Right: " << msg->right_velocity);
+          RCLCPP_INFO_STREAM_ONCE(this->get_logger(),
+        "Received wheel commands - Left: " << msg->left_velocity << ", Right: " <<
+            msg->right_velocity);
         // Original Thought - Remove if other idea works fine:
-        wheel_vel_.v_lw = std::clamp(static_cast<double>(msg->left_velocity) / this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_/this->motor_cmd_per_rad_sec_), (this->motor_cmd_max_/this->motor_cmd_per_rad_sec_));
-        wheel_vel_.v_rw = std::clamp(static_cast<double>(msg->right_velocity) / this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_/this->motor_cmd_per_rad_sec_), (this->motor_cmd_max_/this->motor_cmd_per_rad_sec_));
+          wheel_vel_.v_lw = std::clamp(static_cast<double>(msg->left_velocity) /
+        this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_),
+          (this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_));
+          wheel_vel_.v_rw = std::clamp(static_cast<double>(msg->right_velocity) /
+        this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_),
+          (this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_));
     });
   }
 
