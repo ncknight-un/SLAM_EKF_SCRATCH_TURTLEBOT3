@@ -68,7 +68,7 @@ turtle_control
 if(BUILD_TESTING)
   ############################################### Begin_Citation [11] #########################
   find_package(catch_ros2 REQUIRED)
-  include (CTest)
+  include(CTest)
 
   # Set each test executable's dependencies:
   add_executable(turtle_control_test test/turtle_control_test.cpp)
@@ -81,7 +81,7 @@ if(BUILD_TESTING)
     sensor_msgs::sensor_msgs__rosidl_typesupport_cpp
   )
 
-  install(TARGETS 
+  install(TARGETS
     turtle_control_test
     DESTINATION lib/${PROJECT_NAME}
   )
@@ -99,6 +99,11 @@ if(BUILD_TESTING)
 
   # Add the ros2 integration tests:
   catch_ros2_add_integration_test(turtle_control_test LAUNCH_FILE turtle_control_test.launch.xml)
+
+  install(DIRECTORY
+  test
+  DESTINATION share/${PROJECT_NAME}
+)
 endif()
 
 # Set up Install Directories:

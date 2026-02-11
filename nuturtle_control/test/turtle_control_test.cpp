@@ -7,7 +7,7 @@ using namespace std::chrono_literals;
 
 // ################################### Begin_Citation [9] ###################################
 // The following test case is adapted from the example test case provided in the Catch2 documentation:
-TEST_CASE("cmd_vel pure translation equal correct wheel_cmd", "[turtle_control]") 
+TEST_CASE("cmd_vel pure translation equal correct wheel_cmd", "[turtle_control]")
 {
     auto node = rclcpp::Node::make_shared("turtle_control_test");
 
@@ -21,27 +21,28 @@ TEST_CASE("cmd_vel pure translation equal correct wheel_cmd", "[turtle_control]"
     bool msg_received = false;
     nuturtlebot_msgs::msg::WheelCommands received_msg;
 
-    auto wheel_sub = node->create_subscription<nuturtlebot_msgs::msg::WheelCommands>("wheel_cmd", 10,
+    auto wheel_sub = node->create_subscription<nuturtlebot_msgs::msg::WheelCommands>("wheel_cmd",
+    10,
       [&](nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg) {
-          received_msg = *msg;
-          msg_received = true;
+        received_msg = *msg;
+        msg_received = true;
       }
     );
 
     auto start_time = rclcpp::Clock().now();
 
     while (rclcpp::ok() &&
-           ((rclcpp::Clock().now() - start_time).seconds() < TEST_DURATION))
-    {
+    ((rclcpp::Clock().now() - start_time).seconds() < TEST_DURATION))
+  {
         // Publish command repeatedly until received
-        if (!msg_received) {
-            geometry_msgs::msg::Twist twist;
-            twist.linear.x = 1.0;
-            twist.angular.z = 0.0;
-            cmd_pub->publish(twist);
-        }
+    if (!msg_received) {
+      geometry_msgs::msg::Twist twist;
+      twist.linear.x = 1.0;
+      twist.angular.z = 0.0;
+      cmd_pub->publish(twist);
+    }
 
-        rclcpp::spin_some(node);
+    rclcpp::spin_some(node);
     }
 
     REQUIRE(msg_received);

@@ -4,7 +4,7 @@
     <!-- catch2_launch_file - A required tag which will add a "result_file" argument for the launch file.
     This file will hold the results of the test. Description attribute of this tag is optional for XML launch files. -->
     <catch2_launch_file description='Launch file for turtle_control tests'/>
-    <arg name="result_file" default="/tmp/turtle_control_test.xml"/>
+    <!-- <arg name="result_file" default="/tmp/turtle_control_test.xml"/> -->
 
     <!-- Specific launch arguments can also be included at the user's discretion -->
     <arg name='test_duration' default='10.0' description='Max length of test in seconds.'/>
@@ -17,7 +17,7 @@
     Specific parameters and other arguments can also be passed, like the "test_duration" example below. -->
     <catch2_integration_test_node pkg='catch_ros2' exec='turtle_control_test'>
         <param name='test_duration' value='$(var test_duration)'/>
-        <arg name="result_file" value="$(var result_file)" />
+        <!-- <arg name="result_file" value="$(var result_file)" /> -->
     </catch2_integration_test_node>
     <!-- ################################### End_Citation [10] ############################ -->
 </launch>
