@@ -82,6 +82,7 @@
             args="0.0 0.0 0.0 0.0 0.0 0.0 nusim/world odom"/>
     </group>
     <group if="$(eval '\'$(var robot)\'==\'localhost\'')">
+        <!-- Start the odometry Node -->
         <node pkg="nuturtle_control" exec="odometry" name="odometry">
             <param name="frequency" value="100"/>
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
@@ -91,11 +92,19 @@
             <param name="wheel_right" value="wheel_right_joint"/>
             <remap from="joint_states" to="blue/joint_states"/>
         </node>
+
+        <!-- Start the turtle control node -->
         <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
             <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
             <remap from="joint_states" to="blue/joint_states"/>
         </node>
+        <!-- Start the physical turtlebot node  -->
         <node pkg="numsr_turtlebot" exec="numsr_turtlebot" name="numsr_turtlebot"/>
+
+        <!-- Start the lazer node -->
+        <node pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher" name="lazer">
+            <arg name="port" value="/dev/ttyUSB0"/>
+        </node>
 
         <!-- Launch the circle Node if cmd_src arg is circle -->
         <node pkg="nuturtle_control" exec="circle" if="$(eval '\'$(var cmd_src)\'==\'circle\'')">
