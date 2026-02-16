@@ -74,7 +74,6 @@ if(BUILD_TESTING)
   add_executable(turtle_control_test test/turtle_control_test.cpp)
   target_link_libraries(turtle_control_test PRIVATE
     rclcpp::rclcpp
-    turtlelib::turtlelib
     catch_ros2::catch_ros2_with_node_main
     geometry_msgs::geometry_msgs__rosidl_typesupport_cpp
     nuturtlebot_msgs::nuturtlebot_msgs__rosidl_typesupport_cpp

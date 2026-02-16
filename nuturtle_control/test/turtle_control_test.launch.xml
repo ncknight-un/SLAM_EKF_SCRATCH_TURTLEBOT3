@@ -4,20 +4,26 @@
     <!-- catch2_launch_file - A required tag which will add a "result_file" argument for the launch file.
     This file will hold the results of the test. Description attribute of this tag is optional for XML launch files. -->
     <catch2_launch_file description='Launch file for turtle_control tests'/>
-    <!-- <arg name="result_file" default="/tmp/turtle_control_test.xml"/> -->
 
     <!-- Specific launch arguments can also be included at the user's discretion -->
     <arg name='test_duration' default='10.0' description='Max length of test in seconds.'/>
 
     <!-- Launch the Turtle Control Node -->
-    <node pkg='nuturtle_control' exec='turtle_control' />
+    <node pkg="nuturtle_control" exec="turtle_control">
+        <param from = "$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+        <remap from = "joint_states" to = "blue/joint_states"/>
+        <remap from = "sensor_data" to = "red/sensor_data"/>
+        <remap from = "wheel_cmd" to = "red/wheel_cmd"/>
+    </node>
 
     <!-- catch2_integration_test_node - a wrapper around node which passes the "result_file" argument to Catch2.
     There should only be one test node. This node will shutdown the entire launch file when it exits.
     Specific parameters and other arguments can also be passed, like the "test_duration" example below. -->
     <catch2_integration_test_node pkg='nuturtle_control' exec='turtle_control_test'>
         <param name='test_duration' value='$(var test_duration)'/>
-        <!-- <arg name="result_file" value="$(var result_file)" /> -->
+        <remap from = "wheel_cmd" to = "red/wheel_cmd"/>
+        <remap from = "sensor_data" to = "red/sensor_data"/>
+        <remap from = "joint_states" to = "blue/joint_states"/>
     </catch2_integration_test_node>
     <!-- ################################### End_Citation [10] ############################ -->
 </launch>
