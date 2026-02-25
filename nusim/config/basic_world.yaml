@@ -11,3 +11,5 @@
     obstacles_x: [-0.4, 0.7, 0.5]
     obstacles_y: [-0.7, -0.8, 0.8]
     obstacles_r: [0.038, 0.038,0.038]
+    input_noise: 0
+    slip_fraction: 0

@@ -40,8 +40,18 @@
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include "turtlelib/diff_drive.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
+#include <random>
 
 using namespace std::chrono_literals;
+
+ std::mt19937 & get_random() {
+    // static variables inside a function are created once and persist for the remainder of the program
+    static std::random_device rd{}; 
+    static std::mt19937 mt{rd()};
+    // we return a reference to the pseudo-random number genrator object. This is always the
+    // same object every time get_random is called
+    return mt;
+ }
 
 /// \brief A class to launch a Simulator Node
 class Nusimulator : public rclcpp::Node {
@@ -90,19 +100,25 @@ public:
         auto dt = 1.0 / rate; // Change in time since last publish.
 
         // Update the DiffDrive model using the current wheel positions:
-        double phi_left = turtlelib::normalize_angle(diff_drive_.get_phi_left() + wheel_vel_.v_lw *
-        dt);
-        double phi_right = turtlelib::normalize_angle(diff_drive_.get_phi_right() +
-        wheel_vel_.v_rw * dt);
+        std::uniform_real_distribution<double> slip_dist(-slip_fraction_, slip_fraction_);
+
+        double slip_l = slip_dist(get_random());
+        double slip_r = slip_dist(get_random());
+
+        double phi_left = turtlelib::normalize_angle(
+            diff_drive_.get_phi_left() +
+            wheel_vel_.v_lw * dt * (1.0 + slip_l));
+
+        double phi_right = turtlelib::normalize_angle(
+            diff_drive_.get_phi_right() +
+            wheel_vel_.v_rw * dt * (1.0 + slip_r));
         diff_drive_.update_fk(phi_left, phi_right);
 
         // Publish the SensorData message update:
         nuturtlebot_msgs::msg::SensorData sensor_data_msg;
         sensor_data_msg.stamp = this->get_clock()->now();
-        sensor_data_msg.left_encoder = static_cast<int>(diff_drive_.get_phi_left() *
-          encode_ticks_per_rad_);
-        sensor_data_msg.right_encoder = static_cast<int>(diff_drive_.get_phi_right() *
-          encode_ticks_per_rad_);
+        sensor_data_msg.left_encoder = static_cast<int>(diff_drive_.get_phi_left() * encode_ticks_per_rad_);
+        sensor_data_msg.right_encoder = static_cast<int>(diff_drive_.get_phi_right() * encode_ticks_per_rad_);
         sensor_data_publisher_->publish(sensor_data_msg);
 
         // Publish the JointState message update:
@@ -161,17 +177,28 @@ public:
     wheel_cmd_subscriber_ =
       this->create_subscription<nuturtlebot_msgs::msg::WheelCommands>("red/wheel_cmd", 10,
         [this](const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg) {
-        // Log the received wheel commands:
-          RCLCPP_INFO_STREAM_ONCE(this->get_logger(),
-        "Received wheel commands - Left: " << msg->left_velocity << ", Right: " <<
-            msg->right_velocity);
-        // Original Thought - Remove if other idea works fine:
-          wheel_vel_.v_lw = std::clamp(static_cast<double>(msg->left_velocity) /
-        this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_),
-          (this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_));
-          wheel_vel_.v_rw = std::clamp(static_cast<double>(msg->right_velocity) /
-        this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_),
-          (this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_));
+      // Log the received wheel commands:
+        RCLCPP_INFO_STREAM_ONCE(this->get_logger(),
+      "Received wheel commands - Left: " << msg->left_velocity << ", Right: " <<
+          msg->right_velocity);
+                  
+      // Apply Input noise to velocity control:
+      auto ur = msg->right_velocity;
+      auto ul = msg->left_velocity;
+      auto vr = ur + d(get_random());
+      auto vl = ul + d(get_random());
+
+      // Set the normal distribuition for noise:
+      std::normal_distribution<> d(0.0, input_noise_);
+      // Update vr and vl if ur or ul is 0.0:
+      if(ur == 0)
+        vr = ur;
+      if(ul == 0)
+        vl = ul;
+
+      // Set wheel velocities with update to vi:
+      wheel_vel_.v_lw = std::clamp(static_cast<double>(vl) / this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_), (this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_));
+      wheel_vel_.v_rw = std::clamp(static_cast<double>(vr) / this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_), (this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_));
     });
   }
 
@@ -362,6 +389,8 @@ private:
   int motor_cmd_max_ = declare_parameter<int>("motor_cmd_max", 265);
   double motor_cmd_per_rad_sec_ = declare_parameter<double>("motor_cmd_per_rad_sec", 41.67);
   int encode_ticks_per_rad_ = declare_parameter<int>("encode_ticks_per_rad", 652);
+  int input_noise_ = declare_parameter<int>("input_noise", 0);
+  int slip_fraction_ = declare_parameter<int>("slip_fraction", 0);
 
   // Initialize the DiffDrive model:
   turtlelib::DiffDrive diff_drive_{track_width_, wheel_radius_};
