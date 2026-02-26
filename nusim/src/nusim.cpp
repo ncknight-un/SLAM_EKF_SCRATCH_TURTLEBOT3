@@ -17,6 +17,7 @@
 ///     ~/timestep (std_msgs::msg::UInt64): Current simulation timestep counter
 ///     ~/real_walls (visualization_msgs::msg::MarkerArray): Markers representing arena walls
 ///     ~/real_obstacles (visualization_msgs::msg::MarkerArray): Markers representing obstacles
+///     ~/fake_obstacles (visualization_msgs::msg::MarkerArray): Markers representing fake obstacles for sensor data
 /// SUBSCRIBES:
 ///     ~/cmd_vel (geometry_msgs::msg::Twist): Velocity commands for the robot
 /// SERVERS:
@@ -68,6 +69,9 @@ public:
       rclcpp::QoS(10).transient_local());
     obst_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/real_obstacles",
       rclcpp::QoS(10).transient_local());
+    fake_obst_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/fake_obstacles",
+      rclcpp::QoS(10).transient_local());
+
     // Initialize the transform broadcaster
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     // Initialize the Publisher for Sensor Data:
@@ -83,7 +87,7 @@ public:
 
     // Initialize and publish the Real Obstacles:
     auto marker_array_obstacles = createObstacles();
-    obst_pub_->publish(marker_array_obstacles);
+    obst_pub_->publish(marker_array_obstacles); 
 
     // Create the timer callback:
     auto timer_callback = [this, rate]() -> void {
@@ -163,9 +167,20 @@ public:
         // Send the transformation
         tf_broadcaster_->sendTransform(t);
       };
+    
+    auto fake_sensor_callback_ = [this]() -> void {
+        // Create a timer callback for publishing the fake sensor data of the obstacles every 200 ms:
+        auto marker_array_fake_obstacles = createFakeObstacles();
+        fake_obst_pub_->publish(marker_array_fake_obstacles);
+    };
+    
     // Set the timer:
     timer_ = this->create_wall_timer(std::chrono::milliseconds(static_cast<int>(1000 / rate)),
       timer_callback);
+    
+    // Create a timer to publish the fake sensor data every 200 ms:
+    sensor_timer_ = this->create_wall_timer(std::chrono::milliseconds(200), fake_sensor_callback_);
+
     // Reset service
     reset_service_ = this->create_service<std_srvs::srv::Empty>(
             "~/reset",
@@ -185,11 +200,11 @@ public:
       // Apply Input noise to velocity control:
       auto ur = msg->right_velocity;
       auto ul = msg->left_velocity;
-      auto vr = ur + d(get_random());
-      auto vl = ul + d(get_random());
 
       // Set the normal distribuition for noise:
       std::normal_distribution<> d(0.0, input_noise_);
+      auto vr = ur + d(get_random());
+      auto vl = ul + d(get_random());
       // Update vr and vl if ur or ul is 0.0:
       if(ur == 0)
         vr = ur;
@@ -203,6 +218,56 @@ public:
   }
 
 private:
+/// \brief Creates visualization markers for the fake sensor data of the obstacles.
+///
+/// \returns A MarkerArray containing a gaussian distribution of fake obstacles that dissapear/are 
+///           deleted when they go out of the robots max range.
+  visualization_msgs::msg::MarkerArray createFakeObstacles(){
+    // Initialize and publish the Fake Obstacles:
+    visualization_msgs::msg::MarkerArray marker_array_fake_obstacles;
+
+    for (size_t i = 0; i < obstacles_x_.size(); ++i) {
+      visualization_msgs::msg::Marker marker;
+
+      marker.header.frame_id = "red/base_footprint";
+      marker.header.stamp = rclcpp::Clock().now();
+      marker.ns = "fake_obstacles";
+      marker.id = i;
+      marker.type = visualization_msgs::msg::Marker::CYLINDER;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      // Set orientation
+      marker.pose.orientation.w = 1.0;
+      // Determine obstacle locations and size:
+      // Add uncertainty radius to obstacles: 
+      auto sigma = std::sqrt(basic_sensor_variance_);
+      std::normal_distribution<> d(0.0, sigma);
+      double obs_x = obstacles_x_.at(i) - x0_ + d(get_random());
+      double obs_y = obstacles_y_.at(i) - y0_ + d(get_random());
+      double obs_r = obstacles_r_.at(i) + d(get_random());
+      // Set the marker information for the fake obstacles:
+      marker.pose.position.x = obs_x;
+      marker.pose.position.y = obs_y;
+      marker.pose.position.z = obst_height_ / 2;
+      marker.scale.x = obs_r * 2;
+      marker.scale.y = obs_r * 2;
+      marker.scale.z = obst_height_;
+      // Fake Obstacles (Yellow)
+      marker.color.r = 1.0;
+      marker.color.g = 1.0;
+      marker.color.b = 0.0;
+      marker.color.a = 1.0;
+      // Add obstacle to marker array
+      marker_array_fake_obstacles.markers.emplace_back(marker);
+
+      // If the obstacle is out of range, delete it from the marker array by changing its action to DELETE:
+      double distance = std::sqrt(std::pow(obs_x, 2) + std::pow(obs_y, 2));
+      if (distance > max_range_) {
+        marker_array_fake_obstacles.markers.back().action = visualization_msgs::msg::Marker::DELETE;
+      }
+    }
+    return marker_array_fake_obstacles;
+  }
+
 /// \brief Creates visualization markers for the arena walls and floor
 ///
 /// \returns A MarkerArray containing 4 walls (red) and a floor (white) with dimensions
@@ -335,8 +400,7 @@ private:
   /// \returns void
   void handle_service_reset(
     const std::shared_ptr<std_srvs::srv::Empty::Request> request,
-    const std::shared_ptr<std_srvs::srv::Empty::Response> response)
-  {
+    const std::shared_ptr<std_srvs::srv::Empty::Response> response) {
     (void)request;
     (void)response;
     RCLCPP_INFO(this->get_logger(), "Timestep Reset!");
@@ -351,9 +415,11 @@ private:
 
   // Initialize ROS 2 Infrustructure:
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr sensor_timer_;
   rclcpp::Publisher<std_msgs::msg::UInt64>::SharedPtr publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr obst_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr fake_obst_pub_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscriber_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_subscriber_;
   rclcpp::Publisher<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_publisher_;
@@ -391,6 +457,8 @@ private:
   int encode_ticks_per_rad_ = declare_parameter<int>("encode_ticks_per_rad", 652);
   int input_noise_ = declare_parameter<int>("input_noise", 0);
   int slip_fraction_ = declare_parameter<int>("slip_fraction", 0);
+  double max_range_ = declare_parameter<double>("max_range", 2.0);
+  double basic_sensor_variance_ = declare_parameter<double>("basic_sensor_variance", 0.01);
 
   // Initialize the DiffDrive model:
   turtlelib::DiffDrive diff_drive_{track_width_, wheel_radius_};

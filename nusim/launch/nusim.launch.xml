@@ -9,15 +9,15 @@
         <param from = "$(find-pkg-share nusim)/config/$(var config_file).yaml"/>
     </node>
 
+    <!-- RViz - If RViz is launched and closed, the launchfile will terminate-->
+    <node pkg='rviz2' exec='rviz2' args='-d $(find-pkg-share nusim)/config/nusim.rviz' on_exit='shutdown'>
+        <remap from='map' to='nusim/world'/>
+    </node>
+
     <!-- Load the Redbot for Ground-->
     <include file='$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml'>
         <arg name='color' value='red'/>
         <arg name='use_rviz' value='false'/>
         <arg name='use_jsp' value='true'/>
     </include>
-
-    <!-- RViz - If RViz is launched and closed, the launchfile will terminate-->
-    <node pkg='rviz2' exec='rviz2' args='-d $(find-pkg-share nusim)/config/nusim.rviz' on_exit='shutdown'>
-        <remap from='map' to='nusim/world'/>
-    </node>
 </launch>
