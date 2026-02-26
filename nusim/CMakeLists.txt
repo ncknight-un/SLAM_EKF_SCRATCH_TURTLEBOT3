@@ -17,6 +17,7 @@ find_package(visualization_msgs REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
 find_package(nuturtlebot_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 
 # Link Libraries:
 add_executable(nusimulator src/nusim.cpp)
@@ -26,6 +27,7 @@ target_link_libraries(nusimulator PUBLIC
   ${geometry_msgs_TARGETS}
   ${visualization_msgs_TARGETS}
   ${nuturtlebot_msgs_TARGETS}
+  ${nav_msgs_TARGETS}
   turtlelib::turtlelib
   tf2_ros::tf2_ros
   tf2::tf2

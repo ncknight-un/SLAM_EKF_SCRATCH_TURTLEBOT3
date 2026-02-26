@@ -18,6 +18,7 @@
 ///     ~/real_walls (visualization_msgs::msg::MarkerArray): Markers representing arena walls
 ///     ~/real_obstacles (visualization_msgs::msg::MarkerArray): Markers representing obstacles
 ///     ~/fake_obstacles (visualization_msgs::msg::MarkerArray): Markers representing fake obstacles for sensor data
+///     ~/red/nav_path (nav_msgs::msg::Path): The current traced path of the robot.
 /// SUBSCRIBES:
 ///     ~/cmd_vel (geometry_msgs::msg::Twist): Velocity commands for the robot
 /// SERVERS:
@@ -42,6 +43,7 @@
 #include "turtlelib/diff_drive.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include <random>
+#include <nav_msgs/msg/path.hpp>
 
 using namespace std::chrono_literals;
 
@@ -88,6 +90,9 @@ public:
     // Initialize and publish the Real Obstacles:
     auto marker_array_obstacles = createObstacles();
     obst_pub_->publish(marker_array_obstacles); 
+
+    // Initialize the Publisher for the robot path:
+    path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("red/nav_path", 10);
 
     // Create the timer callback:
     auto timer_callback = [this, rate]() -> void {
@@ -166,6 +171,23 @@ public:
         t.transform.rotation.w = q.w();
         // Send the transformation
         tf_broadcaster_->sendTransform(t);
+
+        // Publish the robot path:
+        nav_msgs::msg::Path path_msg;
+        path_msg.header.stamp = sensor_data_msg.stamp;  // Keep the same timestamp as sensor data update
+        path_msg.header.frame_id = "nusim/world";
+        geometry_msgs::msg::PoseStamped pose;
+        pose.header = path_msg.header;
+        // Update the pose of the robot:
+        pose.pose.position.x = x0_;
+        pose.pose.position.y = y0_;
+        pose.pose.position.z = 0.0;
+        pose.pose.orientation.x = q.x();
+        pose.pose.orientation.y = q.y();
+        pose.pose.orientation.z = q.z();
+        pose.pose.orientation.w = q.w();
+        path_msg.poses.push_back(pose);
+        path_publisher_->publish(path_msg);
       };
     
     auto fake_sensor_callback_ = [this]() -> void {
@@ -426,6 +448,7 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_publisher_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
 
   // Set the timestep:
   uint64_t timestep_;
