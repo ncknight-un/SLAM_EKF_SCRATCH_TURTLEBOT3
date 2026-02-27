@@ -43,4 +43,5 @@ Task C.9
 Task C.10
 Task V.1
 Task C.11
-Task C.12 - Finished except for wall lidar scan.
+Task C.12
+Task V.2

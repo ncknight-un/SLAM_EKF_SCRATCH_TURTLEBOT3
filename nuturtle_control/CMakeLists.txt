@@ -20,6 +20,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(turtlelib REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 
 # Create Executables and Link Libraries:
 add_executable(turtle_control src/turtle_control.cpp)
@@ -31,6 +32,9 @@ target_link_libraries(turtle_control PUBLIC
   ${geometry_msgs_TARGETS}
   ${nuturtlebot_msgs_TARGETS}
   ${sensor_msgs_TARGETS}
+  ${std_msgs_TARGETS}
+  ${nav_msgs_TARGETS}
+  ${tf2_ros_TARGETS}
   rclcpp::rclcpp
   sensor_msgs::sensor_msgs_library
   turtlelib::turtlelib

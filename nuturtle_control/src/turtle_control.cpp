@@ -10,6 +10,7 @@
 /// PUBLISHES:
 ///     ~ wheel_cmd (nuturtle_control/msg/WheelCommands): The motor commands for the left and right wheels, converted from the cmd_vel topic
 ///     ~ joint_states (sensor_msgs/msg/JointState): The current joint states of the
+///     ~ path (nav_msgs/msg/Path): The current path of the robot based on its position updates for odometry.
 /// SUBSCRIBES:
 ///     ~ cmd_vel (geometry_msgs/msg/Twist): The desired linear and angular velocity of the robot base, which is converted to wheel commands and published on the wheel_cmd topic
 ///     ~ sensor_data (nuturtle_control/msg/SensorData): The current wheel encoder ticks, which is used to update the DiffDrive model and publish the current joint states on the joint_states
@@ -25,6 +26,8 @@
 #include "nuturtlebot_msgs/msg/sensor_data.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "turtlelib/diff_drive.hpp"
+#include <nav_msgs/msg/path.hpp>
+#include <tf2/LinearMath/Quaternion.hpp>
 
 /// \brief A class to launch a Simulator Node
 class TurtleControl : public rclcpp::Node {
@@ -51,6 +54,9 @@ public:
         // Construct the publisher for joint states:
     joint_state_publisher_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states",
       10);
+
+      // Construct the publisher for the robot path:
+      path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("blue/odom_path", 10);
 
         // Construct the subscriber and publisher for cmd_vel:
     cmd_vel_subscriber_ = this->create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 10,
@@ -117,6 +123,25 @@ public:
           joint_state_msg.position = {phi_left, phi_right};
           joint_state_msg.velocity = {dphi_left, dphi_right};
           joint_state_publisher_->publish(joint_state_msg);
+
+          // Publish the robot path for odometry:
+          robot_path_.header.stamp = msg->stamp;  // Keep the same timestamp as sensor data update
+          robot_path_.header.frame_id = "nusim/world";
+          geometry_msgs::msg::PoseStamped pose;
+          pose.header = robot_path_.header;
+          // Update the pose of the robot:
+          pose.pose.position.x = diff_drive_.get_q().translation().x;
+          pose.pose.position.y = diff_drive_.get_q().translation().y;
+          pose.pose.position.z = 0.0;
+          // Orienation of the robot as a quaternion:
+          tf2::Quaternion q;
+          q.setRPY(0, 0, diff_drive_.get_q().rotation());
+          pose.pose.orientation.x = q.x();
+          pose.pose.orientation.y = q.y();
+          pose.pose.orientation.z = q.z();
+          pose.pose.orientation.w = q.w();
+          robot_path_.poses.push_back(pose);
+          path_publisher_->publish(robot_path_);
         });
   }
 
@@ -126,6 +151,7 @@ private:
   rclcpp::Publisher<nuturtlebot_msgs::msg::WheelCommands>::SharedPtr wheel_cmd_publisher_;
   rclcpp::Subscription<nuturtlebot_msgs::msg::SensorData>::SharedPtr sensor_data_subscriber_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
 
     // Initialize the parameters:
   double wheel_radius_ = declare_parameter<double>("wheel_radius");
@@ -141,6 +167,9 @@ private:
   double prev_phi_right_ = 0.0;
     // Initialize the DiffDrive model:
   turtlelib::DiffDrive diff_drive_{track_width_, wheel_radius_};
+
+  // Track the robot path for odometry:
+  nav_msgs::msg::Path robot_path_;
 };
 
 int main(int argc, char * argv[])

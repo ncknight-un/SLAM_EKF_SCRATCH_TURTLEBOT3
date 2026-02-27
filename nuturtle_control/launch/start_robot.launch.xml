@@ -33,7 +33,7 @@
 
         <!-- Launch the Nusim Node if robot arg is nusim-->
         <node pkg="nusim" exec="nusimulator" if="$(eval '\'$(var robot)\'==\'nusim\'')">
-            <param from = "$(find-pkg-share nusim)/config/basic_world.yaml"/>
+            <param from = "$(find-pkg-share nusim)/config/basic_world_laser.yaml"/>
             <remap from = "wheel_left_joint" to = "red/wheel_left_joint"/>
             <remap from = "wheel_right_joint" to = "red/wheel_right_joint"/>
         </node>
@@ -103,7 +103,7 @@
 
         <!-- Start the lazer node -->
         <node pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher" name="lazer">
-            <arg name="port" value="/dev/ttyUSB0"/>
+            <param name="port" value="/dev/ttyUSB0"/>
         </node>
 
         <!-- Launch the circle Node if cmd_src arg is circle -->

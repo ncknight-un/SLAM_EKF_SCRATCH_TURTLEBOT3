@@ -158,6 +158,8 @@ public:
         auto [collision_detected, obstacle_index] = checkCollision();
         if (collision_detected) {
           updateCollision(obstacle_index);
+          // Update the DiffDrive model with the new position after collision:
+          diff_drive_.set_q(turtlelib::Transform2D(turtlelib::Vector2D(x0_, y0_), theta0_));
         }
 
         // Assign parameters to corresponding tf variables and broadcast:
@@ -184,11 +186,10 @@ public:
         tf_broadcaster_->sendTransform(t);
 
         // Publish the robot path:
-        nav_msgs::msg::Path path_msg;
-        path_msg.header.stamp = sensor_data_msg.stamp;  // Keep the same timestamp as sensor data update
-        path_msg.header.frame_id = "nusim/world";
+        robot_path_.header.stamp = sensor_data_msg.stamp;  // Keep the same timestamp as sensor data update
+        robot_path_.header.frame_id = "nusim/world";
         geometry_msgs::msg::PoseStamped pose;
-        pose.header = path_msg.header;
+        pose.header = robot_path_.header;
         // Update the pose of the robot:
         pose.pose.position.x = x0_;
         pose.pose.position.y = y0_;
@@ -197,8 +198,8 @@ public:
         pose.pose.orientation.y = q.y();
         pose.pose.orientation.z = q.z();
         pose.pose.orientation.w = q.w();
-        path_msg.poses.push_back(pose);
-        path_publisher_->publish(path_msg);
+        robot_path_.poses.push_back(pose);
+        path_publisher_->publish(robot_path_);
       };
     
     auto fake_sensor_callback_ = [this]() -> void {
@@ -690,6 +691,9 @@ private:
 
   // Store Wheel velocities:
   turtlelib::wheel_vel wheel_vel_{0.0, 0.0};
+
+  // Store the robot path:
+  nav_msgs::msg::Path robot_path_;
 };
 
 int main(int argc, char * argv[])
