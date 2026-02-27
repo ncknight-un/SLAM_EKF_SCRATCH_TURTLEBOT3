@@ -45,3 +45,5 @@ Task V.1
 Task C.11
 Task C.12
 Task V.2
+Task V.3 - Will start tomorrow!
+Task L.1 - Built the package

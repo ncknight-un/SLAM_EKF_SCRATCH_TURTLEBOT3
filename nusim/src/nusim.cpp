@@ -158,8 +158,10 @@ public:
         auto [collision_detected, obstacle_index] = checkCollision();
         if (collision_detected) {
           updateCollision(obstacle_index);
+          // ############################### Begin_Citation [13] ##################################
           // Update the DiffDrive model with the new position after collision:
-          diff_drive_.set_q(turtlelib::Transform2D(turtlelib::Vector2D(x0_, y0_), theta0_));
+          diff_drive_.set_q(turtlelib::Transform2D(turtlelib::Vector2D(x0_, y0_), turtlelib::normalize_angle(theta0_)));
+          // ############################### End_Citation [13] ##################################
         }
 
         // Assign parameters to corresponding tf variables and broadcast:
@@ -230,12 +232,17 @@ public:
           double obs_x = obstacles_x_.at(i);
           double obs_y = obstacles_y_.at(i);
           double obs_r = obstacles_r_.at(i);
-
+          
+          // ######################################### Begin_Citation [13] #########################
           // Calculate the angle between the robot and the obstacle:
-          double angle_to_obstacle = std::atan2(obs_y - y0_, obs_x - x0_);
+          double angle_to_obstacle = std::atan2(obs_y - y0_, obs_x - x0_) - theta0_; // Subtract the robot's orientation to get the angle in the robot's frame of reference
+          // Wrap the angle to the obstacle to be between -pi and pi:
+          angle_to_obstacle = turtlelib::normalize_angle(angle_to_obstacle);
+          // ######################################## End_Citation [13] ############################
 
           // Calculate the distance between the robot and the obstacle:
           double distance_to_obstacle = std::sqrt(std::pow(obs_x - x0_, 2) + std::pow(obs_y - y0_, 2)) - obs_r;
+          RCLCPP_DEBUG_STREAM(this->get_logger(), "Angle to obstacle " << i << ": " << angle_to_obstacle << " and distance to obstacle: " << distance_to_obstacle);
           
           // If the distance is less than max range, or greater than the range min:
           if (distance_to_obstacle < laser_scan_msg.range_max && distance_to_obstacle > laser_scan_msg.range_min) {
@@ -249,50 +256,55 @@ public:
               }
             }
           }
-          // Add the walls as obstacles for the laser scaner as well and check if laser hits one::
-          for(size_t i = 0; i < 4; ++i){
-            // Determine wall surface point the laser could hit (The wall line + half the thickness)
-            double wall_x, wall_y;
-            switch (i) {
-              case 0: // Bottom wall
-                wall_x = x0_;     // At the robots x
-                wall_y = -arena_y_ / 2.0 + arena_thick_ / 2.0;
-                break;
-              case 1: // Left wall
-                wall_x = -arena_x_ / 2.0 + arena_thick_ / 2.0;
-                wall_y = y0_;     // At the robots y
-                break;
-              case 2: // Right wall
-                wall_x = arena_x_ / 2.0 + arena_thick_ / 2.0;
-                wall_y = y0_;   // At the robots y
-                break;
-              case 3: // Top wall
-                wall_x = x0_;     // At the robots x
-                wall_y = arena_y_ / 2.0 + arena_thick_ / 2.0;
-                break;
-              default:
-                continue; // Won't occur as it should only check the four walls in the 2D plane.
-            }
-            double angle_to_wall = std::atan2(wall_y - y0_, wall_x - x0_);
-            double distance_to_wall = std::sqrt(std::pow(wall_x - x0_, 2) + std::pow(wall_y - y0_, 2));
-            if (distance_to_wall < laser_scan_msg.range_max && distance_to_wall > laser_scan_msg.range_min) {
-              int index = static_cast<int>((angle_to_wall - laser_scan_msg.angle_min) / laser_scan_msg.angle_increment);
-              if (index >= 0 && index < static_cast<int>(laser_scan_msg.ranges.size())) {
-                // Check to make sure distance to wall is less than the lidar range max and greater than the lider min range:
-                if (distance_to_wall < laser_scan_msg.ranges[index] && std::abs(angle_to_wall) <= laser_scan_msg.angle_max && std::abs(angle_to_wall) >= laser_scan_msg.angle_min) {
-                  // Update the laser scane range and add gaussian noise to the distance measurement:
-                    std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
-                    laser_scan_msg.ranges[index] = distance_to_wall + d(get_random());
-                }
+        }
+        // Add the walls as obstacles for the laser scaner as well and check if laser hits one::
+        for(size_t i = 0; i < 4; ++i){
+          // Determine wall surface point the laser could hit (The wall line + half the thickness)
+          double wall_x, wall_y;
+          switch (i) {
+            case 0: // Bottom wall
+              wall_x = x0_;     // At the robots x
+              wall_y = -arena_y_ / 2.0 + arena_thick_/2.0;
+              break;
+            case 1: // Left wall
+              wall_x = -arena_x_ / 2.0 + arena_thick_/2.0;
+              wall_y = y0_;     // At the robots y
+              break;
+            case 2: // Right wall
+              wall_x = arena_x_ / 2.0 - arena_thick_/2.0;
+              wall_y = y0_;   // At the robots y
+              break;
+            case 3: // Top wall
+              wall_x = x0_;     // At the robots x
+              wall_y = arena_y_ / 2.0 - arena_thick_/2.0;
+              break;
+            default:
+              continue; // Won't occur as it should only check the four walls in the 2D plane.
+          }
+          double angle_to_wall = std::atan2(wall_y - y0_, wall_x - x0_) - theta0_; // Subtract the robot's orientation to get the angle in the robot's frame of reference.
+          // Wrap the angle to the wall to be between -pi and pi:
+          angle_to_wall = turtlelib::normalize_angle(angle_to_wall);
+          // Calculate the distance between the robot and the wall:
+          double distance_to_wall = std::sqrt(std::pow(wall_x - x0_, 2) + std::pow(wall_y - y0_, 2));
+          RCLCPP_DEBUG_STREAM(this->get_logger(), "Angle to wall " << i << ": " << angle_to_wall << " and distance to wall: " << distance_to_wall);
+
+          if (distance_to_wall < laser_scan_msg.range_max && distance_to_wall > laser_scan_msg.range_min) {
+            int index = static_cast<int>((angle_to_wall - laser_scan_msg.angle_min) / laser_scan_msg.angle_increment);
+            if (index >= 0 && index < static_cast<int>(laser_scan_msg.ranges.size())) {
+              // Check to make sure distance to wall is less than the lidar range max and greater than the lider min range:
+              if (distance_to_wall < laser_scan_msg.ranges[index] && std::abs(angle_to_wall) <= laser_scan_msg.angle_max && std::abs(angle_to_wall) >= laser_scan_msg.angle_min) {
+                // Update the laser scane range and add gaussian noise to the distance measurement:
+                  std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
+                  laser_scan_msg.ranges[index] = distance_to_wall + d(get_random());
               }
             }
           }
         }
-        // ####################################### End_Citation [12] ######################################
-        // Set the intensities to empty:
-        laser_scan_msg.intensities.clear();
-        // Publish the laser scan message:
-        fake_laser_pub_->publish(laser_scan_msg);
+      // ####################################### End_Citation [12] ######################################
+      // Set the intensities to empty:
+      laser_scan_msg.intensities = std::vector<float>(laser_scan_msg.ranges.size(), 0.0);   // Fill with all zeros since we don't use intensity. When I left empty it would reset my Rviz each build.
+      // Publish the laser scan message:
+      fake_laser_pub_->publish(laser_scan_msg);
     };
     
     // Set the timer:
@@ -442,7 +454,10 @@ private:
     for (size_t i = 0; i < obstacles_x_.size(); ++i) {
       visualization_msgs::msg::Marker marker;
 
-      marker.header.frame_id = "red/base_footprint";
+      // Publish the markers with respect to the world frame, but check against the robots positon.
+      // ############################## Begin_Citation [13] ##################################
+      marker.header.frame_id = "nusim/world";
+      // ############################### End_Citation [13] ###################################
       marker.header.stamp = rclcpp::Clock().now();
       marker.ns = "fake_obstacles";
       marker.id = i;
@@ -450,13 +465,15 @@ private:
       marker.action = visualization_msgs::msg::Marker::ADD;
       // Set orientation
       marker.pose.orientation.w = 1.0;
+
       // Determine obstacle locations and size:
       // Add uncertainty radius to obstacles: 
       auto sigma = std::sqrt(basic_sensor_variance_);
       std::normal_distribution<> d(0.0, sigma);
-      double obs_x = obstacles_x_.at(i) - x0_ + d(get_random());
-      double obs_y = obstacles_y_.at(i) - y0_ + d(get_random());
+      double obs_x = obstacles_x_.at(i) + d(get_random());
+      double obs_y = obstacles_y_.at(i) + d(get_random());
       double obs_r = obstacles_r_.at(i) + d(get_random());
+
       // Set the marker information for the fake obstacles:
       marker.pose.position.x = obs_x;
       marker.pose.position.y = obs_y;
@@ -472,8 +489,8 @@ private:
       // Add obstacle to marker array
       marker_array_fake_obstacles.markers.emplace_back(marker);
 
-      // If the obstacle is out of range, delete it from the marker array by changing its action to DELETE:
-      double distance = std::sqrt(std::pow(obs_x, 2) + std::pow(obs_y, 2));
+      // If the obstacle is out of range of the robot in the world, delete it from the marker array by changing its action to DELETE:
+      double distance = std::sqrt(std::pow(obs_x - x0_, 2) + std::pow(obs_y - y0_, 2));
       if (distance > max_range_) {
         marker_array_fake_obstacles.markers.back().action = visualization_msgs::msg::Marker::DELETE;
       }

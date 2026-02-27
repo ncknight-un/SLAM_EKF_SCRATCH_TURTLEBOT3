@@ -45,7 +45,7 @@ public:
         auto message = geometry_msgs::msg::Twist();
             // Check to make sure that the radius is not zero:
         if (radius_ == 0.0) {
-          RCLCPP_WARN(this->get_logger(),
+          RCLCPP_WARN_STREAM_ONCE(this->get_logger(),
           "Radius was set to zero, drive in a circle not possible! Setting velocity to 0.0.");
           velocity_ = 0.0;
                 // Note: Counter clockwise is positive and clockwise is negative.

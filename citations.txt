@@ -10,4 +10,5 @@
 [9] Nick Morales. "catch_ros2 - integration_test_node.cpp" Accessed: January 7th, 2026. [Online]. Available: https://github.com/ngmor/catch_ros2/blob/main/examples/integration_test/integration_test_node.cpp - February 7th
 [10] Nick Morales. "catch_ros2 - CMakeLists.txt" Accessed: January 7th, 2026. [Online]. Available: https://github.com/ngmor/catch_ros2/blob/main/examples/integration_test/example_integration_test.launch.xml - February 7th
 [11] Derick Dietz. CMAKE discussion on requirements for Integration Testing. February 7th, 2026.
-[12] https://emanual.robotis.com/docs/en/platform/turtlebot3/appendix_lds_01/
+[12] Robotis. "Turtlebot3 Lidar Manual". Accessed: February 26th, 2026. [Online]. Available: https://emanual.robotis.com/docs/en/platform/turtlebot3/appendix_lds_01/
+[13] Claude. "Simulation Error Assistance - Path Updating and Frame Adjustment". Accessed. February 27th, 2026. [Online]. Available: https://claude.ai/share/544008df-f8bc-45e4-977d-91a83432d019
