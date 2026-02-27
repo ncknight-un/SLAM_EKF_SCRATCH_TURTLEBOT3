@@ -11,8 +11,8 @@
     obstacles_x: [-0.4, 0.7, 0.5]
     obstacles_y: [-0.7, -0.8, 0.8]
     obstacles_r: [0.038, 0.038,0.038]
-    input_noise: 0
-    slip_fraction: 0
+    input_noise: 0.1
+    slip_fraction: 0.05
     basic_sensor_variance: 0.001
     max_range: 1.0
     laser_max_range: 3.5
@@ -21,5 +21,5 @@
     laser_angle_max: 3.14
     laser_angle_increment: 0.01745
     laser_num_readings: 360
-    laser_resolution: 0.01745
-    laser_scan_variance: 0.01
+    laser_resolution: 0.01745 # Conversion of integer and real distance.
+    laser_scan_variance: 0.0

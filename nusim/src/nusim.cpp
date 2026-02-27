@@ -113,26 +113,34 @@ public:
         // Update the wheel positions and publish them on red/sensor_data topic:
         auto dt = 1.0 / rate; // Change in time since last publish.
 
+        // Apply slip and noise to the ground truth:
         // Update the DiffDrive model using the current wheel positions:
         std::uniform_real_distribution<double> slip_dist(-slip_fraction_, slip_fraction_);
 
         double slip_l = slip_dist(get_random());
         double slip_r = slip_dist(get_random());
 
-        double phi_left = turtlelib::normalize_angle(
-            diff_drive_.get_phi_left() +
-            wheel_vel_.v_lw * dt * (1.0 + slip_l));
+        // Update just the encoder phi_left and right for sensor data:
+        double phi_left  = turtlelib::normalize_angle(diff_drive_no_noise_.get_phi_left()  + wheel_vel_.v_lw * dt);
+        double phi_right = turtlelib::normalize_angle(diff_drive_no_noise_.get_phi_right() + wheel_vel_.v_rw * dt);
 
-        double phi_right = turtlelib::normalize_angle(
-            diff_drive_.get_phi_right() +
-            wheel_vel_.v_rw * dt * (1.0 + slip_r));
-        diff_drive_.update_fk(phi_left, phi_right);
+        // Slip only the increment, not the total accumulated angle:
+        double phi_left_noise  = turtlelib::normalize_angle(diff_drive_.get_phi_left()  + wheel_vel_.v_lw * dt * (1.0 + slip_l));
+        double phi_right_noise = turtlelib::normalize_angle(diff_drive_.get_phi_right() + wheel_vel_.v_rw * dt * (1.0 + slip_r));
+
+        diff_drive_.update_fk(phi_left_noise, phi_right_noise);  // ground truth with slip
+        diff_drive_no_noise_.update_fk(phi_left, phi_right); // odometry without slip, but with noise in the sensor data
+
+        RCLCPP_DEBUG_STREAM(this->get_logger(), "The phi_left is " << phi_left << " and phi_right is " << phi_right << " at rate " <<
+          rate << " Hz!");
+
+        diff_drive_.update_fk(phi_left_noise, phi_right_noise);
 
         // Publish the SensorData message update:
         nuturtlebot_msgs::msg::SensorData sensor_data_msg;
         sensor_data_msg.stamp = this->get_clock()->now();
-        sensor_data_msg.left_encoder = static_cast<int>(diff_drive_.get_phi_left() * encode_ticks_per_rad_);
-        sensor_data_msg.right_encoder = static_cast<int>(diff_drive_.get_phi_right() * encode_ticks_per_rad_);
+        sensor_data_msg.left_encoder = static_cast<int>(diff_drive_no_noise_.get_phi_left() * encode_ticks_per_rad_);
+        sensor_data_msg.right_encoder = static_cast<int>(diff_drive_no_noise_.get_phi_right() * encode_ticks_per_rad_);
         sensor_data_publisher_->publish(sensor_data_msg);
 
         // Publish the JointState message update:
@@ -164,6 +172,11 @@ public:
           // ############################### End_Citation [13] ##################################
         }
 
+        auto [wall_collision_detected, wall_index] = checkWallCollision();
+        if(wall_collision_detected) {
+          updateWallCollision(wall_index);
+          diff_drive_.set_q(turtlelib::Transform2D(turtlelib::Vector2D(x0_, y0_), turtlelib::normalize_angle(theta0_)));
+        }
         // Assign parameters to corresponding tf variables and broadcast:
         geometry_msgs::msg::TransformStamped t;
         t.header.stamp = sensor_data_msg.stamp;
@@ -225,7 +238,7 @@ public:
         laser_scan_msg.range_max = laser_max_range_;
 
         // Initialize the ranges vector:
-        laser_scan_msg.ranges.resize(360, 3.5);
+        laser_scan_msg.ranges.resize(laser_num_readings_, laser_max_range_);
 
         // Update the ranges vector with distances to obstacles if seen within the laser scan parameters:
         for (size_t i = 0; i < obstacles_x_.size(); ++i) {
@@ -611,7 +624,8 @@ private:
       marker.scale.x = obstacles_r_.at(i) * 2;
       marker.scale.y = obstacles_r_.at(i) * 2;
       marker.scale.z = obst_height_;
-      // Color Obstacles (Red)
+      // Color Obstacles (Red)          diff_drive_.set_q(turtlelib::Transform2D(turtlelib::Vector2D(x0_, y0_), turtlelib::normalize_angle(theta0_)));
+
       marker.color.r = 1.0;
       marker.color.g = 0.0;
       marker.color.b = 0.0;
@@ -687,8 +701,8 @@ private:
   int motor_cmd_max_ = declare_parameter<int>("motor_cmd_max", 265);
   double motor_cmd_per_rad_sec_ = declare_parameter<double>("motor_cmd_per_rad_sec", 41.67);
   int encode_ticks_per_rad_ = declare_parameter<int>("encode_ticks_per_rad", 652);
-  int input_noise_ = declare_parameter<int>("input_noise", 0);
-  int slip_fraction_ = declare_parameter<int>("slip_fraction", 0);
+  double input_noise_ = declare_parameter<double>("input_noise", 0);
+  double slip_fraction_ = declare_parameter<double>("slip_fraction", 0);
   double max_range_ = declare_parameter<double>("max_range", 2.0);
   double basic_sensor_variance_ = declare_parameter<double>("basic_sensor_variance", 0.01);
   double collision_radius_ = declare_parameter<double>("collision_radius", 0.11);
@@ -703,8 +717,10 @@ private:
   double laser_resolution_ = declare_parameter<double>("laser_resolution", 0.01745);
   double laser_scan_variance_ = declare_parameter<double>("laser_scan_variance", 0.01);
 
-  // Initialize the DiffDrive model:
+  // Initialize the DiffDrive model for the ground truth (with noise):
   turtlelib::DiffDrive diff_drive_{track_width_, wheel_radius_};
+  // Initialize the DiffFrive model for the odometry publishing (without noise):
+  turtlelib::DiffDrive diff_drive_no_noise_{track_width_, wheel_radius_};
 
   // Store Wheel velocities:
   turtlelib::wheel_vel wheel_vel_{0.0, 0.0};
