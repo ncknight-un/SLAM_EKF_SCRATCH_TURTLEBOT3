@@ -240,6 +240,7 @@ public:
           if (distance_to_obstacle < laser_scan_msg.range_max && distance_to_obstacle > laser_scan_msg.range_min) {
             int index = static_cast<int>((angle_to_obstacle - laser_scan_msg.angle_min) / laser_scan_msg.angle_increment);
             if (index >= 0 && index < static_cast<int>(laser_scan_msg.ranges.size())) {
+              // Check to make sure distance to obstacle is less than the lidar range max and greater than the lider min range:
               if (distance_to_obstacle < laser_scan_msg.ranges[index] && std::abs(angle_to_obstacle) <= laser_scan_msg.angle_max && std::abs(angle_to_obstacle) >= laser_scan_msg.angle_min) {
                 // Update the laser scane range and add gaussian noise to the distance measurement:
                   std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
@@ -247,8 +248,44 @@ public:
               }
             }
           }
-          // Add the walls as obstacles for the laser scan as well:
-          //double angle_to_wall = std::atan2()
+          // Add the walls as obstacles for the laser scaner as well and check if laser hits one::
+          for(size_t i = 0; i < 4; ++i){
+            // Determine wall surface point the laser could hit (The wall line + half the thickness)
+            double wall_x, wall_y;
+            switch (i) {
+              case 0: // Bottom wall
+                wall_x = x0_;     // At the robots x
+                wall_y = -arena_y_ / 2.0 + arena_thick_ / 2.0;
+                break;
+              case 1: // Left wall
+                wall_x = -arena_x_ / 2.0 + arena_thick_ / 2.0;
+                wall_y = y0_;     // At the robots y
+                break;
+              case 2: // Right wall
+                wall_x = arena_x_ / 2.0 + arena_thick_ / 2.0;
+                wall_y = y0_;   // At the robots y
+                break;
+              case 3: // Top wall
+                wall_x = x0_;     // At the robots x
+                wall_y = arena_y_ / 2.0 + arena_thick_ / 2.0;
+                break;
+              default:
+                continue; // Won't occur as it should only check the four walls in the 2D plane.
+            }
+            double angle_to_wall = std::atan2(wall_y - y0_, wall_x - x0_);
+            double distance_to_wall = std::sqrt(std::pow(wall_x - x0_, 2) + std::pow(wall_y - y0_, 2));
+            if (distance_to_wall < laser_scan_msg.range_max && distance_to_wall > laser_scan_msg.range_min) {
+              int index = static_cast<int>((angle_to_wall - laser_scan_msg.angle_min) / laser_scan_msg.angle_increment);
+              if (index >= 0 && index < static_cast<int>(laser_scan_msg.ranges.size())) {
+                // Check to make sure distance to wall is less than the lidar range max and greater than the lider min range:
+                if (distance_to_wall < laser_scan_msg.ranges[index] && std::abs(angle_to_wall) <= laser_scan_msg.angle_max && std::abs(angle_to_wall) >= laser_scan_msg.angle_min) {
+                  // Update the laser scane range and add gaussian noise to the distance measurement:
+                    std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
+                    laser_scan_msg.ranges[index] = distance_to_wall + d(get_random());
+                }
+              }
+            }
+          }
         }
         // ####################################### End_Citation [12] ######################################
         // Set the intensities to empty:
@@ -338,6 +375,58 @@ private:
     // Update the robot center position:
     x0_ = new_x;
     y0_ = new_y;
+    return;
+  }
+/// \brief A function to check collision determination between the robot and the arena walls. This will be called after every position update.
+///
+/// \returns A boolean value indicating if the collision radius of the robot overlaps with the arena walls, and the index of the wall collided with.
+  std::pair<bool, int> checkWallCollision() {
+    // Check for collision with walls one by one:
+    // Check bottom wall:
+    if ((y0_ - collision_radius_) < (-arena_y_ / 2.0 + arena_thick_)) {
+      RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with bottom wall!");
+      return std::make_pair(true, 0); // Collision detected with bottom wall
+    }
+    // Check left wall:
+    if ((x0_ - collision_radius_) < (-arena_x_ / 2.0 + arena_thick_)) {
+      RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with left wall!");
+      return std::make_pair(true, 1); // Collision detected with left wall
+    }
+    // Check right wall:
+    if ((x0_ + collision_radius_) > (arena_x_ / 2.0 - arena_thick_)) {
+      RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with right wall!");
+      return std::make_pair(true, 2); // Collision detected with right wall
+    }
+    // Check top wall:
+    if ((y0_ + collision_radius_) > (arena_y_ / 2.0 - arena_thick_)) {
+      RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with top wall!");
+      return std::make_pair(true, 3); // Collision detected with top wall
+    }
+    // No collision is detected with walls, return false and index -1.
+    return std::make_pair(false, -1);
+  }
+
+/// \brief Update the center of the robot after a collision with the wall is detected. This will be called after checkWallCollision() returns true.
+///
+/// \returns void, but will update robots position to be tangent to the wall.
+  void updateWallCollision(int wall_index) {
+    // Update the robot center position based on which wall was collided with:
+    switch (wall_index) {
+      case 0: // Bottom wall
+        y0_ = -arena_y_ / 2.0 + arena_thick_ + collision_radius_;
+        break;
+      case 1: // Left wall
+        x0_ = -arena_x_ / 2.0 + arena_thick_ + collision_radius_;
+        break;
+      case 2: // Right wall
+        x0_ = arena_x_ / 2.0 - arena_thick_ - collision_radius_;
+        break;
+      case 3: // Top wall
+        y0_ = arena_y_ / 2.0 - arena_thick_ - collision_radius_;
+        break;
+      default:
+        RCLCPP_WARN_STREAM(this->get_logger(), "Invalid wall index in updateWallCollision!");
+    }
     return;
   }
 
