@@ -149,6 +149,12 @@ public:
         y0_ = diff_drive_.get_q().translation().y;
         theta0_ = diff_drive_.get_q().rotation();
 
+        // Check for collision and update the robot position if a collision is detected:
+        auto [collision_detected, obstacle_index] = checkCollision();
+        if (collision_detected) {
+          updateCollision(obstacle_index);
+        }
+
         // Assign parameters to corresponding tf variables and broadcast:
         geometry_msgs::msg::TransformStamped t;
         t.header.stamp = sensor_data_msg.stamp;
@@ -240,6 +246,46 @@ public:
   }
 
 private:
+/// \brief A function to check collision detection between the robot and the obstacles in the arena. This will be called after every position update.
+///
+/// \returns A boolean value indicating if the collision radius of the robot overlaps with the collision radius of an obstacle, and the index of the object collided with.
+  std::pair<bool, int> checkCollision() {
+    // Check for collision with obstacles:
+    for (size_t i = 0; i < obstacles_x_.size(); ++i) {
+      double obs_x = obstacles_x_.at(i);
+      double obs_y = obstacles_y_.at(i);
+      double obs_r = obstacles_r_.at(i);
+      // Calculate the distance between the robot and the obstacle centers:
+      double distance = std::sqrt(std::pow(x0_ - obs_x, 2) + std::pow(y0_ - obs_y, 2));
+      if (distance < (collision_radius_ + obs_r)) {
+        RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with obstacle at (" << obs_x << ", " << obs_y << ")!");
+        return std::make_pair(true, i); // Collision detected with an obstacle at index i
+      }
+    }
+    return std::make_pair(false, -1); // No collision after update, return -1 for index to indicate no collision.
+  }
+
+/// \brief Update the center of the robot after a collision is detected. This will be called after checkCollision() returns true.
+///
+/// \returns void, updates the posiiton of the robots center.
+  void updateCollision(int obstacle_index) {
+    // Get the position of the obstacle the robot collided with:
+    double obs_x = obstacles_x_.at(obstacle_index);
+    double obs_y = obstacles_y_.at(obstacle_index);
+    double obs_r = obstacles_r_.at(obstacle_index);
+
+    // Calculate the line angle between the two centers of the robot and the obstacle (Heading from the obstacle to the robot):
+    double angle_to_robot = std::atan2(y0_ - obs_y, x0_ - obs_x);
+    // Calculate the new position of the robot center by shifting it back along the angle until the collision radius of the robot is tangent to the obstacle:
+    // (collision_radius_ + obs_r) is the distance from the obstacle center to the point of tangency, so we shift along that heading.
+    double new_x = obs_x + (collision_radius_ + obs_r) * std::cos(angle_to_robot);
+    double new_y = obs_y + (collision_radius_ + obs_r) * std::sin(angle_to_robot);
+    // Update the robot center position:
+    x0_ = new_x;
+    y0_ = new_y;
+    return;
+  }
+
 /// \brief Creates visualization markers for the fake sensor data of the obstacles.
 ///
 /// \returns A MarkerArray containing a gaussian distribution of fake obstacles that dissapear/are 
@@ -482,6 +528,7 @@ private:
   int slip_fraction_ = declare_parameter<int>("slip_fraction", 0);
   double max_range_ = declare_parameter<double>("max_range", 2.0);
   double basic_sensor_variance_ = declare_parameter<double>("basic_sensor_variance", 0.01);
+  double collision_radius_ = declare_parameter<double>("collision_radius", 0.11);
 
   // Initialize the DiffDrive model:
   turtlelib::DiffDrive diff_drive_{track_width_, wheel_radius_};
