@@ -18,6 +18,7 @@
 ///     ~/real_walls (visualization_msgs::msg::MarkerArray): Markers representing arena walls
 ///     ~/real_obstacles (visualization_msgs::msg::MarkerArray): Markers representing obstacles
 ///     ~/fake_obstacles (visualization_msgs::msg::MarkerArray): Markers representing fake obstacles for sensor data
+///     ~/sim_scan (sensor_msgs::msg::LaserScan): Simulated laser scan data based on the robot's position and obstacles in the arena
 ///     ~/red/nav_path (nav_msgs::msg::Path): The current traced path of the robot.
 /// SUBSCRIBES:
 ///     ~/cmd_vel (geometry_msgs::msg::Twist): Velocity commands for the robot
@@ -44,6 +45,7 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 #include <random>
 #include <nav_msgs/msg/path.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
 
 using namespace std::chrono_literals;
 
@@ -89,10 +91,13 @@ public:
 
     // Initialize and publish the Real Obstacles:
     auto marker_array_obstacles = createObstacles();
-    obst_pub_->publish(marker_array_obstacles); 
+    obst_pub_->publish(marker_array_obstacles);
 
     // Initialize the Publisher for the robot path:
     path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("red/nav_path", 10);
+
+    // Initialize the Publisher for the fake laser scan data:
+    fake_laser_pub_ = this->create_publisher<sensor_msgs::msg::LaserScan>("red/sim_scan", 10);
 
     // Create the timer callback:
     auto timer_callback = [this, rate]() -> void {
@@ -200,6 +205,56 @@ public:
         // Create a timer callback for publishing the fake sensor data of the obstacles every 200 ms:
         auto marker_array_fake_obstacles = createFakeObstacles();
         fake_obst_pub_->publish(marker_array_fake_obstacles);
+
+        // ###################################### Begin_Citation [12] ######################################
+        // Update the fake lidar scan data and publish it on red/sim_scan topic:
+        sensor_msgs::msg::LaserScan laser_scan_msg;
+        laser_scan_msg.header.stamp = this->get_clock()->now();
+        laser_scan_msg.header.frame_id = "red/base_scan";   // Turtlebot3 laser scan frame
+
+        // Set the laser scan parameters:
+        laser_scan_msg.angle_min = laser_angle_min_;
+        laser_scan_msg.angle_max = laser_angle_max_;
+        laser_scan_msg.angle_increment = laser_angle_increment_;
+        laser_scan_msg.time_increment = (1.0/200.0) / laser_num_readings_; // Time between individual measurements, assuming all measurements are taken in 1/200 seconds as publlished by the timer./
+        laser_scan_msg.scan_time = 0.2; // Scan data is published every 200 ms.
+        laser_scan_msg.range_min = laser_min_range_;
+        laser_scan_msg.range_max = laser_max_range_;
+
+        // Initialize the ranges vector:
+        laser_scan_msg.ranges.resize(360, 3.5);
+
+        // Update the ranges vector with distances to obstacles if seen within the laser scan parameters:
+        for (size_t i = 0; i < obstacles_x_.size(); ++i) {
+          double obs_x = obstacles_x_.at(i);
+          double obs_y = obstacles_y_.at(i);
+          double obs_r = obstacles_r_.at(i);
+
+          // Calculate the angle between the robot and the obstacle:
+          double angle_to_obstacle = std::atan2(obs_y - y0_, obs_x - x0_);
+
+          // Calculate the distance between the robot and the obstacle:
+          double distance_to_obstacle = std::sqrt(std::pow(obs_x - x0_, 2) + std::pow(obs_y - y0_, 2)) - obs_r;
+          
+          // If the distance is less than max range, or greater than the range min:
+          if (distance_to_obstacle < laser_scan_msg.range_max && distance_to_obstacle > laser_scan_msg.range_min) {
+            int index = static_cast<int>((angle_to_obstacle - laser_scan_msg.angle_min) / laser_scan_msg.angle_increment);
+            if (index >= 0 && index < static_cast<int>(laser_scan_msg.ranges.size())) {
+              if (distance_to_obstacle < laser_scan_msg.ranges[index] && std::abs(angle_to_obstacle) <= laser_scan_msg.angle_max && std::abs(angle_to_obstacle) >= laser_scan_msg.angle_min) {
+                // Update the laser scane range and add gaussian noise to the distance measurement:
+                  std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
+                  laser_scan_msg.ranges[index] = distance_to_obstacle + d(get_random());
+              }
+            }
+          }
+          // Add the walls as obstacles for the laser scan as well:
+          //double angle_to_wall = std::atan2()
+        }
+        // ####################################### End_Citation [12] ######################################
+        // Set the intensities to empty:
+        laser_scan_msg.intensities.clear();
+        // Publish the laser scan message:
+        fake_laser_pub_->publish(laser_scan_msg);
     };
     
     // Set the timer:
@@ -495,6 +550,7 @@ private:
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr reset_service_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr fake_laser_pub_;
 
   // Set the timestep:
   uint64_t timestep_;
@@ -529,6 +585,16 @@ private:
   double max_range_ = declare_parameter<double>("max_range", 2.0);
   double basic_sensor_variance_ = declare_parameter<double>("basic_sensor_variance", 0.01);
   double collision_radius_ = declare_parameter<double>("collision_radius", 0.11);
+
+  // Set the laser parameters:
+  double laser_max_range_ = declare_parameter<double>("laser_max_range", 3.5);
+  double laser_min_range_ = declare_parameter<double>("laser_min_range", 0.12);
+  double laser_angle_min_ = declare_parameter<double>("laser_angle_min", -3.14);
+  double laser_angle_max_ = declare_parameter<double>("laser_angle_max", 3.14);
+  double laser_angle_increment_ = declare_parameter<double>("laser_angle_increment", 0.01745);
+  int laser_num_readings_ = declare_parameter<int>("laser_num_readings", 360);
+  double laser_resolution_ = declare_parameter<double>("laser_resolution", 0.01745);
+  double laser_scan_variance_ = declare_parameter<double>("laser_scan_variance", 0.01);
 
   // Initialize the DiffDrive model:
   turtlelib::DiffDrive diff_drive_{track_width_, wheel_radius_};

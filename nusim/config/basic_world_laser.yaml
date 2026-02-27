@@ -1,0 +1,25 @@
+/**:
+  ros__parameters:
+    arena_x_length: 5.0
+    arena_y_length: 10.0
+    arena_thickness: 0.25
+    obstacle_height: 0.25
+    robot:
+      x0: -0.6
+      y0: 0.3
+      theta0: 1.28
+    obstacles_x: [-0.4, 0.7, 0.5]
+    obstacles_y: [-0.7, -0.8, 0.8]
+    obstacles_r: [0.038, 0.038,0.038]
+    input_noise: 0
+    slip_fraction: 0
+    basic_sensor_variance: 0.001
+    max_range: 1.0
+    laser_max_range: 3.5
+    laser_min_range: 0.12
+    laser_angle_min: -3.14
+    laser_angle_max: 3.14
+    laser_angle_increment: 0.01745
+    laser_num_readings: 360
+    laser_resolution: 0.01745
+    laser_scan_variance: 0.01

@@ -41,6 +41,6 @@ Task F.3
 Task F.6 - Added launch node to package. Won't know if its correct till I test on physical robot.
 Task C.9
 Task C.10
-Task V.1 - In progress
+Task V.1
 Task C.11
-Task C.12 - Next to implement, so I can finish V.1
+Task C.12 - Finished except for wall lidar scan.
