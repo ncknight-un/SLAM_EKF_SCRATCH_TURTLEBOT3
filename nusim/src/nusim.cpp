@@ -134,8 +134,6 @@ public:
         RCLCPP_DEBUG_STREAM(this->get_logger(), "The phi_left is " << phi_left << " and phi_right is " << phi_right << " at rate " <<
           rate << " Hz!");
 
-        diff_drive_.update_fk(phi_left_noise, phi_right_noise);
-
         // Publish the SensorData message update:
         nuturtlebot_msgs::msg::SensorData sensor_data_msg;
         sensor_data_msg.stamp = this->get_clock()->now();
@@ -172,11 +170,13 @@ public:
           // ############################### End_Citation [13] ##################################
         }
 
+        // Check for wall collision and update the robot position if a collision is detected:
         auto [wall_collision_detected, wall_index] = checkWallCollision();
         if(wall_collision_detected) {
           updateWallCollision(wall_index);
           diff_drive_.set_q(turtlelib::Transform2D(turtlelib::Vector2D(x0_, y0_), turtlelib::normalize_angle(theta0_)));
         }
+
         // Assign parameters to corresponding tf variables and broadcast:
         geometry_msgs::msg::TransformStamped t;
         t.header.stamp = sensor_data_msg.stamp;
@@ -218,101 +218,122 @@ public:
       };
     
     auto fake_sensor_callback_ = [this]() -> void {
-        // Create a timer callback for publishing the fake sensor data of the obstacles every 200 ms:
-        auto marker_array_fake_obstacles = createFakeObstacles();
-        fake_obst_pub_->publish(marker_array_fake_obstacles);
+      // Create a timer callback for publishing the fake sensor data of the obstacles every 200 ms:
+      auto marker_array_fake_obstacles = createFakeObstacles();
+      fake_obst_pub_->publish(marker_array_fake_obstacles);
 
-        // ###################################### Begin_Citation [12] ######################################
-        // Update the fake lidar scan data and publish it on red/sim_scan topic:
-        sensor_msgs::msg::LaserScan laser_scan_msg;
-        laser_scan_msg.header.stamp = this->get_clock()->now();
-        laser_scan_msg.header.frame_id = "red/base_scan";   // Turtlebot3 laser scan frame
+      // ###################################### Begin_Citation [12] ######################################
+      // Update the fake lidar scan data and publish it on red/sim_scan topic:
+      sensor_msgs::msg::LaserScan laser_scan_msg;
+      laser_scan_msg.header.stamp = this->get_clock()->now();
+      laser_scan_msg.header.frame_id = "red/base_footprint";   // Turtlebot3 laser scan frame is shifted, so I used a centered one.
 
-        // Set the laser scan parameters:
-        laser_scan_msg.angle_min = laser_angle_min_;
-        laser_scan_msg.angle_max = laser_angle_max_;
-        laser_scan_msg.angle_increment = laser_angle_increment_;
-        laser_scan_msg.time_increment = (1.0/200.0) / laser_num_readings_; // Time between individual measurements, assuming all measurements are taken in 1/200 seconds as publlished by the timer./
-        laser_scan_msg.scan_time = 0.2; // Scan data is published every 200 ms.
-        laser_scan_msg.range_min = laser_min_range_;
-        laser_scan_msg.range_max = laser_max_range_;
+      // Set the laser scan parameters:
+      laser_scan_msg.angle_min = laser_angle_min_;
+      laser_scan_msg.angle_max = laser_angle_max_;
+      laser_scan_msg.angle_increment = laser_angle_increment_;
+      laser_scan_msg.time_increment = (1.0/200.0) / laser_num_readings_; // Time between individual measurements, assuming all measurements are taken in 1/200 seconds as publlished by the timer./
+      laser_scan_msg.scan_time = 0.2; // Scan data is published every 200 ms.
+      laser_scan_msg.range_min = laser_min_range_;
+      laser_scan_msg.range_max = laser_max_range_;
 
-        // Initialize the ranges vector:
-        laser_scan_msg.ranges.resize(laser_num_readings_, laser_max_range_);
+      // Initialize the ranges vector:
+      laser_scan_msg.ranges.resize(laser_num_readings_, laser_max_range_);
 
-        // Update the ranges vector with distances to obstacles if seen within the laser scan parameters:
-        for (size_t i = 0; i < obstacles_x_.size(); ++i) {
-          double obs_x = obstacles_x_.at(i);
-          double obs_y = obstacles_y_.at(i);
-          double obs_r = obstacles_r_.at(i);
+      // Loop through the scanner and see if it collides with an obstacle or wall:
+      for(int i = 0; i < laser_num_readings_; i++){
+        // Calculate the angle of the current laser scan ray in robot frame:
+        double angle = laser_scan_msg.angle_min + i * laser_scan_msg.angle_increment;
+
+        // Calculate the end point of the laser ray in the robot frame:
+        double ray_x = laser_scan_msg.range_max * std::cos(angle + theta0_);
+        double ray_y = laser_scan_msg.range_max * std::sin(angle + theta0_);
+        turtlelib::Vector2D ray_dir(ray_x, ray_y);
+
+        // Normalize the ray direction vector:
+        turtlelib::Vector2D ray_dir_normalized = turtlelib::normalize(ray_dir);
+        auto ray_dist = turtlelib::magnitude(ray_dir);
+
+        // Check for intersection with each obstacle:
+        for(size_t obs = 0; obs < obstacles_x_.size(); obs++) {
+          auto obs_x = obstacles_x_.at(obs);
+          auto obs_y = obstacles_y_.at(obs);
+          auto obs_r = obstacles_r_.at(obs);
+
+          // Get the vector of the turtlebot to the obstacle center:
+          turtlelib::Vector2D to_obstacle(obs_x - x0_, obs_y - y0_);
+
+          // Normalize the ray vector to get the direction, then multiply by the object distance:
+          auto obstacle_distance = turtlelib::magnitude(to_obstacle);
+
+          // Project the center onto the ray to get the closest point on the ray to the center of the obstacle:
+          auto projection_length = turtlelib::dot(to_obstacle, ray_dir_normalized);
+
+          // Compute perpendicular distance from the obstacle center to the ray:
+          auto perpendicular_dist = std::sqrt(std::pow(obstacle_distance, 2) - std::pow(projection_length, 2));
           
-          // ######################################### Begin_Citation [13] #########################
-          // Calculate the angle between the robot and the obstacle:
-          double angle_to_obstacle = std::atan2(obs_y - y0_, obs_x - x0_) - theta0_; // Subtract the robot's orientation to get the angle in the robot's frame of reference
-          // Wrap the angle to the obstacle to be between -pi and pi:
-          angle_to_obstacle = turtlelib::normalize_angle(angle_to_obstacle);
-          // ######################################## End_Citation [13] ############################
+          // Check if the distance between the two vectors is less than the obstacle radius:
+          if(perpendicular_dist <= obs_r && projection_length > 0 && projection_length < ray_dist) {
+            // Distance from projection point to the intersection point on the ray:
+            auto intersection_dist = std::sqrt(std::pow(obs_r, 2) - std::pow(perpendicular_dist, 2));
 
-          // Calculate the distance between the robot and the obstacle:
-          double distance_to_obstacle = std::sqrt(std::pow(obs_x - x0_, 2) + std::pow(obs_y - y0_, 2)) - obs_r;
-          RCLCPP_DEBUG_STREAM(this->get_logger(), "Angle to obstacle " << i << ": " << angle_to_obstacle << " and distance to obstacle: " << distance_to_obstacle);
-          
-          // If the distance is less than max range, or greater than the range min:
-          if (distance_to_obstacle < laser_scan_msg.range_max && distance_to_obstacle > laser_scan_msg.range_min) {
-            int index = static_cast<int>((angle_to_obstacle - laser_scan_msg.angle_min) / laser_scan_msg.angle_increment);
-            if (index >= 0 && index < static_cast<int>(laser_scan_msg.ranges.size())) {
-              // Check to make sure distance to obstacle is less than the lidar range max and greater than the lider min range:
-              if (distance_to_obstacle < laser_scan_msg.ranges[index] && std::abs(angle_to_obstacle) <= laser_scan_msg.angle_max && std::abs(angle_to_obstacle) >= laser_scan_msg.angle_min) {
-                // Update the laser scane range and add gaussian noise to the distance measurement:
-                  std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
-                  laser_scan_msg.ranges[index] = distance_to_obstacle + d(get_random());
-              }
+            // Find the first intersection point along the ray:
+            auto laser_hit_point = ray_dir_normalized * (projection_length - intersection_dist);
+
+            // If the ray intersects with the obstacle, calculate the distance from the robot to the point of intersection:
+            double distance_to_obstacle = turtlelib::magnitude(laser_hit_point);
+            // Check if this distance is less than the current range reading for this ray and within the laser scan range limits:
+            if (distance_to_obstacle < laser_scan_msg.ranges[i] && distance_to_obstacle < laser_scan_msg.range_max && distance_to_obstacle > laser_scan_msg.range_min) {
+              // Update the range reading for this ray to be the distance to the obstacle plus some gaussian noise based on the laser scan variance parameter:
+              std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
+              laser_scan_msg.ranges[i] = distance_to_obstacle + d(get_random());
             }
           }
         }
-        // Add the walls as obstacles for the laser scaner as well and check if laser hits one::
-        for(size_t i = 0; i < 4; ++i){
-          // Determine wall surface point the laser could hit (The wall line + half the thickness)
-          double wall_x, wall_y;
-          switch (i) {
-            case 0: // Bottom wall
-              wall_x = x0_;     // At the robots x
-              wall_y = -arena_y_ / 2.0 + arena_thick_/2.0;
-              break;
-            case 1: // Left wall
-              wall_x = -arena_x_ / 2.0 + arena_thick_/2.0;
-              wall_y = y0_;     // At the robots y
-              break;
-            case 2: // Right wall
-              wall_x = arena_x_ / 2.0 - arena_thick_/2.0;
-              wall_y = y0_;   // At the robots y
-              break;
-            case 3: // Top wall
-              wall_x = x0_;     // At the robots x
-              wall_y = arena_y_ / 2.0 - arena_thick_/2.0;
-              break;
-            default:
-              continue; // Won't occur as it should only check the four walls in the 2D plane.
-          }
-          double angle_to_wall = std::atan2(wall_y - y0_, wall_x - x0_) - theta0_; // Subtract the robot's orientation to get the angle in the robot's frame of reference.
-          // Wrap the angle to the wall to be between -pi and pi:
-          angle_to_wall = turtlelib::normalize_angle(angle_to_wall);
-          // Calculate the distance between the robot and the wall:
-          double distance_to_wall = std::sqrt(std::pow(wall_x - x0_, 2) + std::pow(wall_y - y0_, 2));
-          RCLCPP_DEBUG_STREAM(this->get_logger(), "Angle to wall " << i << ": " << angle_to_wall << " and distance to wall: " << distance_to_wall);
+      }
+      // Add the walls as obstacles for the laser scaner as well and check if laser hits one::
+      for(size_t i = 0; i < 4; ++i){
+        // Determine wall surface point the laser could hit (The wall line + half the thickness)
+        double wall_x, wall_y;
+        switch (i) {
+          case 0: // Bottom wall
+            wall_x = x0_;     // At the robots x
+            wall_y = -arena_y_ / 2.0 + arena_thick_/2.0;
+            break;
+          case 1: // Left wall
+            wall_x = -arena_x_ / 2.0 + arena_thick_/2.0;
+            wall_y = y0_;     // At the robots y
+            break;
+          case 2: // Right wall
+            wall_x = arena_x_ / 2.0 - arena_thick_/2.0;
+            wall_y = y0_;   // At the robots y
+            break;
+          case 3: // Top wall
+            wall_x = x0_;     // At the robots x
+            wall_y = arena_y_ / 2.0 - arena_thick_/2.0;
+            break;
+          default:
+            continue; // Won't occur as it should only check the four walls in the 2D plane.
+        }
+        double angle_to_wall = std::atan2(wall_y - y0_, wall_x - x0_) - theta0_; // Subtract the robot's orientation to get the angle in the robot's frame of reference.
+        // Wrap the angle to the wall to be between -pi and pi:
+        angle_to_wall = turtlelib::normalize_angle(angle_to_wall);
+        // Calculate the distance between the robot and the wall:
+        double distance_to_wall = std::sqrt(std::pow(wall_x - x0_, 2) + std::pow(wall_y - y0_, 2));
+        RCLCPP_DEBUG_STREAM(this->get_logger(), "Angle to wall " << i << ": " << angle_to_wall << " and distance to wall: " << distance_to_wall);
 
-          if (distance_to_wall < laser_scan_msg.range_max && distance_to_wall > laser_scan_msg.range_min) {
-            int index = static_cast<int>((angle_to_wall - laser_scan_msg.angle_min) / laser_scan_msg.angle_increment);
-            if (index >= 0 && index < static_cast<int>(laser_scan_msg.ranges.size())) {
-              // Check to make sure distance to wall is less than the lidar range max and greater than the lider min range:
-              if (distance_to_wall < laser_scan_msg.ranges[index] && std::abs(angle_to_wall) <= laser_scan_msg.angle_max && std::abs(angle_to_wall) >= laser_scan_msg.angle_min) {
-                // Update the laser scane range and add gaussian noise to the distance measurement:
-                  std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
-                  laser_scan_msg.ranges[index] = distance_to_wall + d(get_random());
-              }
+        if (distance_to_wall < laser_scan_msg.range_max && distance_to_wall > laser_scan_msg.range_min) {
+          int index = static_cast<int>((angle_to_wall - laser_scan_msg.angle_min) / laser_scan_msg.angle_increment);
+          if (index >= 0 && index < static_cast<int>(laser_scan_msg.ranges.size())) {
+            // Check to make sure distance to wall is less than the lidar range max and greater than the lider min range:
+            if (distance_to_wall < laser_scan_msg.ranges[index] && std::abs(angle_to_wall) <= laser_scan_msg.angle_max && std::abs(angle_to_wall) >= laser_scan_msg.angle_min) {
+              // Update the laser scane range and add gaussian noise to the distance measurement:
+                std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
+                laser_scan_msg.ranges[index] = distance_to_wall + d(get_random());
             }
           }
         }
+      }
       // ####################################### End_Citation [12] ######################################
       // Set the intensities to empty:
       laser_scan_msg.intensities = std::vector<float>(laser_scan_msg.ranges.size(), 0.0);   // Fill with all zeros since we don't use intensity. When I left empty it would reset my Rviz each build.
@@ -409,22 +430,22 @@ private:
   std::pair<bool, int> checkWallCollision() {
     // Check for collision with walls one by one:
     // Check bottom wall:
-    if ((y0_ - collision_radius_) < (-arena_y_ / 2.0 + arena_thick_)) {
+    if ((y0_) < (-arena_y_ / 2.0 + arena_thick_/2.0)) {
       RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with bottom wall!");
       return std::make_pair(true, 0); // Collision detected with bottom wall
     }
     // Check left wall:
-    if ((x0_ - collision_radius_) < (-arena_x_ / 2.0 + arena_thick_)) {
+    if ((x0_) < (-arena_x_ / 2.0 + arena_thick_/2.0)) {
       RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with left wall!");
       return std::make_pair(true, 1); // Collision detected with left wall
     }
     // Check right wall:
-    if ((x0_ + collision_radius_) > (arena_x_ / 2.0 - arena_thick_)) {
+    if ((x0_) > (arena_x_ / 2.0 - arena_thick_/2.0)) {
       RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with right wall!");
       return std::make_pair(true, 2); // Collision detected with right wall
     }
     // Check top wall:
-    if ((y0_ + collision_radius_) > (arena_y_ / 2.0 - arena_thick_)) {
+    if ((y0_) > (arena_y_ / 2.0 - arena_thick_/2.0)) {
       RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with top wall!");
       return std::make_pair(true, 3); // Collision detected with top wall
     }
@@ -439,16 +460,16 @@ private:
     // Update the robot center position based on which wall was collided with:
     switch (wall_index) {
       case 0: // Bottom wall
-        y0_ = -arena_y_ / 2.0 + arena_thick_ + collision_radius_;
+        y0_ = -arena_y_ / 2.0 + arena_thick_/2.0;
         break;
       case 1: // Left wall
-        x0_ = -arena_x_ / 2.0 + arena_thick_ + collision_radius_;
+        x0_ = -arena_x_ / 2.0 + arena_thick_/2.0;
         break;
       case 2: // Right wall
-        x0_ = arena_x_ / 2.0 - arena_thick_ - collision_radius_;
+        x0_ = arena_x_ / 2.0 - arena_thick_/2.0;
         break;
       case 3: // Top wall
-        y0_ = arena_y_ / 2.0 - arena_thick_ - collision_radius_;
+        y0_ = arena_y_ / 2.0 - arena_thick_/2.0;
         break;
       default:
         RCLCPP_WARN_STREAM(this->get_logger(), "Invalid wall index in updateWallCollision!");
@@ -568,7 +589,7 @@ private:
         // Floor
         marker.pose.position.x = 0.0;
         marker.pose.position.y = 0.0;
-        marker.pose.position.z = -arena_thick_ / 2.0;
+        marker.pose.position.z = -arena_thick_ / 2.0 - 0.05; // Slightly below the walls to avoid z-fighting in visualization
         marker.scale.x = arena_x_;
         marker.scale.y = arena_y_;
         marker.scale.z = arena_thick_;
