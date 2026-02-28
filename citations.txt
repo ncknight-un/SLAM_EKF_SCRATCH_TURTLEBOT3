@@ -12,3 +12,4 @@
 [11] Derick Dietz. CMAKE discussion on requirements for Integration Testing. February 7th, 2026.
 [12] Robotis. "Turtlebot3 Lidar Manual". Accessed: February 26th, 2026. [Online]. Available: https://emanual.robotis.com/docs/en/platform/turtlebot3/appendix_lds_01/
 [13] Claude. "Simulation Error Assistance - Path Updating and Frame Adjustment". Accessed. February 27th, 2026. [Online]. Available: https://claude.ai/share/544008df-f8bc-45e4-977d-91a83432d019
+[14] wikipedia. "Line-Line Intersection". Accessed. February 27th, 2026. [Online]. Available: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection

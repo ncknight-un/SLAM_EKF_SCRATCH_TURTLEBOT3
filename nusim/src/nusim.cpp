@@ -290,46 +290,53 @@ public:
             }
           }
         }
-      }
-      // Add the walls as obstacles for the laser scaner as well and check if laser hits one::
-      for(size_t i = 0; i < 4; ++i){
-        // Determine wall surface point the laser could hit (The wall line + half the thickness)
-        double wall_x, wall_y;
-        switch (i) {
-          case 0: // Bottom wall
-            wall_x = x0_;     // At the robots x
-            wall_y = -arena_y_ / 2.0 + arena_thick_/2.0;
-            break;
-          case 1: // Left wall
-            wall_x = -arena_x_ / 2.0 + arena_thick_/2.0;
-            wall_y = y0_;     // At the robots y
-            break;
-          case 2: // Right wall
-            wall_x = arena_x_ / 2.0 - arena_thick_/2.0;
-            wall_y = y0_;   // At the robots y
-            break;
-          case 3: // Top wall
-            wall_x = x0_;     // At the robots x
-            wall_y = arena_y_ / 2.0 - arena_thick_/2.0;
-            break;
-          default:
-            continue; // Won't occur as it should only check the four walls in the 2D plane.
-        }
-        double angle_to_wall = std::atan2(wall_y - y0_, wall_x - x0_) - theta0_; // Subtract the robot's orientation to get the angle in the robot's frame of reference.
-        // Wrap the angle to the wall to be between -pi and pi:
-        angle_to_wall = turtlelib::normalize_angle(angle_to_wall);
-        // Calculate the distance between the robot and the wall:
-        double distance_to_wall = std::sqrt(std::pow(wall_x - x0_, 2) + std::pow(wall_y - y0_, 2));
-        RCLCPP_DEBUG_STREAM(this->get_logger(), "Angle to wall " << i << ": " << angle_to_wall << " and distance to wall: " << distance_to_wall);
+        // Check for wall Intersections using line-line intersection between the ray and each wall segment:
+        // Loop through each wall segment and check for intersection with the laser:
+        for(size_t w = 0; w < 4; ++w){
+          double x1, y1, x2, y2;
+          switch(w){
+            case 0: // Bottom wall
+              x1 = -arena_x_/2.0; 
+              x2 =  arena_x_/2.0; 
+              y2 = y1 = -arena_y_/2.0 + arena_thick_/2.0;
+              break;
+            case 1: // Left wall
+              x2 = x1 = -arena_x_/2.0 +arena_thick_/2.0;
+              y1 = -arena_y_/2.0;
+              y2 =  arena_y_/2.0;
+              break;
+            case 2: // Right wall
+              x1 = x2 =arena_x_/2.0 - arena_thick_/2.0; 
+              y1 = -arena_y_/2.0;
+              y2 =  arena_y_/2.0;
+              break;
+            case 3: // Top wall
+              x1 = -arena_x_/2.0; 
+              x2 =  arena_x_/2.0; 
+              y2 = y1 = arena_y_/2.0 - arena_thick_/2.0;
+              break;
+            default: continue;
+          }
+          // ################################ Begin_Citation [14] ######################################
+          // Check for intersection between the ray and the wall segment:
+          double ray_dx = std::cos(angle + theta0_);
+          double ray_dy = std::sin(angle + theta0_);
+        
+          double seg_dx = x2 - x1;
+          double seg_dy = y2 - y1;
+          double denom = ray_dx * seg_dy - ray_dy * seg_dx;
+          // Check to see if laser is parallel to wall segment:
+          if(std::abs(denom) < 1e-9) continue;
+          
+          // laser is not parallel, so calculate line intersection parameters t and u:
+          double t = ((x1 - x0_) * seg_dy - (y1 - y0_) * seg_dx) / denom;
+          double u = ((x1 - x0_) * ray_dy  - (y1 - y0_) * ray_dx)  / denom;
+          // ################################## End_Citation [14] ######################################
 
-        if (distance_to_wall < laser_scan_msg.range_max && distance_to_wall > laser_scan_msg.range_min) {
-          int index = static_cast<int>((angle_to_wall - laser_scan_msg.angle_min) / laser_scan_msg.angle_increment);
-          if (index >= 0 && index < static_cast<int>(laser_scan_msg.ranges.size())) {
-            // Check to make sure distance to wall is less than the lidar range max and greater than the lider min range:
-            if (distance_to_wall < laser_scan_msg.ranges[index] && std::abs(angle_to_wall) <= laser_scan_msg.angle_max && std::abs(angle_to_wall) >= laser_scan_msg.angle_min) {
-              // Update the laser scane range and add gaussian noise to the distance measurement:
-                std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
-                laser_scan_msg.ranges[index] = distance_to_wall + d(get_random());
+          if(t > laser_scan_msg.range_min && t < laser_scan_msg.range_max && u >= 0.0 && u <= 1.0){
+            if(t < laser_scan_msg.ranges[i]){
+              std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
+              laser_scan_msg.ranges[i] = t + d(get_random());
             }
           }
         }
