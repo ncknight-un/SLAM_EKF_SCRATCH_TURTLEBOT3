@@ -11,13 +11,15 @@ project(slamlib)
 # Then general behavior is to call "find_package" but the options
 # provided are package specific.  Usually there is then a CMAKE variable
 find_package(Doxygen)
+find_package (Armadillo REQUIRED)
+find_package(turtlelib REQUIRED)
 
 # Create a library.  Can specify if it is shared or static but usually
 # you don't need or want to.
 # name is the name of the library without the extension or lib prefix
 # name creates a cmake "target" (in this case the target is called "libname"
 add_library(slamlib
-    src/slam.cpp
+    src/ekf.cpp
 )
 
 # Use target_include_directories so that #include"mylibrary/header.hpp" works
@@ -53,7 +55,7 @@ target_compile_features(slamlib PUBLIC cxx_std_23)
 # and paths to the locations of header files.
 # Because libname has PUBLIC cxx_std_23 as a compile feature
 # Name will also be compiled with c++23 as the standard.
-# target_link_libraries(converter  slamlib)
+target_link_libraries(slamlib PUBLIC ${ARMADILLO_LIBRARIES} turtlelib::turtlelib)
 
 # install the include files by copying the whole include directory
 install(DIRECTORY include/slamlib DESTINATION include)
@@ -62,7 +64,7 @@ install(DIRECTORY include/slamlib DESTINATION include)
 # Also create CMake Export called project_name-targets
 # The CMake Export contains files that allow other CMake projects
 # to find this project. It must be installed separately.
-# install(TARGETS slamlib converter EXPORT slamlib-targets)
+install(TARGETS slamlib EXPORT slamlib-targets)
 
 # The project_name-targets created by install(TARGETS) needs to be installed.
 # install(EXPORT ...) will generate a file called project_name-config.cmake
@@ -75,23 +77,6 @@ install(EXPORT slamlib-targets
         FILE slamlib-config.cmake
         NAMESPACE slamlib::
         DESTINATION share/${PROJECT_NAME}/cmake)
-
-# THIS Doxygen formater has been removed due to compiling issue, but is an example of how to set up.
-# # Building documentation should be optional.
-# # To build documentation pass -DBUILD_DOCS=ON when generating the build system
-# option(BUILD_DOCS "Build the documentation" ON)
-
-# # build the documentation
-# if(${DOXYGEN_FOUND} AND ${BUILD_DOCS})
-#     # Turn the README.md into the homepage of the doxygen docs
-#     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
-
-#     # Tell Doxygen where to find the documentation
-#     doxygen_add_docs(doxygen include/ src/ README.md ALL)
-
-#     # The documentation will be in the build/html directory
-#     # The main page is build/html/index.html
-# endif()
 
 # Execution of Unit Testing CTests:  (run ctest --verbose)
 include(CTest)

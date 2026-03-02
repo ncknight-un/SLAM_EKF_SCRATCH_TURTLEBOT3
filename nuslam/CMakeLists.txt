@@ -7,16 +7,38 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(nuturtle_control_interfaces REQUIRED)
+find_package(nuturtlebot_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(Armadillo REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(turtlelib REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(slamlib REQUIRED)
+
 
 # Set target link libraries:
-# add_executable(nuslam_node src/nuslam_node.cpp)
-# target_link_libraries(nuslam_node PUBLIC 
-#   Armadillo::Armadillo
-    turtlelib::turtlelib
-# )
+add_executable(nuslam_node src/slam_odom.cpp)
+target_link_libraries(nuslam_node PUBLIC 
+  ${geometry_msgs_TARGETS}
+  ${nav_msgs_TARGETS}
+  ${nuturtle_control_interfaces_TARGETS}
+  ${sensor_msgs_TARGETS}
+  ${std_srvs_TARGETS}
+  sensor_msgs::sensor_msgs_library
+  tf2_ros::static_transform_broadcaster_node
+  tf2_ros::tf2_ros
+  turtlelib::turtlelib
+  slamlib::slamlib
+  rclcpp::rclcpp
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

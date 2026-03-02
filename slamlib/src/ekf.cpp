@@ -1,6 +1,6 @@
-#include "nuslam/ekf.hpp"
+#include "slamlib/ekf.hpp"
 
-namespace nuslam {
+namespace slamlib {
     EKF::EKF(int num_landmarks, double process_noise, double measurement_noise) {
         // Initialize the expected number of landmarks
         n_landmarks_ = num_landmarks;
@@ -71,8 +71,8 @@ namespace nuslam {
         H_ = arma::zeros(2, 3 + 2 * n_landmarks_);
 
         // Get dx and dy for the observed landmark:
-        auto dx = combined_state_(3 + 2 * landmark_id) - state_(1);         // m_x - robot_x (Equation 16 in tmp/slam_EKF.pdf)
-        auto dy = combined_state_(3 + 2 * landmark_id + 1) - state_(2);     // m_y - robot_y (Equation 17 in tmp/slam_EKF.pdf)
+        auto dx = combined_state_(3 + 2 * landmark_id) - combined_state_(1);         // m_x - robot_x (Equation 16 in tmp/slam_EKF.pdf)
+        auto dy = combined_state_(3 + 2 * landmark_id + 1) - combined_state_(2);     // m_y - robot_y (Equation 17 in tmp/slam_EKF.pdf)
         auto d = dx * dx + dy * dy;
 
         // Set the robot State columns in Equation 18 in tmp/slam_EKF.pdf:
@@ -92,26 +92,26 @@ namespace nuslam {
 
     void EKF::predict(const turtlelib::Twist2D& control_input, double dt) {
         // Build the State Transition Matrix A based on the control input:
-        auto theta = state_(0);
-        auto v = control_input.vx;
+        auto theta = combined_state_(0);
+        auto v = control_input.x;
         auto omega = control_input.omega;
 
         // Update the Estimate using the function g() in Equations 20 in tmp/slam_EKF.pdf:
         arma::colvec state_pred(3);
         if (std::abs(omega) > 1e-6) { // State change has rotation (Equation 7 in tmp/slam_EKF.pdf):
             state_pred(0) = theta + omega * dt;
-            state_pred(1) = state_(1) + (v / omega) * (std::sin(state_pred(0)) - std::sin(theta));
-            state_pred(2) = state_(2) - (v / omega) * (std::cos(state_pred(0)) - std::cos(theta));
+            state_pred(1) = combined_state_(1) + (v / omega) * (std::sin(state_pred(0)) - std::sin(theta));
+            state_pred(2) = combined_state_(2) - (v / omega) * (std::cos(state_pred(0)) - std::cos(theta));
         } else { // State change does not have rotation (linear motion) Equation 5 in tmp/slam_EKF.pdf:
             state_pred(0) = theta;
-            state_pred(1) = state_(1) + v * dt * std::cos(theta);
-            state_pred(2) = state_(2) + v * dt * std::sin(theta);
+            state_pred(1) = combined_state_(1) + v * dt * std::cos(theta);
+            state_pred(2) = combined_state_(2) + v * dt * std::sin(theta);
         }
 
         // ################################## Begin_Citation [15] ##################################
-        // Source used to check if I was doing my noise propagation correctly, and to determine where to wrap angles in the predict step:
+        // Source used to check if I was doing my noise propagation correctly, and determined I needed to wrap angle at predict step:
         // Wrap the predicted angle to [-pi, pi]:
-        state_pred(0) = turtlelib::wrap_angle(state_pred(0));
+        state_pred(0) = turtlelib::normalize_angle(state_pred(0));
         // ################################## End_Citation [15] ################################## 
 
         // Update the estimated combined state vector for the robot state estimate:
@@ -122,11 +122,11 @@ namespace nuslam {
         // Compute the Jacobian of the motion model (A matrix):
         if (std::abs(omega) > 1e-6) {   // See Equation 10 in tmp/slam_EKF.pdf for the Jacobian of the motion model with rotation
             // Note A_(0,0) does not change.
-            A_(1, 0) = (v / omega) * (std::cos(state_(0)) - std::cos(state_pred(0)));         //TODO: Normalize angles...
-            A_(2, 0) = (v / omega) * (std::sin(state_(0)) - std::sin(state_pred(0)));
+            A_(1, 0) = (v / omega) * (std::cos(combined_state_(0)) - std::cos(state_pred(0)));         //TODO: Normalize angles...
+            A_(2, 0) = (v / omega) * (std::sin(combined_state_(0)) - std::sin(state_pred(0)));
         } else {    // See Equation 9 in tmp/slam_EKF.pdf for the Jacobian of the motion model without rotation
-            A_(1, 0) = -v * dt * std::sin(state_(0));
-            A_(2, 0) = v * dt * std::cos(state_(0));
+            A_(1, 0) = -v * dt * std::sin(combined_state_(0));
+            A_(2, 0) = v * dt * std::cos(combined_state_(0));
         }
 
         // Build Q_bar - Equation 22 in tmp/slam_EKF.pdf:
@@ -146,9 +146,9 @@ namespace nuslam {
         // We already know the landmark id from the data association step done in ROS2 SLAM Node.
         if (!landmark_initialized_[landmark_id]) {
             // If not initialized, initialize the landmark position in the map state based on the measurement and current robot pose
-            auto theta = state_(0);
-            auto x = state_(1);
-            auto y = state_(2);
+            auto theta = combined_state_(0);
+            auto x = combined_state_(1);
+            auto y = combined_state_(2);
 
             // Get landmarks in Cartesian coordinates in the world frame using Equations 23 and 24 in tmp/slam_EKF.pdf:
             auto m_x = x + range * std::cos(theta + bearing);
@@ -167,17 +167,26 @@ namespace nuslam {
 
         // Compute the theoretical measurement (range and bearing), given the current state estimage, using Equations 14 & 25 in tmp/slam_EKF.pdf:
         arma::colvec z_hat(2);
-        z_hat(0) = std::sqrt(std::pow(combined_state_(3 + 2 * landmark_id) - state_(1),2)
-                                        + std::pow(combined_state_(3 + 2 * landmark_id + 1) - state_(2), 2));
-        z_hat(1) = std::atan2(combined_state_(3 + 2 * landmark_id + 1) - state_(2),
-                            combined_state_(3 + 2 * landmark_id) - state_(1)) - state_(0);
+        z_hat(0) = std::sqrt(std::pow(combined_state_(3 + 2 * landmark_id) - combined_state_(1),2)
+                                        + std::pow(combined_state_(3 + 2 * landmark_id + 1) - combined_state_(2), 2));
+        z_hat(1) = std::atan2(combined_state_(3 + 2 * landmark_id + 1) - combined_state_(2),
+                            combined_state_(3 + 2 * landmark_id) - combined_state_(1)) - combined_state_(0);
 
         // Compute the Kalman Gain from the linearized measurement model (Equation 26 in tmp/slam_EKF.pdf):
         // Note: K will be a (3+2N x 2) to map the error in the measurement space back to the combined state space.
         K_ = Covariance_ * H_.t() * arma::inv(H_ * Covariance_ * H_.t() + R_);
 
+        // Normalize the measurement error (z - z_hat) for the bearing component: 
+        auto bearing_wrap = turtlelib::normalize_angle(z(1) - z_hat(1));
+        arma::colvec z_norm(2);
+        z_norm(0) = z(0) - z_hat(0);
+        z_norm(1) = bearing_wrap;
+
         // Compute the posterior state update (Equation 27 in tmp/slam_EKF.pdf):
-        combined_state_ = combined_state_ + K_ * (z - z_hat);
+        combined_state_ = combined_state_ + K_ * z_norm;
+
+        // Guarantee the robot state_ theta is wrapped to [-pi, pi]:
+        combined_state_(0) = turtlelib::normalize_angle(combined_state_(0));
         
         // Compute the updated covariance matrix (Equation 28 in tmp/slam_EKF.pdf):
         Covariance_ = (arma::eye(3 + 2 * n_landmarks_, 3 + 2 * n_landmarks_) - K_ * H_) * Covariance_; 
@@ -199,5 +208,3 @@ namespace nuslam {
         return K_;
     }
 } // End of namespace nuslam
-
-//TODO: Figure out where to wrap angles.

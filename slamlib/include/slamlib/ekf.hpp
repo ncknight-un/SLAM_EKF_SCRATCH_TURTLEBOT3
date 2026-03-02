@@ -16,9 +16,11 @@
 #include <iosfwd>
 #include <vector>
 #include <armadillo>
-#include <turtlelib>
+#include <turtlelib/angle.hpp>
+#include <turtlelib/se2d.hpp>
+#include <turtlelib/geometry2d.hpp>
 
-namespace nuslam {
+namespace slamlib {
     /// \brief A class for performing SLAM using an Extended Kalman Filter
     class EKF {
     public:
@@ -90,3 +92,4 @@ namespace nuslam {
         int n_landmarks_;
     };
 }
+#endif // SLAMLIB_EKF_HPP_INCLUDE_GUARD
