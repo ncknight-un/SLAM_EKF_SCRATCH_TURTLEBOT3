@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <launch>
-    <!-- Arguement to launch Rviz -->
-    <arg name="config_file" default="basic_world_laser" 
+    <!-- Arguement for config file -->
+    <arg name="config_file" default="basic_world_laser_3obs" 
     description="The user can control what config file is used to load the world"/>
 
     <!-- Launch the Nusim Node-->

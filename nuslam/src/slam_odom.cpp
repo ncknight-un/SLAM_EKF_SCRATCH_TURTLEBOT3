@@ -36,7 +36,7 @@
 class Odometry : public rclcpp::Node {
 public:
   Odometry()
-  : Node("odometry")
+  : Node("slam_odom")
   {
         // Check required parameters:
     if (wheel_left_.empty()) {

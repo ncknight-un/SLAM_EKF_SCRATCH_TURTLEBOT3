@@ -33,7 +33,7 @@
 
         <!-- Launch the Nusim Node if robot arg is nusim-->
         <node pkg="nusim" exec="nusimulator" if="$(eval '\'$(var robot)\'==\'nusim\'')">
-            <param from = "$(find-pkg-share nusim)/config/basic_world_laser.yaml"/>
+            <param from = "$(find-pkg-share nusim)/config/basic_world_laser_3obs.yaml"/>
             <remap from = "wheel_left_joint" to = "red/wheel_left_joint"/>
             <remap from = "wheel_right_joint" to = "red/wheel_right_joint"/>
         </node>

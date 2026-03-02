@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+<launch>
+   <!-- Arguement to launch the robot simulation type -->
+    <arg name="robot" default="nusim" 
+        description="The user can control which robot simulation to launch.">
+        <choice value="nusim" />
+        <choice value="localhost" />
+        <choice value="none" />
+    </arg>
+
+    <!-- Arguement to launch the command vel type -->
+    <arg name="cmd_src" default="teleop" 
+        description="The user can control which command velocity source to launch.">
+        <choice value="circle" />
+        <choice value="teleop" />
+        <choice value="none" />
+    </arg>
+
+    <!-- Arguement to launch Rviz -->
+    <arg name="use_rviz" default="true" 
+        description="The user can control whether the turtlebot3 is shown in Rviz or not at launch. This is false for localhost">
+        <choice value="true"/>
+        <choice value="false"/>
+    </arg>
+
+    <!-- Arguement for config file -->
+    <arg name="config_file" default="basic_world_laser_1obs" 
+    description="The user can control what config file is used to load the world"/>
+
+    <!-- ########################## Robot Siumulation Type ############################ -->
+    <group if="$(eval '\'$(var robot)\'==\'nusim\'')">
+        <!-- RViz Launch-->
+        <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nuturtle_control)/config/load_slam_odometry.rviz" 
+            if="$(eval '\'$(var use_rviz)\'==\'true\'')" on_exit="shutdown">
+            <remap from='map' to='nusim/world'/>
+        </node>
+
+        <!-- Launch the Nusim Node if robot arg is nusim-->
+        <node pkg="nusim" exec="nusimulator" if="$(eval '\'$(var robot)\'==\'nusim\'')">
+            <param from = "$(find-pkg-share nusim)/config/$(var config_file).yaml"/>
+            <remap from = "wheel_left_joint" to = "red/wheel_left_joint"/>
+            <remap from = "wheel_right_joint" to = "red/wheel_right_joint"/>
+        </node>
+
+        <!-- Load the Redbot for Ground-->
+        <include file="$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml">
+            <arg name="color" value="red"/>
+            <arg name="use_rviz" value="false"/>
+            <arg name="use_jsp" value="false"/>
+        </include>
+
+        <!-- Launch Turtle Control -->
+        <node pkg="nuturtle_control" exec="turtle_control">
+            <param from = "$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+            <remap from = "joint_states" to = "blue/joint_states"/>
+            <remap from = "sensor_data" to = "red/sensor_data"/>
+            <remap from = "wheel_cmd" to = "red/wheel_cmd"/>
+        </node>
+
+        <!-- ########################### cmd_src launch arguements ######################## -->
+        <!-- Launch the circle Node if cmd_src arg is circle -->
+        <node pkg="nuturtle_control" exec="circle" if="$(eval '\'$(var cmd_src)\'==\'circle\'')">
+            <param name="frequency" value="100"/>
+        </node>
+
+        <!-- Publish the odometry SLAM node -->
+        <node pkg="nuslam" exec="slam_odom" name="slam_odom">
+            <param from = "$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+            <param name="body_id" value="blue/base_footprint"/>
+            <param name="odom_id" value="odom"/>
+            <!-- Allow the blue to follow the nomenclature that is used in nusim for the red wheels. -->
+            <param name="wheel_left" value="wheel_left_joint"/>
+            <param name="wheel_right" value="wheel_right_joint"/>
+            <remap from="joint_states" to="red/joint_states"/>
+        </node>
+        
+        <!-- Load the Bluebot for odometry -->
+        <include file='$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml'>
+            <arg name='color' value='blue'/>
+            <arg name='use_rviz' value='$(var use_rviz)'/> 
+            <arg name='use_jsp' value='false'/>
+        </include>
+
+        <!-- Set the Identity transform between nusim/world and odom -->
+        <node pkg="tf2_ros" exec="static_transform_publisher" name="world_to_odom"
+            args="0.0 0.0 0.0 0.0 0.0 0.0 nusim/world odom"/>
+    </group>
+    <group if="$(eval '\'$(var robot)\'==\'localhost\'')">
+        <!-- Start the odometry Node -->
+        <node pkg="nuturtle_control" exec="odometry" name="odometry">
+            <param name="frequency" value="100"/>
+            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+            <param name="body_id" value="blue/base_footprint"/>
+            <param name="odom_id" value="odom"/>
+            <param name="wheel_left" value="wheel_left_joint"/>
+            <param name="wheel_right" value="wheel_right_joint"/>
+            <remap from="joint_states" to="blue/joint_states"/>
+        </node>
+
+        <!-- Start the turtle control node -->
+        <node pkg="nuturtle_control" exec="turtle_control" name="turtle_control">
+            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+            <remap from="joint_states" to="blue/joint_states"/>
+        </node>
+        <!-- Start the physical turtlebot node  -->
+        <node pkg="numsr_turtlebot" exec="numsr_turtlebot" name="numsr_turtlebot"/>
+
+        <!-- Start the lazer node -->
+        <node pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher" name="lazer">
+            <param name="port" value="/dev/ttyUSB0"/>
+        </node>
+
+        <!-- Launch the circle Node if cmd_src arg is circle -->
+        <node pkg="nuturtle_control" exec="circle" if="$(eval '\'$(var cmd_src)\'==\'circle\'')">
+            <param name="velocity" value="0.1"/>
+            <param name="radius" value="0.25"/>
+            <param name="frequency" value="100"/>
+        </node>
+    </group>
+</launch>
