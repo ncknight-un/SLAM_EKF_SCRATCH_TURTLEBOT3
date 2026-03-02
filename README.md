@@ -2,6 +2,13 @@
 * Nolan Knight
 * Winter 2025
 
+### EKF SLAM Simulation Test #1: (NOTE: Current issue with position updating)
+
+
+https://github.com/user-attachments/assets/03fdd3da-590c-4f56-9c46-5e33046bf6b5
+
+`Next steps to fix this issue are to continue debugging node to determine if it is a message issue or if the algorithm is not implemented correctly`
+
 ### Odometry Turtlebot Test:
 
 https://github.com/user-attachments/assets/654c35ba-8415-4926-86aa-6737d10a04a6
