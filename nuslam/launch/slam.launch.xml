@@ -66,25 +66,32 @@
         <!-- Publish the odometry SLAM node -->
         <node pkg="nuslam" exec="slam_odom" name="slam_odom">
             <param from = "$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
-            <param name="body_id" value="blue/base_footprint"/>
+            <param from = "$(find-pkg-share nuslam)/config/slam.yaml"/>
+            <param name="body_id" value="green/base_footprint"/>
             <param name="odom_id" value="odom"/>
             <!-- Allow the blue to follow the nomenclature that is used in nusim for the red wheels. -->
             <param name="wheel_left" value="wheel_left_joint"/>
             <param name="wheel_right" value="wheel_right_joint"/>
             <remap from="joint_states" to="red/joint_states"/>
+            <remap from="fake_obstacles" to="nusimulator/fake_obstacles"/>
         </node>
         
         <!-- Load the Bluebot for odometry -->
         <include file='$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml'>
             <arg name='color' value='blue'/>
-            <arg name='use_rviz' value='$(var use_rviz)'/> 
+            <arg name='use_rviz' value='false'/> 
             <arg name='use_jsp' value='false'/>
         </include>
 
-        <!-- Set the Identity transform between nusim/world and odom -->
-        <node pkg="tf2_ros" exec="static_transform_publisher" name="world_to_odom"
-            args="0.0 0.0 0.0 0.0 0.0 0.0 nusim/world odom"/>
+        <!-- Load the Greenbot for SLAM -->
+        <include file='$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml'>
+            <arg name='color' value='green'/>
+            <arg name='use_rviz' value='$(var use_rviz)'/> 
+            <!-- Set jsp to true because we are only publishing its tf -->
+            <arg name='use_jsp' value='true'/> 
+        </include>
     </group>
+
     <group if="$(eval '\'$(var robot)\'==\'localhost\'')">
         <!-- Start the odometry Node -->
         <node pkg="nuturtle_control" exec="odometry" name="odometry">

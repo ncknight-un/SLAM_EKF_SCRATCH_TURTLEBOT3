@@ -28,7 +28,7 @@ namespace slamlib {
         /// \param num_landmarks The expected number of landmarks in the environment
         /// \param process_noise The process noise covariance for the robot's motion
         /// \param measurement_noise The measurement noise covariance for the robot's sensors
-        EKF(int num_landmarks = 3, double process_noise = 0.1, double measurement_noise = 0.01);
+        EKF(int num_landmarks = 3, double process_noise = 0.01, double measurement_noise = 0.01);
 
         /// \brief Construct a EKF object with the given initial state
         /// \param initial_state The initial state vector (theta, x, y)
@@ -53,7 +53,7 @@ namespace slamlib {
 
         /// \brief Get the current state estimate of the robot (theta, x, y)
         /// \return The current state vector
-        arma::colvec getState() const;
+        turtlelib::Transform2D getState() const;
 
         /// \brief Get the current combined state estimate of the robot and the map:
         /// \return The current combined state vector (robot state + map state)
@@ -66,6 +66,10 @@ namespace slamlib {
         /// \brief Get the Kalman Gain matrix
         /// \return The current Kalman Gain matrix
         arma::mat getKalmanGain() const;
+
+        /// \brief Get the current estimated landmark positions in the map
+        /// \return a 2 xN matrix of the current landmark positions seen.
+        std::vector<turtlelib::Point2D> getLandmarkPositions() const;
 
     private:
         // Combined state vector (robot state + map state):

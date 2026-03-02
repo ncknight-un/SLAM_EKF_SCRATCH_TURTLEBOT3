@@ -192,8 +192,8 @@ namespace slamlib {
         Covariance_ = (arma::eye(3 + 2 * n_landmarks_, 3 + 2 * n_landmarks_) - K_ * H_) * Covariance_; 
     }
 
-    arma::colvec EKF::getState() const {
-        return combined_state_.subvec(0, 2);
+    turtlelib::Transform2D EKF::getState() const {
+        return turtlelib::Transform2D(turtlelib::Vector2D(combined_state_(1), combined_state_(2)), combined_state_(0));
     }
 
     arma::colvec EKF::getCombinedState() const {
@@ -206,5 +206,13 @@ namespace slamlib {
 
     arma::mat EKF::getKalmanGain() const {
         return K_;
+    }
+
+    std::vector<turtlelib::Point2D> EKF::getLandmarkPositions() const {
+        std::vector<turtlelib::Point2D> landmarks;
+        for (int i = 0; i < n_landmarks_; i++) {
+            landmarks.push_back(turtlelib::Point2D(combined_state_(3 + 2 * i), combined_state_(3 + 2 * i + 1))); // mx, my for each landmark in the map.
+        }
+        return landmarks;
     }
 } // End of namespace nuslam

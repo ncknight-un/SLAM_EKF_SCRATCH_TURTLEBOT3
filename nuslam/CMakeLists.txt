@@ -25,13 +25,14 @@ find_package(slamlib REQUIRED)
 
 
 # Set target link libraries:
-add_executable(nuslam_node src/slam_odom.cpp)
-target_link_libraries(nuslam_node PUBLIC 
+add_executable(slam_odom src/slam_odom.cpp)
+target_link_libraries(slam_odom PUBLIC 
   ${geometry_msgs_TARGETS}
   ${nav_msgs_TARGETS}
   ${nuturtle_control_interfaces_TARGETS}
   ${sensor_msgs_TARGETS}
   ${std_srvs_TARGETS}
+  ${visualization_msgs_TARGETS}
   sensor_msgs::sensor_msgs_library
   tf2_ros::static_transform_broadcaster_node
   tf2_ros::tf2_ros
@@ -39,6 +40,12 @@ target_link_libraries(nuslam_node PUBLIC
   slamlib::slamlib
   rclcpp::rclcpp
 )
+
+install(TARGETS
+  slam_odom
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -51,5 +58,12 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+# Set up Install Directories:
+install(DIRECTORY
+  launch
+  config
+  DESTINATION share/${PROJECT_NAME}
+)
 
 ament_package()

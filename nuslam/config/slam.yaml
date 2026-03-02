@@ -1,0 +1,6 @@
+/**:
+  ros__parameters:
+    # SLAM EKF Parameters:
+    slam_process_variance: 0.01
+    slam_measurement_variance: 0.01
+    slam_obs_radius: 0.038
