@@ -9,6 +9,14 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(Armadillo REQUIRED)
+
+# Set target link libraries:
+# add_executable(nuslam_node src/nuslam_node.cpp)
+# target_link_libraries(nuslam_node PUBLIC 
+#   Armadillo::Armadillo
+    turtlelib::turtlelib
+# )
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

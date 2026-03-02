@@ -38,12 +38,12 @@ Task C.8
 Task F.1
 Task F.2
 Task F.3
-Task F.6 - Added launch node to package. Won't know if its correct till I test on physical robot.
+Task F.6 - Will check when doing V.3
 Task C.9
 Task C.10
 Task V.1
 Task C.11
 Task C.12
 Task V.2
-Task V.3 - Will start tomorrow!
-Task L.1 - Built the package
+Task V.3 - Will come back to it.
+Task L.1 - Built the package working on the math now.
