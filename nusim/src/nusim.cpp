@@ -49,14 +49,15 @@
 
 using namespace std::chrono_literals;
 
- std::mt19937 & get_random() {
+std::mt19937 & get_random()
+{
     // static variables inside a function are created once and persist for the remainder of the program
-    static std::random_device rd{}; 
-    static std::mt19937 mt{rd()};
+  static std::random_device rd{};
+  static std::mt19937 mt{rd()};
     // we return a reference to the pseudo-random number genrator object. This is always the
     // same object every time get_random is called
-    return mt;
- }
+  return mt;
+}
 
 /// \brief A class to launch a Simulator Node
 class Nusimulator : public rclcpp::Node {
@@ -73,7 +74,8 @@ public:
       rclcpp::QoS(10).transient_local());
     obst_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/real_obstacles",
       rclcpp::QoS(10).transient_local());
-    fake_obst_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/fake_obstacles",
+    fake_obst_pub_ =
+      this->create_publisher<visualization_msgs::msg::MarkerArray>("~/fake_obstacles",
       rclcpp::QoS(10).transient_local());
 
     // Initialize the transform broadcaster
@@ -121,24 +123,31 @@ public:
         double slip_r = slip_dist(get_random());
 
         // Update just the encoder phi_left and right for sensor data:
-        double phi_left  = turtlelib::normalize_angle(diff_drive_no_noise_.get_phi_left()  + wheel_vel_.v_lw * dt);
-        double phi_right = turtlelib::normalize_angle(diff_drive_no_noise_.get_phi_right() + wheel_vel_.v_rw * dt);
+        double phi_left = turtlelib::normalize_angle(diff_drive_no_noise_.get_phi_left() +
+        wheel_vel_.v_lw * dt);
+        double phi_right = turtlelib::normalize_angle(diff_drive_no_noise_.get_phi_right() +
+        wheel_vel_.v_rw * dt);
 
         // Slip only the increment, not the total accumulated angle:
-        double phi_left_noise  = turtlelib::normalize_angle(diff_drive_.get_phi_left()  + wheel_vel_.v_lw * dt * (1.0 + slip_l));
-        double phi_right_noise = turtlelib::normalize_angle(diff_drive_.get_phi_right() + wheel_vel_.v_rw * dt * (1.0 + slip_r));
+        double phi_left_noise = turtlelib::normalize_angle(diff_drive_.get_phi_left() +
+        wheel_vel_.v_lw * dt * (1.0 + slip_l));
+        double phi_right_noise = turtlelib::normalize_angle(diff_drive_.get_phi_right() +
+        wheel_vel_.v_rw * dt * (1.0 + slip_r));
 
         diff_drive_.update_fk(phi_left_noise, phi_right_noise);  // ground truth with slip
         diff_drive_no_noise_.update_fk(phi_left, phi_right); // odometry without slip, but with noise in the sensor data
 
-        RCLCPP_DEBUG_STREAM(this->get_logger(), "The phi_left is " << phi_left << " and phi_right is " << phi_right << " at rate " <<
+        RCLCPP_DEBUG_STREAM(this->get_logger(),
+        "The phi_left is " << phi_left << " and phi_right is " << phi_right << " at rate " <<
           rate << " Hz!");
 
         // Publish the SensorData message update:
         nuturtlebot_msgs::msg::SensorData sensor_data_msg;
         sensor_data_msg.stamp = this->get_clock()->now();
-        sensor_data_msg.left_encoder = static_cast<int>(diff_drive_no_noise_.get_phi_left() * encode_ticks_per_rad_);
-        sensor_data_msg.right_encoder = static_cast<int>(diff_drive_no_noise_.get_phi_right() * encode_ticks_per_rad_);
+        sensor_data_msg.left_encoder = static_cast<int>(diff_drive_no_noise_.get_phi_left() *
+          encode_ticks_per_rad_);
+        sensor_data_msg.right_encoder = static_cast<int>(diff_drive_no_noise_.get_phi_right() *
+          encode_ticks_per_rad_);
         sensor_data_publisher_->publish(sensor_data_msg);
 
         // Publish the JointState message update:
@@ -166,7 +175,8 @@ public:
           updateCollision(obstacle_index);
           // ############################### Begin_Citation [13] ##################################
           // Update the DiffDrive model with the new position after collision:
-          diff_drive_.set_q(turtlelib::Transform2D(turtlelib::Vector2D(x0_, y0_), turtlelib::normalize_angle(theta0_)));
+          diff_drive_.set_q(turtlelib::Transform2D(turtlelib::Vector2D(x0_, y0_),
+          turtlelib::normalize_angle(theta0_)));
           // ############################### End_Citation [13] ##################################
         }
 
@@ -174,7 +184,8 @@ public:
         auto [wall_collision_detected, wall_index] = checkWallCollision();
         if(wall_collision_detected) {
           updateWallCollision(wall_index);
-          diff_drive_.set_q(turtlelib::Transform2D(turtlelib::Vector2D(x0_, y0_), turtlelib::normalize_angle(theta0_)));
+          diff_drive_.set_q(turtlelib::Transform2D(turtlelib::Vector2D(x0_, y0_),
+          turtlelib::normalize_angle(theta0_)));
         }
 
         // Assign parameters to corresponding tf variables and broadcast:
@@ -216,142 +227,151 @@ public:
         robot_path_.poses.push_back(pose);
         path_publisher_->publish(robot_path_);
       };
-    
+
     auto fake_sensor_callback_ = [this]() -> void {
       // Create a timer callback for publishing the fake sensor data of the obstacles every 200 ms:
-      auto marker_array_fake_obstacles = createFakeObstacles();
-      fake_obst_pub_->publish(marker_array_fake_obstacles);
+        auto marker_array_fake_obstacles = createFakeObstacles();
+        fake_obst_pub_->publish(marker_array_fake_obstacles);
 
       // ###################################### Begin_Citation [12] ######################################
       // Update the fake lidar scan data and publish it on red/sim_scan topic:
-      sensor_msgs::msg::LaserScan laser_scan_msg;
-      laser_scan_msg.header.stamp = this->get_clock()->now();
-      laser_scan_msg.header.frame_id = "red/base_footprint";   // Turtlebot3 laser scan frame is shifted, so I used a centered one.
+        sensor_msgs::msg::LaserScan laser_scan_msg;
+        laser_scan_msg.header.stamp = this->get_clock()->now();
+        laser_scan_msg.header.frame_id = "red/base_footprint"; // Turtlebot3 laser scan frame is shifted, so I used a centered one.
 
       // Set the laser scan parameters:
-      laser_scan_msg.angle_min = laser_angle_min_;
-      laser_scan_msg.angle_max = laser_angle_max_;
-      laser_scan_msg.angle_increment = laser_angle_increment_;
-      laser_scan_msg.time_increment = (1.0/200.0) / laser_num_readings_; // Time between individual measurements, assuming all measurements are taken in 1/200 seconds as publlished by the timer./
-      laser_scan_msg.scan_time = 0.2; // Scan data is published every 200 ms.
-      laser_scan_msg.range_min = laser_min_range_;
-      laser_scan_msg.range_max = laser_max_range_;
+        laser_scan_msg.angle_min = laser_angle_min_;
+        laser_scan_msg.angle_max = laser_angle_max_;
+        laser_scan_msg.angle_increment = laser_angle_increment_;
+        laser_scan_msg.time_increment = (1.0 / 200.0) / laser_num_readings_; // Time between individual measurements, assuming all measurements are taken in 1/200 seconds as publlished by the timer./
+        laser_scan_msg.scan_time = 0.2; // Scan data is published every 200 ms.
+        laser_scan_msg.range_min = laser_min_range_;
+        laser_scan_msg.range_max = laser_max_range_;
 
       // Initialize the ranges vector:
-      laser_scan_msg.ranges.resize(laser_num_readings_, laser_max_range_);
+        laser_scan_msg.ranges.resize(laser_num_readings_, laser_max_range_);
 
       // Loop through the scanner and see if it collides with an obstacle or wall:
-      for(int i = 0; i < laser_num_readings_; i++){
+        for(int i = 0; i < laser_num_readings_; i++) {
         // Calculate the angle of the current laser scan ray in robot frame:
-        double angle = laser_scan_msg.angle_min + i * laser_scan_msg.angle_increment;
+          double angle = laser_scan_msg.angle_min + i * laser_scan_msg.angle_increment;
 
         // Calculate the end point of the laser ray in the robot frame:
-        double ray_x = laser_scan_msg.range_max * std::cos(angle + theta0_);
-        double ray_y = laser_scan_msg.range_max * std::sin(angle + theta0_);
-        turtlelib::Vector2D ray_dir(ray_x, ray_y);
+          double ray_x = laser_scan_msg.range_max * std::cos(angle + theta0_);
+          double ray_y = laser_scan_msg.range_max * std::sin(angle + theta0_);
+          turtlelib::Vector2D ray_dir(ray_x, ray_y);
 
         // Normalize the ray direction vector:
-        turtlelib::Vector2D ray_dir_normalized = turtlelib::normalize(ray_dir);
-        auto ray_dist = turtlelib::magnitude(ray_dir);
+          turtlelib::Vector2D ray_dir_normalized = turtlelib::normalize(ray_dir);
+          auto ray_dist = turtlelib::magnitude(ray_dir);
 
         // Check for intersection with each obstacle:
-        for(size_t obs = 0; obs < obstacles_x_.size(); obs++) {
-          auto obs_x = obstacles_x_.at(obs);
-          auto obs_y = obstacles_y_.at(obs);
-          auto obs_r = obstacles_r_.at(obs);
+          for(size_t obs = 0; obs < obstacles_x_.size(); obs++) {
+            auto obs_x = obstacles_x_.at(obs);
+            auto obs_y = obstacles_y_.at(obs);
+            auto obs_r = obstacles_r_.at(obs);
 
           // Get the vector of the turtlebot to the obstacle center:
-          turtlelib::Vector2D to_obstacle(obs_x - x0_, obs_y - y0_);
+            turtlelib::Vector2D to_obstacle(obs_x - x0_, obs_y - y0_);
 
           // Normalize the ray vector to get the direction, then multiply by the object distance:
-          auto obstacle_distance = turtlelib::magnitude(to_obstacle);
+            auto obstacle_distance = turtlelib::magnitude(to_obstacle);
 
           // Project the center onto the ray to get the closest point on the ray to the center of the obstacle:
-          auto projection_length = turtlelib::dot(to_obstacle, ray_dir_normalized);
+            auto projection_length = turtlelib::dot(to_obstacle, ray_dir_normalized);
 
           // Compute perpendicular distance from the obstacle center to the ray:
-          auto perpendicular_dist = std::sqrt(std::pow(obstacle_distance, 2) - std::pow(projection_length, 2));
-          
+            auto perpendicular_dist = std::sqrt(std::pow(obstacle_distance,
+            2) - std::pow(projection_length, 2));
+
           // Check if the distance between the two vectors is less than the obstacle radius:
-          if(perpendicular_dist <= obs_r && projection_length > 0 && projection_length < ray_dist) {
+            if(perpendicular_dist <= obs_r && projection_length > 0 &&
+              projection_length < ray_dist)
+            {
             // Distance from projection point to the intersection point on the ray:
-            auto intersection_dist = std::sqrt(std::pow(obs_r, 2) - std::pow(perpendicular_dist, 2));
+              auto intersection_dist = std::sqrt(std::pow(obs_r, 2) - std::pow(perpendicular_dist,
+              2));
 
             // Find the first intersection point along the ray:
-            auto laser_hit_point = ray_dir_normalized * (projection_length - intersection_dist);
+              auto laser_hit_point = ray_dir_normalized * (projection_length - intersection_dist);
 
             // If the ray intersects with the obstacle, calculate the distance from the robot to the point of intersection:
-            double distance_to_obstacle = turtlelib::magnitude(laser_hit_point);
+              double distance_to_obstacle = turtlelib::magnitude(laser_hit_point);
             // Check if this distance is less than the current range reading for this ray and within the laser scan range limits:
-            if (distance_to_obstacle < laser_scan_msg.ranges[i] && distance_to_obstacle < laser_scan_msg.range_max && distance_to_obstacle > laser_scan_msg.range_min) {
+              if (distance_to_obstacle < laser_scan_msg.ranges[i] &&
+                distance_to_obstacle<laser_scan_msg.range_max &&
+                distance_to_obstacle> laser_scan_msg.range_min)
+              {
               // Update the range reading for this ray to be the distance to the obstacle plus some gaussian noise based on the laser scan variance parameter:
-              std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
-              laser_scan_msg.ranges[i] = distance_to_obstacle + d(get_random());
+                std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
+                laser_scan_msg.ranges[i] = distance_to_obstacle + d(get_random());
+              }
             }
           }
-        }
         // Check for wall Intersections using line-line intersection between the ray and each wall segment:
         // Loop through each wall segment and check for intersection with the laser:
-        for(size_t w = 0; w < 4; ++w){
-          double x1, y1, x2, y2;
-          switch(w){
-            case 0: // Bottom wall
-              x1 = -arena_x_/2.0; 
-              x2 =  arena_x_/2.0; 
-              y2 = y1 = -arena_y_/2.0 + arena_thick_/2.0;
-              break;
-            case 1: // Left wall
-              x2 = x1 = -arena_x_/2.0 +arena_thick_/2.0;
-              y1 = -arena_y_/2.0;
-              y2 =  arena_y_/2.0;
-              break;
-            case 2: // Right wall
-              x1 = x2 =arena_x_/2.0 - arena_thick_/2.0; 
-              y1 = -arena_y_/2.0;
-              y2 =  arena_y_/2.0;
-              break;
-            case 3: // Top wall
-              x1 = -arena_x_/2.0; 
-              x2 =  arena_x_/2.0; 
-              y2 = y1 = arena_y_/2.0 - arena_thick_/2.0;
-              break;
-            default: continue;
-          }
+          for(size_t w = 0; w < 4; ++w) {
+            double x1, y1, x2, y2;
+            switch(w) {
+              case 0: // Bottom wall
+                x1 = -arena_x_ / 2.0;
+                x2 = arena_x_ / 2.0;
+                y2 = y1 = -arena_y_ / 2.0 + arena_thick_ / 2.0;
+                break;
+              case 1: // Left wall
+                x2 = x1 = -arena_x_ / 2.0 + arena_thick_ / 2.0;
+                y1 = -arena_y_ / 2.0;
+                y2 = arena_y_ / 2.0;
+                break;
+              case 2: // Right wall
+                x1 = x2 = arena_x_ / 2.0 - arena_thick_ / 2.0;
+                y1 = -arena_y_ / 2.0;
+                y2 = arena_y_ / 2.0;
+                break;
+              case 3: // Top wall
+                x1 = -arena_x_ / 2.0;
+                x2 = arena_x_ / 2.0;
+                y2 = y1 = arena_y_ / 2.0 - arena_thick_ / 2.0;
+                break;
+              default: continue;
+            }
           // ################################ Begin_Citation [14] ######################################
           // Check for intersection between the ray and the wall segment:
-          double ray_dx = std::cos(angle + theta0_);
-          double ray_dy = std::sin(angle + theta0_);
-        
-          double seg_dx = x2 - x1;
-          double seg_dy = y2 - y1;
-          double denom = ray_dx * seg_dy - ray_dy * seg_dx;
+            double ray_dx = std::cos(angle + theta0_);
+            double ray_dy = std::sin(angle + theta0_);
+
+            double seg_dx = x2 - x1;
+            double seg_dy = y2 - y1;
+            double denom = ray_dx * seg_dy - ray_dy * seg_dx;
           // Check to see if laser is parallel to wall segment:
-          if(std::abs(denom) < 1e-9) continue;
-          
+            if(std::abs(denom) < 1e-9) {continue;}
+
           // laser is not parallel, so calculate line intersection parameters t and u:
-          double t = ((x1 - x0_) * seg_dy - (y1 - y0_) * seg_dx) / denom;
-          double u = ((x1 - x0_) * ray_dy  - (y1 - y0_) * ray_dx)  / denom;
+            double t = ((x1 - x0_) * seg_dy - (y1 - y0_) * seg_dx) / denom;
+            double u = ((x1 - x0_) * ray_dy - (y1 - y0_) * ray_dx) / denom;
           // ################################## End_Citation [14] ######################################
 
-          if(t > laser_scan_msg.range_min && t < laser_scan_msg.range_max && u >= 0.0 && u <= 1.0){
-            if(t < laser_scan_msg.ranges[i]){
-              std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
-              laser_scan_msg.ranges[i] = t + d(get_random());
+            if(t > laser_scan_msg.range_min && t < laser_scan_msg.range_max && u >= 0.0 &&
+              u <= 1.0)
+            {
+              if(t < laser_scan_msg.ranges[i]) {
+                std::normal_distribution<> d(0.0, std::sqrt(laser_scan_variance_));
+                laser_scan_msg.ranges[i] = t + d(get_random());
+              }
             }
           }
         }
-      }
       // ####################################### End_Citation [12] ######################################
       // Set the intensities to empty:
-      laser_scan_msg.intensities = std::vector<float>(laser_scan_msg.ranges.size(), 0.0);   // Fill with all zeros since we don't use intensity. When I left empty it would reset my Rviz each build.
+        laser_scan_msg.intensities = std::vector<float>(laser_scan_msg.ranges.size(), 0.0); // Fill with all zeros since we don't use intensity. When I left empty it would reset my Rviz each build.
       // Publish the laser scan message:
-      fake_laser_pub_->publish(laser_scan_msg);
-    };
-    
+        fake_laser_pub_->publish(laser_scan_msg);
+      };
+
     // Set the timer:
     timer_ = this->create_wall_timer(std::chrono::milliseconds(static_cast<int>(1000 / rate)),
       timer_callback);
-    
+
     // Create a timer to publish the fake sensor data every 200 ms:
     sensor_timer_ = this->create_wall_timer(std::chrono::milliseconds(200), fake_sensor_callback_);
 
@@ -367,27 +387,33 @@ public:
       this->create_subscription<nuturtlebot_msgs::msg::WheelCommands>("red/wheel_cmd", 10,
         [this](const nuturtlebot_msgs::msg::WheelCommands::SharedPtr msg) {
       // Log the received wheel commands:
-        RCLCPP_INFO_STREAM_ONCE(this->get_logger(),
+          RCLCPP_INFO_STREAM_ONCE(this->get_logger(),
       "Received wheel commands - Left: " << msg->left_velocity << ", Right: " <<
-          msg->right_velocity);
-                  
+            msg->right_velocity);
+
       // Apply Input noise to velocity control:
-      auto ur = msg->right_velocity;
-      auto ul = msg->left_velocity;
+          auto ur = msg->right_velocity;
+          auto ul = msg->left_velocity;
 
       // Set the normal distribuition for noise:
-      std::normal_distribution<> d(0.0, input_noise_);
-      auto vr = ur + d(get_random());
-      auto vl = ul + d(get_random());
+          std::normal_distribution<> d(0.0, input_noise_);
+          auto vr = ur + d(get_random());
+          auto vl = ul + d(get_random());
       // Update vr and vl if ur or ul is 0.0:
-      if(ur == 0)
-        vr = ur;
-      if(ul == 0)
-        vl = ul;
+          if(ur == 0) {
+            vr = ur;
+          }
+          if(ul == 0) {
+            vl = ul;
+          }
 
       // Set wheel velocities with update to vi:
-      wheel_vel_.v_lw = std::clamp(static_cast<double>(vl) / this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_), (this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_));
-      wheel_vel_.v_rw = std::clamp(static_cast<double>(vr) / this->motor_cmd_per_rad_sec_, -(this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_), (this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_));
+          wheel_vel_.v_lw = std::clamp(static_cast<double>(vl) / this->motor_cmd_per_rad_sec_,
+        -(this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_),
+          (this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_));
+          wheel_vel_.v_rw = std::clamp(static_cast<double>(vr) / this->motor_cmd_per_rad_sec_,
+        -(this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_),
+          (this->motor_cmd_max_ / this->motor_cmd_per_rad_sec_));
     });
   }
 
@@ -395,7 +421,8 @@ private:
 /// \brief A function to check collision detection between the robot and the obstacles in the arena. This will be called after every position update.
 ///
 /// \returns A boolean value indicating if the collision radius of the robot overlaps with the collision radius of an obstacle, and the index of the object collided with.
-  std::pair<bool, int> checkCollision() {
+  std::pair<bool, int> checkCollision()
+  {
     // Check for collision with obstacles:
     for (size_t i = 0; i < obstacles_x_.size(); ++i) {
       double obs_x = obstacles_x_.at(i);
@@ -404,7 +431,8 @@ private:
       // Calculate the distance between the robot and the obstacle centers:
       double distance = std::sqrt(std::pow(x0_ - obs_x, 2) + std::pow(y0_ - obs_y, 2));
       if (distance < (collision_radius_ + obs_r)) {
-        RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with obstacle at (" << obs_x << ", " << obs_y << ")!");
+        RCLCPP_WARN_STREAM(this->get_logger(),
+          "Collision detected with obstacle at (" << obs_x << ", " << obs_y << ")!");
         return std::make_pair(true, i); // Collision detected with an obstacle at index i
       }
     }
@@ -414,7 +442,8 @@ private:
 /// \brief Update the center of the robot after a collision is detected. This will be called after checkCollision() returns true.
 ///
 /// \returns void, updates the posiiton of the robots center.
-  void updateCollision(int obstacle_index) {
+  void updateCollision(int obstacle_index)
+  {
     // Get the position of the obstacle the robot collided with:
     double obs_x = obstacles_x_.at(obstacle_index);
     double obs_y = obstacles_y_.at(obstacle_index);
@@ -434,25 +463,26 @@ private:
 /// \brief A function to check collision determination between the robot and the arena walls. This will be called after every position update.
 ///
 /// \returns A boolean value indicating if the collision radius of the robot overlaps with the arena walls, and the index of the wall collided with.
-  std::pair<bool, int> checkWallCollision() {
+  std::pair<bool, int> checkWallCollision()
+  {
     // Check for collision with walls one by one:
     // Check bottom wall:
-    if ((y0_) < (-arena_y_ / 2.0 + arena_thick_/2.0)) {
+    if ((y0_) < (-arena_y_ / 2.0 + arena_thick_ / 2.0)) {
       RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with bottom wall!");
       return std::make_pair(true, 0); // Collision detected with bottom wall
     }
     // Check left wall:
-    if ((x0_) < (-arena_x_ / 2.0 + arena_thick_/2.0)) {
+    if ((x0_) < (-arena_x_ / 2.0 + arena_thick_ / 2.0)) {
       RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with left wall!");
       return std::make_pair(true, 1); // Collision detected with left wall
     }
     // Check right wall:
-    if ((x0_) > (arena_x_ / 2.0 - arena_thick_/2.0)) {
+    if ((x0_) > (arena_x_ / 2.0 - arena_thick_ / 2.0)) {
       RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with right wall!");
       return std::make_pair(true, 2); // Collision detected with right wall
     }
     // Check top wall:
-    if ((y0_) > (arena_y_ / 2.0 - arena_thick_/2.0)) {
+    if ((y0_) > (arena_y_ / 2.0 - arena_thick_ / 2.0)) {
       RCLCPP_WARN_STREAM(this->get_logger(), "Collision detected with top wall!");
       return std::make_pair(true, 3); // Collision detected with top wall
     }
@@ -463,20 +493,21 @@ private:
 /// \brief Update the center of the robot after a collision with the wall is detected. This will be called after checkWallCollision() returns true.
 ///
 /// \returns void, but will update robots position to be tangent to the wall.
-  void updateWallCollision(int wall_index) {
+  void updateWallCollision(int wall_index)
+  {
     // Update the robot center position based on which wall was collided with:
     switch (wall_index) {
       case 0: // Bottom wall
-        y0_ = -arena_y_ / 2.0 + arena_thick_/2.0;
+        y0_ = -arena_y_ / 2.0 + arena_thick_ / 2.0;
         break;
       case 1: // Left wall
-        x0_ = -arena_x_ / 2.0 + arena_thick_/2.0;
+        x0_ = -arena_x_ / 2.0 + arena_thick_ / 2.0;
         break;
       case 2: // Right wall
-        x0_ = arena_x_ / 2.0 - arena_thick_/2.0;
+        x0_ = arena_x_ / 2.0 - arena_thick_ / 2.0;
         break;
       case 3: // Top wall
-        y0_ = arena_y_ / 2.0 - arena_thick_/2.0;
+        y0_ = arena_y_ / 2.0 - arena_thick_ / 2.0;
         break;
       default:
         RCLCPP_WARN_STREAM(this->get_logger(), "Invalid wall index in updateWallCollision!");
@@ -486,9 +517,10 @@ private:
 
 /// \brief Creates visualization markers for the fake sensor data of the obstacles.
 ///
-/// \returns A MarkerArray containing a gaussian distribution of fake obstacles that dissapear/are 
+/// \returns A MarkerArray containing a gaussian distribution of fake obstacles that dissapear/are
 ///           deleted when they go out of the robots max range.
-  visualization_msgs::msg::MarkerArray createFakeObstacles(){
+  visualization_msgs::msg::MarkerArray createFakeObstacles()
+  {
     // Initialize and publish the Fake Obstacles:
     visualization_msgs::msg::MarkerArray marker_array_fake_obstacles;
 
@@ -508,7 +540,7 @@ private:
       marker.pose.orientation.w = 1.0;
 
       // Determine obstacle locations and size:
-      // Add uncertainty radius to obstacles: 
+      // Add uncertainty radius to obstacles:
       auto sigma = std::sqrt(basic_sensor_variance_);
       std::normal_distribution<> d(0.0, sigma);
       double obs_x = obstacles_x_.at(i) + d(get_random());
@@ -672,7 +704,8 @@ private:
   /// \returns void
   void handle_service_reset(
     const std::shared_ptr<std_srvs::srv::Empty::Request> request,
-    const std::shared_ptr<std_srvs::srv::Empty::Response> response) {
+    const std::shared_ptr<std_srvs::srv::Empty::Response> response)
+  {
     (void)request;
     (void)response;
     RCLCPP_INFO(this->get_logger(), "Timestep Reset!");

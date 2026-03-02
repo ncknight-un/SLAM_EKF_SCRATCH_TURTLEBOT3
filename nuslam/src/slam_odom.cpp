@@ -63,7 +63,7 @@ public:
 
         // Initialize the transform broadcaster
     tf_broadcaster_odom_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-    
+
        // Initialize the SLAM transform broadcaster
     tf_broadcaster_slam_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
@@ -74,14 +74,15 @@ public:
     slam_path_pub_ = this->create_publisher<nav_msgs::msg::Path>("green/slam_path", 10);
 
         // Construct the publisher for SLAM obstacles:
-    slam_obstacle_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("slam_obstacles", 10);
+    slam_obstacle_pub_ =
+      this->create_publisher<visualization_msgs::msg::MarkerArray>("slam_obstacles", 10);
 
         // Construct the subscriber for Fake Obstacle Sensor Data with Noise:
     fake_obstacles_subscriber_ =
       this->create_subscription<visualization_msgs::msg::MarkerArray>("fake_obstacles", 10,
         [this](const visualization_msgs::msg::MarkerArray::SharedPtr msg) {
         // Break apart the Marker array, and update the SLAM EKF with each obstacle measurement:
-        for(const auto & marker : msg->markers) {
+          for(const auto & marker : msg->markers) {
             // Pull out each marker and posiiton
             auto obs_id = marker.id;
             auto obs_x = marker.pose.position.x;
@@ -93,7 +94,8 @@ public:
             auto robot_y = robot_pose.translation().y;
             auto robot_theta = robot_pose.rotation();
 
-            RCLCPP_DEBUG_STREAM(this->get_logger(), "Robot pose: x=" << robot_x << ", y=" << robot_y << ", theta=" << robot_theta);
+            RCLCPP_DEBUG_STREAM(this->get_logger(),
+          "Robot pose: x=" << robot_x << ", y=" << robot_y << ", theta=" << robot_theta);
 
             // Change in world x and y from robot to obstacle:
             auto dx = obs_x - robot_x;
@@ -105,57 +107,59 @@ public:
             arma::colvec measurement(2);
             measurement(0) = range;
             measurement(1) = bearing;
-            
-            RCLCPP_DEBUG_STREAM(this->get_logger(), "Measurement for obstacle " << obs_id << ": range=" << range << ", bearing=" << bearing);
+
+            RCLCPP_DEBUG_STREAM(this->get_logger(),
+          "Measurement for obstacle " << obs_id << ": range=" << range << ", bearing=" << bearing);
 
             // Update the SLAM EKF with the new obstacle data:
             slam_ekf_.updateEKF(measurement, obs_id);
-        }
+          }
 
         // Get the new SLAM EKF state and obstacles/landmarks and publish it as a MarkerArray for visualization:
-        auto slam_obstacles = slam_ekf_.getLandmarkPositions(); // vector of points.
-        auto slam_pose = slam_ekf_.getState();  // Transform2D of the robot in the SLAM map.
+          auto slam_obstacles = slam_ekf_.getLandmarkPositions(); // vector of points.
+          auto slam_pose = slam_ekf_.getState(); // Transform2D of the robot in the SLAM map.
 
         // Convert the SLAM EKF landmark positions to a MarkerArray:
-        visualization_msgs::msg::MarkerArray marker_array_slam_obstacles = createSLAMObstacles(slam_obstacles);
-        slam_obstacle_pub_->publish(marker_array_slam_obstacles);
+          visualization_msgs::msg::MarkerArray marker_array_slam_obstacles =
+          createSLAMObstacles(slam_obstacles);
+          slam_obstacle_pub_->publish(marker_array_slam_obstacles);
 
-        // Compute map->odom: 
+        // Compute map->odom:
         // slam_pose times the inv(odom_pose)
-        turtlelib::Transform2D map_to_odom = slam_pose * diff_drive_.get_q().inv();
+          turtlelib::Transform2D map_to_odom = slam_pose * diff_drive_.get_q().inv();
 
         // Publish the SLAM EKF robot pose as a transform:
-        geometry_msgs::msg::TransformStamped t;
-        t.header.stamp = msg->markers[0].header.stamp; // Use the sensor message timestep:
-        t.header.frame_id = "nusim/world"; // Publish the SLAM EKF pose in the world frame (remapped map frame)
-        t.child_frame_id = odom_id_; // Publish the SLAM EKF pose in the odometry frame for easy comparison.
-        t.transform.translation.x = map_to_odom.translation().x;
-        t.transform.translation.y = map_to_odom.translation().y;
-        t.transform.translation.z = 0.0;
-        tf2::Quaternion q;
-        q.setRPY(0, 0, map_to_odom.rotation());
-        t.transform.rotation.x = q.x();
-        t.transform.rotation.y = q.y();
-        t.transform.rotation.z = q.z();
-        t.transform.rotation.w = q.w();
-        tf_broadcaster_slam_->sendTransform(t);
+          geometry_msgs::msg::TransformStamped t;
+          t.header.stamp = msg->markers[0].header.stamp; // Use the sensor message timestep:
+          t.header.frame_id = "nusim/world"; // Publish the SLAM EKF pose in the world frame (remapped map frame)
+          t.child_frame_id = odom_id_; // Publish the SLAM EKF pose in the odometry frame for easy comparison.
+          t.transform.translation.x = map_to_odom.translation().x;
+          t.transform.translation.y = map_to_odom.translation().y;
+          t.transform.translation.z = 0.0;
+          tf2::Quaternion q;
+          q.setRPY(0, 0, map_to_odom.rotation());
+          t.transform.rotation.x = q.x();
+          t.transform.rotation.y = q.y();
+          t.transform.rotation.z = q.z();
+          t.transform.rotation.w = q.w();
+          tf_broadcaster_slam_->sendTransform(t);
 
         // Publish the SLAM obstacles based on the MAP update from the EKF SLAM algorithm:
-        slam_path_.header.stamp = msg->markers[0].header.stamp;  // Keep the same timestamp as sensor data update
-        slam_path_.header.frame_id = "nusim/world";
-        geometry_msgs::msg::PoseStamped pose;
-        pose.header = slam_path_.header;
+          slam_path_.header.stamp = msg->markers[0].header.stamp; // Keep the same timestamp as sensor data update
+          slam_path_.header.frame_id = "nusim/world";
+          geometry_msgs::msg::PoseStamped pose;
+          pose.header = slam_path_.header;
         // Update the pose of the robot:
-        pose.pose.position.x = slam_pose.translation().x;
-        pose.pose.position.y = slam_pose.translation().y;
-        pose.pose.position.z = 0.0;
+          pose.pose.position.x = slam_pose.translation().x;
+          pose.pose.position.y = slam_pose.translation().y;
+          pose.pose.position.z = 0.0;
         // Orienation of the robot as a quaternion:
-        pose.pose.orientation.x = q.x();
-        pose.pose.orientation.y = q.y();
-        pose.pose.orientation.z = q.z();
-        pose.pose.orientation.w = q.w();
-        slam_path_.poses.push_back(pose);
-        slam_path_pub_->publish(slam_path_);
+          pose.pose.orientation.x = q.x();
+          pose.pose.orientation.y = q.y();
+          pose.pose.orientation.z = q.z();
+          pose.pose.orientation.w = q.w();
+          slam_path_.poses.push_back(pose);
+          slam_path_pub_->publish(slam_path_);
 
         });
 
@@ -178,14 +182,14 @@ public:
             // Compute Twist
           turtlelib::Twist2D tw = diff_drive_.compute_twist(turtlelib::Vector2D{phi_left,
             phi_right});
-            
-            //  ################# SLAM EKF PREDICTION STEP #################
-            if(tw.x != 0.0 || tw.omega != 0.0) {
-                // Movement occurs, update prediction:
-                slam_ekf_.predict(tw);
-            }
 
-            RCLCPP_DEBUG_STREAM(this->get_logger(), "tw.x=" << tw.x << " tw.omega=" << tw.omega);
+            //  ################# SLAM EKF PREDICTION STEP #################
+          if(tw.x != 0.0 || tw.omega != 0.0) {
+                // Movement occurs, update prediction:
+            slam_ekf_.predict(tw);
+          }
+
+          RCLCPP_DEBUG_STREAM(this->get_logger(), "tw.x=" << tw.x << " tw.omega=" << tw.omega);
             // #############################################################
 
             // Update forward kinematics:
@@ -209,7 +213,7 @@ public:
           odometry_msg.pose.pose.orientation.z = q.z();
           odometry_msg.pose.pose.orientation.w = q.w();
           odometry_msg.pose.covariance = {0.0};   // Set covariance to 0.
-          
+
             // Set the Linear and angular velocity relative to body frame:
             // Get the current twist from the DiffDrive model:
           odometry_msg.twist.twist.linear.x = tw.x;
@@ -220,29 +224,29 @@ public:
           odometry_publisher_->publish(odometry_msg);
 
             // Publish the odometry transform:
-            geometry_msgs::msg::TransformStamped t;
-            t.header.stamp = msg->header.stamp;
-            t.header.frame_id = odom_id_;
-            t.child_frame_id = body_id_;
-            t.transform.translation.x = odometry_msg.pose.pose.position.x;
-            t.transform.translation.y = odometry_msg.pose.pose.position.y;
-            t.transform.translation.z = 0.0;
-            t.transform.rotation.x = odometry_msg.pose.pose.orientation.x;
-            t.transform.rotation.y = odometry_msg.pose.pose.orientation.y;
-            t.transform.rotation.z = odometry_msg.pose.pose.orientation.z;
-            t.transform.rotation.w = odometry_msg.pose.pose.orientation.w;
-            tf_broadcaster_odom_->sendTransform(t);
+          geometry_msgs::msg::TransformStamped t;
+          t.header.stamp = msg->header.stamp;
+          t.header.frame_id = odom_id_;
+          t.child_frame_id = body_id_;
+          t.transform.translation.x = odometry_msg.pose.pose.position.x;
+          t.transform.translation.y = odometry_msg.pose.pose.position.y;
+          t.transform.translation.z = 0.0;
+          t.transform.rotation.x = odometry_msg.pose.pose.orientation.x;
+          t.transform.rotation.y = odometry_msg.pose.pose.orientation.y;
+          t.transform.rotation.z = odometry_msg.pose.pose.orientation.z;
+          t.transform.rotation.w = odometry_msg.pose.pose.orientation.w;
+          tf_broadcaster_odom_->sendTransform(t);
 
             // Also Publish the Blue Odometry uncorrected by SLAM:
-            geometry_msgs::msg::TransformStamped t_blue;
-            t_blue.header.stamp = msg->header.stamp;
-            t_blue.header.frame_id = "nusim/world";
-            t_blue.child_frame_id = "blue/base_footprint";
-            t_blue.transform.translation.x = diff_drive_.get_q().translation().x;
-            t_blue.transform.translation.y = diff_drive_.get_q().translation().y;
-            t_blue.transform.translation.z = 0.0;
-            t_blue.transform.rotation = t.transform.rotation;
-            tf_broadcaster_odom_->sendTransform(t_blue);
+          geometry_msgs::msg::TransformStamped t_blue;
+          t_blue.header.stamp = msg->header.stamp;
+          t_blue.header.frame_id = "nusim/world";
+          t_blue.child_frame_id = "blue/base_footprint";
+          t_blue.transform.translation.x = diff_drive_.get_q().translation().x;
+          t_blue.transform.translation.y = diff_drive_.get_q().translation().y;
+          t_blue.transform.translation.z = 0.0;
+          t_blue.transform.rotation = t.transform.rotation;
+          tf_broadcaster_odom_->sendTransform(t_blue);
         });
 
         // Initialize Reset service
@@ -276,7 +280,9 @@ private:
     /// \brief Creates visualization markers for the SLAM map obstacles:
     ///
     /// \returns A MarkerArray containing the predicted positions of the obstacles in the SLAM map based on the EKF SLAM algorithm.
-  visualization_msgs::msg::MarkerArray createSLAMObstacles(std::vector<turtlelib::Point2D> slam_obstacles){
+  visualization_msgs::msg::MarkerArray createSLAMObstacles(
+    std::vector<turtlelib::Point2D> slam_obstacles)
+  {
     // Initialize and publish the Fake Obstacles:
     visualization_msgs::msg::MarkerArray marker_array_fake_obstacles;
 
@@ -339,8 +345,8 @@ private:
   double track_width_ = declare_parameter<double>("track_width", 0.16);
 
     // Initialize Parameters for the slam obstacles:
-    double obstacle_height_ = declare_parameter<double>("obst_height", 0.25);
-    double obstacle_radius_ = declare_parameter<double>("slam_obs_radius", 0.038);
+  double obstacle_height_ = declare_parameter<double>("obst_height", 0.25);
+  double obstacle_radius_ = declare_parameter<double>("slam_obs_radius", 0.038);
 
     // Initialize the DiffDrive model for internal odometry state:
   turtlelib::DiffDrive diff_drive_{track_width_, wheel_radius_};
@@ -351,7 +357,7 @@ private:
   int num_obstacles_ = declare_parameter<int>("num_obstacles", 5);
 
   // Create the EKF SLAM object:
-  slamlib::EKF slam_ekf_{num_obstacles_, slam_process_variance_, slam_measurement_variance_};  
+  slamlib::EKF slam_ekf_{num_obstacles_, slam_process_variance_, slam_measurement_variance_};
 
   // Transform2D to hold the current estimated pose of the robot based on the EKF SLAM algorithm:
   turtlelib::Transform2D q_slam_;

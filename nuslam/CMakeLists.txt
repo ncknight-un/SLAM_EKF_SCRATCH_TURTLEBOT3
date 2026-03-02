@@ -23,10 +23,9 @@ find_package(visualization_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(slamlib REQUIRED)
 
-
 # Set target link libraries:
 add_executable(slam_odom src/slam_odom.cpp)
-target_link_libraries(slam_odom PUBLIC 
+target_link_libraries(slam_odom PUBLIC
   ${geometry_msgs_TARGETS}
   ${nav_msgs_TARGETS}
   ${nuturtle_control_interfaces_TARGETS}
@@ -45,7 +44,6 @@ install(TARGETS
   slam_odom
   DESTINATION lib/${PROJECT_NAME}
 )
-
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

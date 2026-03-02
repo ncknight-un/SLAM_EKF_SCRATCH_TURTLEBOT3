@@ -56,7 +56,7 @@ public:
       10);
 
       // Construct the publisher for the robot path:
-      path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("blue/odom_path", 10);
+    path_publisher_ = this->create_publisher<nav_msgs::msg::Path>("blue/odom_path", 10);
 
         // Construct the subscriber and publisher for cmd_vel:
     cmd_vel_subscriber_ = this->create_subscription<geometry_msgs::msg::Twist>("cmd_vel", 10,
