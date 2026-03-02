@@ -90,7 +90,7 @@ namespace slamlib {
         H_(1, (3 + 2 * landmark_id) + 1) = dx / d;
     }
 
-    void EKF::predict(const turtlelib::Twist2D& control_input, double dt) {
+    void EKF::predict(const turtlelib::Twist2D& control_input) {
         // Build the State Transition Matrix A based on the control input:
         auto theta = combined_state_(0);
         auto v = control_input.x;
@@ -99,13 +99,13 @@ namespace slamlib {
         // Update the Estimate using the function g() in Equations 20 in tmp/slam_EKF.pdf:
         arma::colvec state_pred(3);
         if (std::abs(omega) > 1e-6) { // State change has rotation (Equation 7 in tmp/slam_EKF.pdf):
-            state_pred(0) = theta + omega * dt;
+            state_pred(0) = theta + omega;
             state_pred(1) = combined_state_(1) + (v / omega) * (std::sin(state_pred(0)) - std::sin(theta));
             state_pred(2) = combined_state_(2) - (v / omega) * (std::cos(state_pred(0)) - std::cos(theta));
         } else { // State change does not have rotation (linear motion) Equation 5 in tmp/slam_EKF.pdf:
             state_pred(0) = theta;
-            state_pred(1) = combined_state_(1) + v * dt * std::cos(theta);
-            state_pred(2) = combined_state_(2) + v * dt * std::sin(theta);
+            state_pred(1) = combined_state_(1) + v * std::cos(theta);
+            state_pred(2) = combined_state_(2) + v * std::sin(theta);
         }
 
         // ################################## Begin_Citation [15] ##################################
@@ -125,8 +125,8 @@ namespace slamlib {
             A_(1, 0) = (v / omega) * (std::cos(combined_state_(0)) - std::cos(state_pred(0)));         //TODO: Normalize angles...
             A_(2, 0) = (v / omega) * (std::sin(combined_state_(0)) - std::sin(state_pred(0)));
         } else {    // See Equation 9 in tmp/slam_EKF.pdf for the Jacobian of the motion model without rotation
-            A_(1, 0) = -v * dt * std::sin(combined_state_(0));
-            A_(2, 0) = v * dt * std::cos(combined_state_(0));
+            A_(1, 0) = -v * std::sin(combined_state_(0));
+            A_(2, 0) = v * std::cos(combined_state_(0));
         }
 
         // Build Q_bar - Equation 22 in tmp/slam_EKF.pdf:
@@ -160,6 +160,7 @@ namespace slamlib {
 
             // Mark the new landmark as initialized, so the EKF knows it has been seen:
             landmark_initialized_[landmark_id] = true; 
+            return; // No update after init.
         }
 
         // Update the measurement model matrix H based on which landmark is being observed:
@@ -209,9 +210,11 @@ namespace slamlib {
     }
 
     std::vector<turtlelib::Point2D> EKF::getLandmarkPositions() const {
+        // Only return the lanfmarks/obstacles that have been seen:
         std::vector<turtlelib::Point2D> landmarks;
         for (int i = 0; i < n_landmarks_; i++) {
-            landmarks.push_back(turtlelib::Point2D(combined_state_(3 + 2 * i), combined_state_(3 + 2 * i + 1))); // mx, my for each landmark in the map.
+            if (landmark_initialized_[i])
+            landmarks.push_back(turtlelib::Point2D(combined_state_(3 + 2 * i), combined_state_(3 + 2 * i + 1))); // mx, my for each landmark in the map for seen obstacles.
         }
         return landmarks;
     }

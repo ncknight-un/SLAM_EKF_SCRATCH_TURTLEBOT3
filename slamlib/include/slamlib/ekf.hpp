@@ -40,7 +40,7 @@ namespace slamlib {
         /// \brief Perform a prediction step of the EKF SLAM algorithm
         /// \param control_input The control input vector
         /// \param dt The time step duration
-        void predict(const turtlelib::Twist2D& control_input, double dt);
+        void predict(const turtlelib::Twist2D& control_input);
 
         /// \brief Perform an update step of the EKF SLAM algorithm
         /// \param measurement The measurement vector holding the range and bearing to the observed landmark

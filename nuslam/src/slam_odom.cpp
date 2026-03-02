@@ -76,9 +76,6 @@ public:
         // Construct the publisher for SLAM obstacles:
     slam_obstacle_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("slam_obstacles", 10);
 
-    // Initialize the prev_time for SLAM EKF prediction:
-    prev_time_ = this->get_clock()->now(); // Note: this will make the first update have a larger dt, but it will converge with subsequent updates
-
         // Construct the subscriber for Fake Obstacle Sensor Data with Noise:
     fake_obstacles_subscriber_ =
       this->create_subscription<visualization_msgs::msg::MarkerArray>("fake_obstacles", 10,
@@ -95,6 +92,9 @@ public:
             auto robot_x = robot_pose.translation().x;
             auto robot_y = robot_pose.translation().y;
             auto robot_theta = robot_pose.rotation();
+
+            RCLCPP_DEBUG_STREAM(this->get_logger(), "Robot pose: x=" << robot_x << ", y=" << robot_y << ", theta=" << robot_theta);
+
             // Change in world x and y from robot to obstacle:
             auto dx = obs_x - robot_x;
             auto dy = obs_y - robot_y;
@@ -105,6 +105,8 @@ public:
             arma::colvec measurement(2);
             measurement(0) = range;
             measurement(1) = bearing;
+            
+            RCLCPP_DEBUG_STREAM(this->get_logger(), "Measurement for obstacle " << obs_id << ": range=" << range << ", bearing=" << bearing);
 
             // Update the SLAM EKF with the new obstacle data:
             slam_ekf_.updateEKF(measurement, obs_id);
@@ -121,7 +123,6 @@ public:
         // Compute map->odom: 
         // slam_pose times the inv(odom_pose)
         turtlelib::Transform2D map_to_odom = slam_pose * diff_drive_.get_q().inv();
-
 
         // Publish the SLAM EKF robot pose as a transform:
         geometry_msgs::msg::TransformStamped t;
@@ -179,11 +180,12 @@ public:
             phi_right});
             
             //  ################# SLAM EKF PREDICTION STEP #################
-            // Predict the new SLAM EKF state based on the twist:
-            rclcpp::Time current_time(msg->header.stamp);
-            auto dt = (current_time - prev_time_).seconds();
-            slam_ekf_.predict(tw, dt);
-            prev_time_ = msg->header.stamp;
+            if(tw.x != 0.0 || tw.omega != 0.0) {
+                // Movement occurs, update prediction:
+                slam_ekf_.predict(tw);
+            }
+
+            RCLCPP_DEBUG_STREAM(this->get_logger(), "tw.x=" << tw.x << " tw.omega=" << tw.omega);
             // #############################################################
 
             // Update forward kinematics:
@@ -347,9 +349,6 @@ private:
   double slam_process_variance_ = declare_parameter<double>("slam_process_variance", 0.01);
   double slam_measurement_variance_ = declare_parameter<double>("slam_measurement_variance", 0.01);
   int num_obstacles_ = declare_parameter<int>("num_obstacles", 5);
-
-  // Tracker for previous time of joint state update, to compute dt for SLAM EKF prediction step:
-  rclcpp::Time prev_time_;
 
   // Create the EKF SLAM object:
   slamlib::EKF slam_ekf_{num_obstacles_, slam_process_variance_, slam_measurement_variance_};  
