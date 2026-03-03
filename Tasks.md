@@ -47,4 +47,4 @@ Task C.12
 Task V.2
 Task V.3 - Will come back to it tomorrow as the last step! (Wanted to get SLAM done first)
 Task L.1
-Task L.2 - Obstacle is being placed great, green is trying to follow red but is rubber banding.
+Task L.2

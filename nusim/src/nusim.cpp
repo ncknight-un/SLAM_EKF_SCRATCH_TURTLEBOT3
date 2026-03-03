@@ -529,7 +529,7 @@ private:
 
       // Publish the markers with respect to the world frame, but check against the robots positon.
       // ############################## Begin_Citation [13] ##################################
-      marker.header.frame_id = "nusim/world";
+      marker.header.frame_id = "red/base_footprint";
       // ############################### End_Citation [13] ###################################
       marker.header.stamp = rclcpp::Clock().now();
       marker.ns = "fake_obstacles";
@@ -543,13 +543,19 @@ private:
       // Add uncertainty radius to obstacles:
       auto sigma = std::sqrt(basic_sensor_variance_);
       std::normal_distribution<> d(0.0, sigma);
-      double obs_x = obstacles_x_.at(i) + d(get_random());
-      double obs_y = obstacles_y_.at(i) + d(get_random());
+      // World-frame obstacle position (with noise)
+      double obs_x_world = obstacles_x_.at(i) + d(get_random());
+      double obs_y_world = obstacles_y_.at(i) + d(get_random());
+      // Transform into robot frame to publish as a fake sensor data:
+      double dx = obs_x_world - x0_;
+      double dy = obs_y_world - y0_;
+      double obs_x_robot =  std::cos(theta0_) * dx + std::sin(theta0_) * dy;
+      double obs_y_robot = -std::sin(theta0_) * dx + std::cos(theta0_) * dy;
       double obs_r = obstacles_r_.at(i) + d(get_random());
 
       // Set the marker information for the fake obstacles:
-      marker.pose.position.x = obs_x;
-      marker.pose.position.y = obs_y;
+      marker.pose.position.x = obs_x_robot;
+      marker.pose.position.y = obs_y_robot;
       marker.pose.position.z = obst_height_ / 2;
       marker.scale.x = obs_r * 2;
       marker.scale.y = obs_r * 2;
@@ -563,7 +569,7 @@ private:
       marker_array_fake_obstacles.markers.emplace_back(marker);
 
       // If the obstacle is out of range of the robot in the world, delete it from the marker array by changing its action to DELETE:
-      double distance = std::sqrt(std::pow(obs_x - x0_, 2) + std::pow(obs_y - y0_, 2));
+      double distance = std::sqrt(std::pow(obs_x_robot - 0.0, 2) + std::pow(obs_y_robot - 0.0, 2));
       if (distance > max_range_) {
         marker_array_fake_obstacles.markers.back().action = visualization_msgs::msg::Marker::DELETE;
       }
@@ -641,10 +647,10 @@ private:
         marker.color.b = 0.0;
         marker.color.a = 1.0;
       } else if (i == 4) {
-        // Floor (white)
-        marker.color.r = 1.0;
-        marker.color.g = 1.0;
-        marker.color.b = 1.0;
+        // Floor (Gray)
+        marker.color.r = 0.5;
+        marker.color.g = 0.5;
+        marker.color.b = 0.5;
         marker.color.a = 1.0;
       }
       marker_array_walls.markers.emplace_back(marker);

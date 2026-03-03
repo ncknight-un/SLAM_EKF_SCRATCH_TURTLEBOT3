@@ -83,26 +83,14 @@ public:
         [this](const visualization_msgs::msg::MarkerArray::SharedPtr msg) {
         // Break apart the Marker array, and update the SLAM EKF with each obstacle measurement:
           for(const auto & marker : msg->markers) {
-            // Pull out each marker and posiiton
+            // Pull out each marker and posiiton that is in the robot frame (sensor measurements)
             auto obs_id = marker.id;
             auto obs_x = marker.pose.position.x;
             auto obs_y = marker.pose.position.y;
 
-            // Calculate the range and bearing to the obstacle from the robot's current estimated pose based on odometry:
-            auto robot_pose = slam_ekf_.getState(); // Get the current estimated robot pose from the SLAM EKF.
-            auto robot_x = robot_pose.translation().x;
-            auto robot_y = robot_pose.translation().y;
-            auto robot_theta = robot_pose.rotation();
-
-            RCLCPP_DEBUG_STREAM(this->get_logger(),
-          "Robot pose: x=" << robot_x << ", y=" << robot_y << ", theta=" << robot_theta);
-
-            // Change in world x and y from robot to obstacle:
-            auto dx = obs_x - robot_x;
-            auto dy = obs_y - robot_y;
             // Range and Bearing:
-            auto range = std::sqrt(dx * dx + dy * dy);
-            auto bearing = turtlelib::normalize_angle(std::atan2(dy, dx) - robot_theta);
+            auto range = std::sqrt(obs_x * obs_x + obs_y * obs_y);
+            auto bearing = turtlelib::normalize_angle(std::atan2(obs_y, obs_x));
             // Build colvec measurement for EKF update:
             arma::colvec measurement(2);
             measurement(0) = range;
@@ -130,9 +118,15 @@ public:
 
         // Publish the SLAM EKF robot pose as a transform:
           geometry_msgs::msg::TransformStamped t;
-          t.header.stamp = msg->markers[0].header.stamp; // Use the sensor message timestep:
+
+          // Make sure that there is at least one marker seen before updating tf:
+          if(msg->markers.empty()) {
+            return;
+          }
+
+          t.header.stamp = msg->markers[0].header.stamp;
           t.header.frame_id = "nusim/world"; // Publish the SLAM EKF pose in the world frame (remapped map frame)
-          t.child_frame_id = odom_id_; // Publish the SLAM EKF pose in the odometry frame for easy comparison.
+          t.child_frame_id = odom_id_;
           t.transform.translation.x = map_to_odom.translation().x;
           t.transform.translation.y = map_to_odom.translation().y;
           t.transform.translation.z = 0.0;
@@ -358,6 +352,8 @@ private:
 
   // Create the EKF SLAM object:
   slamlib::EKF slam_ekf_{num_obstacles_, slam_process_variance_, slam_measurement_variance_};
+
+  // Tracking diff
 
   // Transform2D to hold the current estimated pose of the robot based on the EKF SLAM algorithm:
   turtlelib::Transform2D q_slam_;

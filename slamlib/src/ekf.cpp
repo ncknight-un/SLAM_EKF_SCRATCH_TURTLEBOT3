@@ -108,7 +108,10 @@ void EKF::predict(const turtlelib::Twist2D & control_input)
         // Update the Estimate using the function g() in Equations 20 in tmp/slam_EKF.pdf:
   arma::colvec state_pred(3);
   if (std::abs(omega) > 1e-6) {       // State change has rotation (Equation 7 in tmp/slam_EKF.pdf):
-    state_pred(0) = theta + omega;
+      // ################################## Begin_Citation [15] ##################################
+// Source used to check if I was doing my noise propagation correctly, and determined I needed to wrap angle at predict step:
+    state_pred(0) = turtlelib::normalize_angle(combined_state_(0) + omega);
+// ################################## End_Citation [15] ##################################
     state_pred(1) = combined_state_(1) + (v / omega) * (std::sin(state_pred(0)) - std::sin(theta));
     state_pred(2) = combined_state_(2) - (v / omega) * (std::cos(state_pred(0)) - std::cos(theta));
   } else {       // State change does not have rotation (linear motion) Equation 5 in tmp/slam_EKF.pdf:
@@ -117,15 +120,9 @@ void EKF::predict(const turtlelib::Twist2D & control_input)
     state_pred(2) = combined_state_(2) + v * std::sin(theta);
   }
 
-        // ################################## Begin_Citation [15] ##################################
-        // Source used to check if I was doing my noise propagation correctly, and determined I needed to wrap angle at predict step:
-        // Wrap the predicted angle to [-pi, pi]:
-  state_pred(0) = turtlelib::normalize_angle(state_pred(0));
-        // ################################## End_Citation [15] ##################################
-
-        // Update the estimated combined state vector for the robot state estimate:
+      // Update the estimated combined state vector for the robot state estimate:
         // Note: The landmark positions do not change during the predict step because we assume a static map.
-  combined_state_.subvec(0, 2) = state_pred;
+      combined_state_.subvec(0, 2) = state_pred;
 
         // Propage the uncertainty using the linearized motion model (Equation 21 in tmp/slam_EKF.pdf):
         // Compute the Jacobian of the motion model (A matrix):

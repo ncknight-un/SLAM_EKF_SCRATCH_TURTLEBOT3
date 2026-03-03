@@ -85,8 +85,8 @@ namespace turtlelib {
 
     turtlelib::Twist2D DiffDrive::compute_twist(turtlelib::Vector2D v) const {
         // Compute the current twist of the robot base based on the current wheel velocities:
-        double v_left = (v.x - phi_left_) * wheel_radius_;
-        double v_right = (v.y - phi_right_) * wheel_radius_;
+        double v_left = turtlelib::normalize_angle(v.x - phi_left_) * wheel_radius_;
+        double v_right = turtlelib::normalize_angle(v.y - phi_right_) * wheel_radius_;
 
         // Compute the linear and angular velocity of the robot base from the wheel velocities (Equation 7, 8, & 9 - See doc/Kinematics.pdf):
         double v_x = (v_right + v_left) / 2.0;

@@ -24,10 +24,10 @@
     </arg>
 
     <!-- Arguement for config file -->
-    <arg name="config_file" default="basic_world_laser_1obs" 
+    <arg name="config_file" default="basic_world_laser_5obs" 
     description="The user can control what config file is used to load the world"/>
 
-    <!-- ########################## Robot Siumulation Type ############################ -->
+    <!-- ########################## Robot Siumulation ############################ -->
     <group if="$(eval '\'$(var robot)\'==\'nusim\'')">
         <!-- RViz Launch-->
         <node pkg="rviz2" exec="rviz2" args="-d $(find-pkg-share nuturtle_control)/config/load_slam_odometry.rviz" 
@@ -57,7 +57,7 @@
             <remap from = "wheel_cmd" to = "red/wheel_cmd"/>
         </node>
 
-        <!-- ########################### cmd_src launch arguements ######################## -->
+        <!-- ########################### cmd_src launch arguement ######################## -->
         <!-- Launch the circle Node if cmd_src arg is circle -->
         <node pkg="nuturtle_control" exec="circle" if="$(eval '\'$(var cmd_src)\'==\'circle\'')">
             <param name="frequency" value="100"/>
@@ -93,15 +93,17 @@
     </group>
 
     <group if="$(eval '\'$(var robot)\'==\'localhost\'')">
-        <!-- Start the odometry Node -->
-        <node pkg="nuturtle_control" exec="odometry" name="odometry">
-            <param name="frequency" value="100"/>
-            <param from="$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
-            <param name="body_id" value="blue/base_footprint"/>
+        <!-- Start the Slam-odom Node -->
+        <node pkg="nuslam" exec="slam_odom" name="slam_odom">
+            <param from = "$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+            <param from = "$(find-pkg-share nuslam)/config/slam.yaml"/>
+            <param name="body_id" value="green/base_footprint"/>
             <param name="odom_id" value="odom"/>
+            <!-- Allow the blue to follow the nomenclature that is used in nusim for the red wheels. -->
             <param name="wheel_left" value="wheel_left_joint"/>
             <param name="wheel_right" value="wheel_right_joint"/>
-            <remap from="joint_states" to="blue/joint_states"/>
+            <remap from="joint_states" to="red/joint_states"/>
+            <remap from="fake_obstacles" to="nusimulator/fake_obstacles"/>
         </node>
 
         <!-- Start the turtle control node -->

@@ -25,3 +25,4 @@
     laser_num_readings: 360
     laser_resolution: 0.0 # Conversion of integer and real distance.
     laser_scan_variance: 0.001
+    num_obstacles: 1
