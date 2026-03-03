@@ -549,7 +549,7 @@ private:
       // Transform into robot frame to publish as a fake sensor data:
       double dx = obs_x_world - x0_;
       double dy = obs_y_world - y0_;
-      double obs_x_robot =  std::cos(theta0_) * dx + std::sin(theta0_) * dy;
+      double obs_x_robot = std::cos(theta0_) * dx + std::sin(theta0_) * dy;
       double obs_y_robot = -std::sin(theta0_) * dx + std::cos(theta0_) * dy;
       double obs_r = obstacles_r_.at(i) + d(get_random());
 

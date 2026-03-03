@@ -121,14 +121,14 @@ void EKF::predict(const turtlelib::Twist2D & control_input)
   }
 
       // Update the estimated combined state vector for the robot state estimate:
-        // Note: The landmark positions do not change during the predict step because we assume a static map.
-      combined_state_.subvec(0, 2) = state_pred;
+      // Note: The landmark positions do not change during the predict step because we assume a static map.
+  combined_state_.subvec(0, 2) = state_pred;
 
         // Propage the uncertainty using the linearized motion model (Equation 21 in tmp/slam_EKF.pdf):
         // Compute the Jacobian of the motion model (A matrix):
   if (std::abs(omega) > 1e-6) {         // See Equation 10 in tmp/slam_EKF.pdf for the Jacobian of the motion model with rotation
             // Note A_(0,0) does not change.
-    A_(1, 0) = (v / omega) * (std::cos(combined_state_(0)) - std::cos(state_pred(0))); 
+    A_(1, 0) = (v / omega) * (std::cos(combined_state_(0)) - std::cos(state_pred(0)));
     A_(2, 0) = (v / omega) * (std::sin(combined_state_(0)) - std::sin(state_pred(0)));
   } else {          // See Equation 9 in tmp/slam_EKF.pdf for the Jacobian of the motion model without rotation
     A_(1, 0) = -v * std::sin(combined_state_(0));
