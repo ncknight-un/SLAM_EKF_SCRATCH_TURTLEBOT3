@@ -7,3 +7,11 @@
 
     # Unserpervised Learning Clustering Parameters:
     dist_threshold: 0.1
+
+    # Circle Fitting Parameters:
+    min_cluster_size: 3
+
+    # Classification Parameters:
+    std_dev_threshold: 15
+    max_mean_threshold: 90
+    min_mean_threshold: 135
