@@ -1,0 +1,157 @@
+/// \file
+/// \brief Creates a ROS 2 Node which allows the turtlebot to sense landmarks for SLAM sensor measurements.
+///
+/// PARAMETERS:
+///     
+/// PUBLISHES:
+///     ~ real_obstacles ()
+/// SUBSCRIBES:
+///     ~/real_scan (sensor_msgs::msg::LaserScan): Lser scan data based on the robot's position and obstacles in the arena using LiDAR Sensor.
+/// SERVERS:
+///     ~ 
+/// CLIENTS:
+///     None
+
+#include <memory>
+#include <string>
+#include "rclcpp/rclcpp.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+#include "tf2_ros/transform_broadcaster.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
+#include "turtlelib/diff_drive.hpp"
+#include "geometry_msgs/msg/pose.hpp"
+#include "geometry_msgs/msg/point.hpp"
+#include "nuturtle_control_interfaces/srv/initial_pose.hpp"
+#include "tf2/LinearMath/Quaternion.hpp"
+#include "visualization_msgs/msg/marker.hpp"
+#include "slamlib/ekf.hpp"
+#include <nav_msgs/msg/path.hpp>
+#include <armadillo>
+#include <unordered_map>
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
+
+/// \brief A class to launch a Landmarks locator Node
+class Landmarks : public rclcpp::Node {
+public:
+  Landmarks()
+  : Node("landmarks")
+  {
+    // Construct the publisher for SLAM obstacles:
+    real_obstacle_pub_ =
+      this->create_publisher<visualization_msgs::msg::MarkerArray>("real_obstacles", 10);
+
+    // Construct the subscriber for the real scaned data:
+    real_sensor_subscriber_ =
+      this->create_subscription<sensor_msgs::msg::SensorData>("sensor_data", 10,
+        [this](const sensor_msgs::msg::SensorData::SharedPtr msg) {
+            // Break apart the sensor information using unsupervised learning to cluster the points based on the the dist_threhold for the sensor data.
+            timestamp_ = msg->scan.header.stamp; // timestamp of the scan
+            frame_id_ = msg->scan.header.frame_id; // frame id of the scan
+            ranges_ = msg->scan.ranges; // vector of ranges
+            angle_min_ = msg->scan.angle_min; // minimum angle of the scan
+            angle_max_ = msg->scan.angle_max; // maximum angle of the scan
+            angle_increment_ = msg->scan.angle_increment; // angle increment of the scan
+            range_min_ = msg->scan.range_min; // minimum range of the scan
+            range_max_ = msg->scan.range_max; // maximum range of the scan
+
+            // Initialize an arrray of clusters to hold the clustered points:
+            std::vector<std::vector<size_t>> clusters; // Store the indices of the points in each cluster.
+
+            // Scan through the ranges and cluster the points based on the distance threshold:
+            for (size_t i = 0; i < ranges_.size(); i++) {
+                // Get the range and angle of the current scan point:go chom
+                auto range = ranges_.at(i);
+                auto angle = angle_min_ + i * angle_increment_;
+
+                // Don't consider a point for a cluster if it is at the maximum range (i.e. no obstacle detected):
+                if (range >= range_max_)
+                    continue;
+                else {
+                  // Get current point in robot frame:
+                    double x = range * std::cos(angle);
+                    double y = range * std::sin(angle);
+                    turtlelib::Point2D current_point(x, y);
+
+                    // Check if the current point belongs to an existing cluster:
+                    bool added_to_cluster = false;
+                    // Loop through existing clusters and see if the current point is within the distance to a point in that cluster:
+                    for (auto & cluster : clusters) {
+                        // Get the last point in the cluster:
+                        auto last_index = cluster.back();
+                        auto last_range = ranges_.at(last_index);
+                        auto last_angle = angle_min_ + last_index * angle_increment_;
+                        // Get the last point in the cluster in robot frame:
+                        double last_x = last_range * std::cos(last_angle);
+                        double last_y = last_range * std::sin(last_angle);
+                        turtlelib::Point2D last_point(last_x, last_y);
+
+                        // If the current point is within the distance threshold of the last point in the cluster, add it to the cluster. Otherwise continue to next cluster:
+                        turtlelib::Vector2D diff = current_point - last_point;
+                        auto distance = turtlelib::magnitude(diff);
+                        if (distance < dist_threshold_) {
+                            cluster.push_back(i);
+                            added_to_cluster = true;
+                            break;
+                        }
+                    }
+
+                    // If the current point was not added to any existing cluster, create a new cluster with this point:
+                    if (!added_to_cluster) {
+                        clusters.push_back({i});
+                    }
+
+                    // If we are at the end of the scan, need to check if the current point belongs to the first cluster to account for wrap around:
+                    if((i == ranges_.size() - 1) && !clusters.empty()) {
+                      // Get the first index in the first cluster:
+                        auto first_index = clusters.front().front();
+                        auto first_range = ranges_.at(first_index);
+                        auto first_angle = angle_min_ + first_index * angle_increment_;
+                        // Get the first point in the first cluster in robot frame:
+                        double first_x = first_range * std::cos(first_angle);
+                        double first_y = first_range * std::sin(first_angle);
+                        turtlelib::Point2D first_point(first_x, first_y);
+
+                        turtlelib::Vector2D diff = current_point - first_point;
+                        auto distance = turtlelib::magnitude(diff);
+                        if (distance < dist_threshold_) {
+                          // Combine the first and laster cluster as they are within the distance threshold of one another:
+                          clusters.front().insert(clusters.front().begin(), clusters.back().begin(), clusters.back().end());
+                          clusters.pop_back(); // Remove the last cluster as it is now combined with the first cluster
+                        }
+                    }
+                } 
+            }
+
+            // Remove and clusters that are too small to be an obstacle (i.e. less than 3 points):
+            for(auto & cluster : clusters) {
+              if(cluster.size() < 3) {
+                // Remove the cluster from the list of clusters:
+                clusters.erase(std::remove(clusters.begin(), clusters.end(), cluster), clusters.end());
+              }
+            }
+
+            // Implement a circle fitting algorithm to find the centroid and radius of each cluster to determine the location of the obstacles:
+        });
+  }
+
+private:
+  // Initialize the ROS Infrastructure:
+    rclcpp::Subscription<sensor_msgs::msg::SensorData>::SharedPtr real_sensor_subscriber_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr real_obstacle_pub_;
+
+    // Initialize the parameters for Unserpervised Learning Clustering:
+    double dist_threshold_ = declare_parameter<double>("dist_threshold", 0.1); // Distance threshold for clustering points together (0.1m)
+
+    // 
+
+};
+
+int main(int argc, char * argv[])
+{
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<Landmarks>());
+  rclcpp::shutdown();
+  return 0;
+}

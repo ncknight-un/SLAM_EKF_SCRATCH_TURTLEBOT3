@@ -4,3 +4,6 @@
     slam_process_variance: 0.001
     slam_measurement_variance: 1.0
     slam_obs_radius: 0.038
+
+    # Unserpervised Learning Clustering Parameters:
+    dist_threshold: 0.1

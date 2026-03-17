@@ -18,7 +18,7 @@
 ///     ~ joint_states (sensor_msgs/msg/JointState): The current joint states of the odom robot, which is used to update the internal odometry state and publish the current odometry message and transform.
 ///     ~ fake_obstacles (visualization_msgs::msg::MarkerArray): Markers representing fake obstacles for sensor data with Gaussian Noise (mimics sensor data)
 /// SERVERS:
-///     initial pose - Resets the robots odometry to think it is at the requested configuration.
+///     ~ initial pose - Resets the robots odometry to think it is at the requested configuration.
 /// CLIENTS:
 ///     None
 
@@ -30,7 +30,7 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "turtlelib/diff_drive.hpp"
 #include "geometry_msgs/msg/pose.hpp"
-#include "geometry_msgs/msg/point.hpp"
+#include "geometry_msgs/Lmsg/point.hpp"
 #include "nuturtle_control_interfaces/srv/initial_pose.hpp"
 #include "tf2/LinearMath/Quaternion.hpp"
 #include "visualization_msgs/msg/marker.hpp"
@@ -352,8 +352,6 @@ private:
 
   // Create the EKF SLAM object:
   slamlib::EKF slam_ekf_{num_obstacles_, slam_process_variance_, slam_measurement_variance_};
-
-  // Tracking diff
 
   // Transform2D to hold the current estimated pose of the robot based on the EKF SLAM algorithm:
   turtlelib::Transform2D q_slam_;
