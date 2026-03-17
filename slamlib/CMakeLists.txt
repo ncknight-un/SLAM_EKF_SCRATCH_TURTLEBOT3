@@ -20,6 +20,7 @@ find_package(turtlelib REQUIRED)
 # name creates a cmake "target" (in this case the target is called "libname"
 add_library(slamlib
     src/ekf.cpp
+    src/circle_reg.cpp
 )
 
 # Use target_include_directories so that #include"mylibrary/header.hpp" works

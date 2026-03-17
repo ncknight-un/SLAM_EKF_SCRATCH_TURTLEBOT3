@@ -39,28 +39,47 @@ target_link_libraries(slam_odom PUBLIC
   slamlib::slamlib
   rclcpp::rclcpp
 )
+add_executable(landmarks src/landmarks.cpp)
+target_link_libraries(landmarks PUBLIC
+  ${geometry_msgs_TARGETS}
+  ${nav_msgs_TARGETS}
+  ${sensor_msgs_TARGETS}
+  ${std_srvs_TARGETS}
+  ${visualization_msgs_TARGETS}
+  ${nuturtle_control_interfaces_TARGETS}
+  sensor_msgs::sensor_msgs_library
+  tf2_ros::static_transform_broadcaster_node
+  tf2_ros::tf2_ros
+  turtlelib::turtlelib
+  slamlib::slamlib
+)
 
 install(TARGETS
   slam_odom
+  landmarks
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# Execution of Unit Testing CTests:  (run ctest --verbose)
+include(CTest)
+
+option(BUILD_TESTING "Allow Unit Test Execution" ON)
+
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
-  set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # comment the line when this package is in a git repo and when
-  # a copyright and license is added to all source files
-  set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
+  find_package(Catch2 3 REQUIRED)
+
+  add_executable(circle_test tests/circle_test.cpp)
+  target_link_libraries(circle_test Catch2::Catch2WithMain slamlib::slamlib turtlelib::turtlelib)
+
+  # Register the test with CTest:
+  add_test(Name TestCircle COMMAND circle_test)
 endif()
 
 # Set up Install Directories:
 install(DIRECTORY
   launch
   config
+  tests
   DESTINATION share/${PROJECT_NAME}
 )
 

@@ -30,7 +30,7 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "turtlelib/diff_drive.hpp"
 #include "geometry_msgs/msg/pose.hpp"
-#include "geometry_msgs/Lmsg/point.hpp"
+#include "geometry_msgs/msg/point.hpp"
 #include "nuturtle_control_interfaces/srv/initial_pose.hpp"
 #include "tf2/LinearMath/Quaternion.hpp"
 #include "visualization_msgs/msg/marker.hpp"

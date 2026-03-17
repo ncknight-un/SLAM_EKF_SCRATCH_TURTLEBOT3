@@ -44,17 +44,17 @@ public:
 
     // Construct the subscriber for the real scaned data:
     real_sensor_subscriber_ =
-      this->create_subscription<sensor_msgs::msg::SensorData>("sensor_data", 10,
-        [this](const sensor_msgs::msg::SensorData::SharedPtr msg) {
+      this->create_subscription<sensor_msgs::msg::LaserScan>("sensor_data", 10,
+        [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
             // Break apart the sensor information using unsupervised learning to cluster the points based on the the dist_threhold for the sensor data.
-            timestamp_ = msg->scan.header.stamp; // timestamp of the scan
-            frame_id_ = msg->scan.header.frame_id; // frame id of the scan
-            ranges_ = msg->scan.ranges; // vector of ranges
-            angle_min_ = msg->scan.angle_min; // minimum angle of the scan
-            angle_max_ = msg->scan.angle_max; // maximum angle of the scan
-            angle_increment_ = msg->scan.angle_increment; // angle increment of the scan
-            range_min_ = msg->scan.range_min; // minimum range of the scan
-            range_max_ = msg->scan.range_max; // maximum range of the scan
+            // auto timestamp_ = msg->header.stamp; // timestamp of the scan
+            auto frame_id_ = msg->header.frame_id; // frame id of the scan
+            auto ranges_ = msg->ranges; // vector of ranges
+            auto angle_min_ = msg->angle_min; // minimum angle of the scan
+            auto angle_max_ = msg->angle_max; // maximum angle of the scan
+            auto angle_increment_ = msg->angle_increment; // angle increment of the scan
+            // auto range_min_ = msg->range_min; // minimum range of the scan
+            auto range_max_ = msg->range_max; // maximum range of the scan
 
             // Initialize an arrray of clusters to hold the clustered points:
             std::vector<std::vector<size_t>> clusters; // Store the indices of the points in each cluster.
@@ -64,6 +64,10 @@ public:
                 // Get the range and angle of the current scan point:go chom
                 auto range = ranges_.at(i);
                 auto angle = angle_min_ + i * angle_increment_;
+                
+                if(angle > angle_max_) {
+                  angle = angle_max_; // Make sure that we don't over index the angle.
+                }
 
                 // Don't consider a point for a cluster if it is at the maximum range (i.e. no obstacle detected):
                 if (range >= range_max_)
@@ -133,13 +137,13 @@ public:
             }
 
             // Implement a circle fitting algorithm to find the centroid and radius of each cluster to determine the location of the obstacles:
-            
+
         });
   }
 
 private:
   // Initialize the ROS Infrastructure:
-    rclcpp::Subscription<sensor_msgs::msg::SensorData>::SharedPtr real_sensor_subscriber_;
+    rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr real_sensor_subscriber_;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr real_obstacle_pub_;
 
     // Initialize the parameters for Unserpervised Learning Clustering:
