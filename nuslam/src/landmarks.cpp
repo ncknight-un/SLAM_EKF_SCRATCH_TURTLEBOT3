@@ -133,6 +133,7 @@ public:
             }
 
             // Implement a circle fitting algorithm to find the centroid and radius of each cluster to determine the location of the obstacles:
+            
         });
   }
 

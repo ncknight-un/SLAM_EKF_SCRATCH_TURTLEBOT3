@@ -50,8 +50,15 @@ namespace slamlib {
         /// \param radius: The radius of the circle that best fits the given points
         /// \return The parameters a and b of the circle that best fits the given points (Equations 6-14 in tmp/circle_reg.pdf)
         turtlelib::Point2D computeCircleParams(vector<turtlelib::Point2D> shifted_points);
+
+        /// \brief Performs the forward pass of the circular regression functions and returns a and b:
+        /// \param points: The points in the cluster.
+        /// \return The parameters a and b of the circle that best fits the given points
+        turtlelib::Point2D fitCircle(vector<turtlelib:::Point2D> points);
+        
     private: 
         // State matrices for the circle regression:
+        vector<turtlelib::Point2D> read_points_;
         arma:mat Z_;    // Data Matrix
         arma:mat M_;    // Moment Matrix 
         arma:mat H_;    // Constraint Matrix
