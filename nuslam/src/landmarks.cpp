@@ -37,9 +37,9 @@ public:
   {
     // Construct the publisher for SLAM obstacles:
     real_obstacle_pub_ =
-      this->create_publisher<visualization_msgs::msg::MarkerArray>("landmarks", 10);
+      this->create_publisher<visualization_msgs::msg::MarkerArray>("~/scan_landmarks", 10);
 
-    // Construct the subscriber for the real scaned data:
+    // Construct the subscriber for the real scaned data: 
     real_sensor_subscriber_ =
       this->create_subscription<sensor_msgs::msg::LaserScan>("laser_scan_data", 10,
         [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {

@@ -24,5 +24,5 @@
     laser_angle_increment: 0.01745
     laser_num_readings: 360
     laser_resolution: 0.0 # Conversion of integer and real distance.
-    laser_scan_variance: 0.0001 # Lowered to identify circles better
+    laser_scan_variance: 0.0 #0.0001 # Lowered to identify circles better
     num_obstacles: 1

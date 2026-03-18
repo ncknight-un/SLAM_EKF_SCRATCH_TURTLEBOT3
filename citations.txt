@@ -15,3 +15,4 @@
 [14] wikipedia. "Line-Line Intersection". Accessed. February 27th, 2026. [Online]. Available: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
 [15] Claude. "Noise Propagation Question and Angle Wrapping Location". Accessed. March 1st, 2026. [Online]. Available: https://claude.ai/share/9544d800-ccab-4914-9d5a-31534256621e
 [16] https://arma.sourceforge.net/docs.html#svd
+[17] https://claude.ai/share/6b27fcd6-b627-42b5-8290-d036c8d45cbf

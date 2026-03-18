@@ -90,9 +90,9 @@ if(BUILD_TESTING)
     find_package(Catch2 3 REQUIRED)
 
     # A test is just an executable that is linked against the unit testing library
-    # add_executable(test_slam tests/test_slam.cpp)
-    # target_link_libraries(test_slam Catch2::Catch2WithMain slamlib)
+    add_executable(test_DataAssociation tests/data_assoc_test.cpp)
+    target_link_libraries(test_DataAssociation Catch2::Catch2WithMain slamlib)
 
     # register the test with CTest, telling it what executable to run
-    # add_test(NAME TestSlam COMMAND test_slam)
+    add_test(NAME TestDataAssociation COMMAND test_DataAssociation)
 endif()

@@ -43,13 +43,14 @@ namespace slamlib {
         void predict(const turtlelib::Twist2D& control_input);
 
         /// \brief Perform an update step of the EKF SLAM algorithm
-        /// \param measurement The measurement vector holding the range and bearing to the observed landmark
-        /// \param landmark_id The id of the landmark being measured
+        /// \param The measurement vector holding the range and bearing to the observed landmark
+        /// \param The id of the landmark being measured
         void updateEKF(const arma::colvec& measurement, int landmark_id);
 
         /// \brief Function to Update the Measuerement Model Matrix H based on which landmark is being observed
-        /// \param landmark_id The id of the landmark being measured
-        void updateMeasurementModelMatrix(int landmark_id);
+        /// \param The id of the landmark being measured
+        /// \param The total number of landmarks in the map
+        void updateMeasurementModelMatrix(int landmark_id, int total_landmarks);
 
         /// \brief Get the current state estimate of the robot (theta, x, y)
         /// \return The current state vector
@@ -70,6 +71,16 @@ namespace slamlib {
         /// \brief Get the current estimated landmark positions in the map
         /// \return a 2 xN matrix of the current landmark positions seen.
         std::vector<turtlelib::Point2D> getLandmarkPositions() const;
+
+        /// \brief Return the number of landmarks currently in the map:
+        /// \return The number of landmarks currently in the map
+        int getNumLandmarks() const;
+
+        /// Feature Association:
+        /// \brief Function to associate a measurement to a landmark id to be used in the updateMeasurementModelStep and updateEKF step.
+        /// \param The measurement vector holding the range and bearing to the observed landmark
+        /// \return The landmark id that is associated with the measurement taken, or -1 for a new landmark id if it is not associated with a previously seen landmark.
+        int dataAssociation(const arma::colvec& measurement, double threshold = 0.1);
 
     private:
         // Combined state vector (robot state + map state):
