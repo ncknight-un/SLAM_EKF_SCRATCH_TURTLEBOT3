@@ -179,7 +179,7 @@ namespace slamlib
         for(size_t i = 1; i < read_points_.size() - 1; i++) {
             turtlelib::Point2D P = read_points_.at(i);
             // Get the vectors from P to P1 and from P2 to P:
-            turtlelib::Vector2D v1 = P - P1;
+            turtlelib::Vector2D v1 = P1 - P;
             turtlelib::Vector2D v2 = P2 - P;
             
             // Get the smallest angle between the two vectors:

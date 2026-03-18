@@ -37,11 +37,11 @@ public:
   {
     // Construct the publisher for SLAM obstacles:
     real_obstacle_pub_ =
-      this->create_publisher<visualization_msgs::msg::MarkerArray>("real_obstacles", 10);
+      this->create_publisher<visualization_msgs::msg::MarkerArray>("landmarks", 10);
 
     // Construct the subscriber for the real scaned data:
     real_sensor_subscriber_ =
-      this->create_subscription<sensor_msgs::msg::LaserScan>("sensor_data", 10,
+      this->create_subscription<sensor_msgs::msg::LaserScan>("laser_scan_data", 10,
         [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
             // Break apart the sensor information using unsupervised learning to cluster the points based on the the dist_threhold for the sensor data.
             auto timestamp_ = msg->header.stamp; // timestamp of the scan
@@ -98,6 +98,8 @@ public:
                         }
                     }
 
+                    RCLCPP_DEBUG_STREAM(this->get_logger(), "There are currently " << clusters.size() << " clusters detected.");
+
                     // If the current point was not added to any existing cluster, create a new cluster with this point:
                     if (!added_to_cluster) {
                         clusters.push_back({i});
@@ -125,42 +127,58 @@ public:
                 } 
             }
 
-            // Remove and clusters that are too small to be an obstacle (i.e. less than or equal to min_cluster_size_):
+            // Remove clusters that are too small to be an obstacle (i.e. less than or equal to min_cluster_size_):
             for(auto & cluster : clusters) {
-              if(cluster.size() <= min_cluster_size_) {
+              if(static_cast<int>(cluster.size()) <= min_cluster_size_) {
                 // Remove the cluster from the list of clusters:
                 clusters.erase(std::remove(clusters.begin(), clusters.end(), cluster), clusters.end());
               }
             }
 
+            RCLCPP_DEBUG_STREAM(this->get_logger(), "There are currently " << clusters.size() << " clusters detected after removing small clusters.");
+
             // Implement the circle fitting algorithm to find the centroid and radius of each cluster to determine the location of the obstacles:
             // for each cluster, build a vector of points and pass it to the circle fitting algorithm:
             // Build a vector of points in the current cluster:
-            std::vector<turtlelib::Point2D> cluster_points;
-            for(auto & cluster : clusters) {
-              for(auto & index : cluster) {
-                auto range = ranges_.at(index);
-                auto angle = angle_min_ + index * angle_increment_;
-                double x = range * std::cos(angle);
-                double y = range * std::sin(angle);
-                turtlelib::Point2D point(x, y);
-                cluster_points.push_back(point);
-              }
-            }
-            // Calculate the centroid and radius for each cluster using the circle fitting algorithm, and whether or not it is considered a circle.
-            auto [centroid, radius, is_circle] = slamlib::CircleReg(cluster_points).fitCircle();
-            
-            // Create an array to hold the centroids that are classified as real obstacles based on the circle fitting algorithm:
             std::vector<turtlelib::Point2D> real_obstacle_centroids;
             std::vector<double> real_obstacle_radii;
 
-            if(is_circle) {
-              // Remove any obstacles that are too small to be real (i.e. radius less than 0.05m):
-              if(!(radius >= min_obstacle_radius_ && radius <= max_obstacle_radius_)) {
-                // The obstacle is a real obstacle and within radius limits, so I can keep its origin and radius for visualization:
-                real_obstacle_centroids.push_back(centroid);
-                real_obstacle_radii.push_back(radius);
-              }
+            for (auto & cluster : clusters) {
+                // Build a vector of points for the current cluster:
+                std::vector<turtlelib::Point2D> cluster_points;
+                for (auto & index : cluster) {
+                    auto range = ranges_.at(index);
+                    auto angle = angle_min_ + index * angle_increment_;
+                    double x = range * std::cos(angle);
+                    double y = range * std::sin(angle);
+                    cluster_points.push_back(turtlelib::Point2D(x, y));
+                }
+
+                // Calculate the centroid and radius for this cluster using the circle fitting algorithm:
+                auto [centroid, radius, is_circle] = slamlib::CircleReg(cluster_points).fitCircle();
+
+                RCLCPP_DEBUG_STREAM(this->get_logger(), "Cluster has " << cluster_points.size() << " points, is_circle: " << is_circle << ", radius: " << radius << " (min: " << min_obstacle_radius_ << ", max: " << max_obstacle_radius_ << ")");
+
+                // If it is a circle and within radius limits, keep it as a real obstacle:
+                if (is_circle) {
+                    if (radius >= min_obstacle_radius_ && radius <= max_obstacle_radius_) {
+                      // Make sure that the centroid is not too close to another centroid already detected:
+                        bool too_close = false;
+                        for (const auto& existing_centroid : real_obstacle_centroids) {
+                          // Calculate the distance between the existing centroid and the new centroid:
+                          auto dist = turtlelib::magnitude(existing_centroid - centroid);
+                          if (dist < min_centroid_dist_) {
+                            too_close = true;
+                            break;
+                          }
+                        }
+                        if (!too_close) {
+                          // Centroid is not too close to existing centroids, add it to the list of real obstacles:
+                          real_obstacle_centroids.push_back(centroid);
+                          real_obstacle_radii.push_back(radius);
+                        }
+                    }
+                }
             }
 
             // For every centroid marked, publish a marker for visualization in RViz:
@@ -212,9 +230,10 @@ private:
   double dist_threshold_ = declare_parameter<double>("dist_threshold", 0.1); // Distance threshold for clustering points together (0.1m)
   double min_obstacle_radius_ = declare_parameter<double>("min_obstacle_radius", 0.05); // Minimum radius for a cluster to be considered a real obstacle (0.05m)
   double max_obstacle_radius_ = declare_parameter<double>("max_obstacle_radius", 0.5); // Maximum radius for a cluster to be considered a real obstacle (0.5m)
-  double min_cluster_size_ = declare_parameter<double>("min_cluster_size", 3); // Minimum number of points for a cluster to be considered a real obstacle (3 points)
+  int min_cluster_size_ = declare_parameter<int>("min_cluster_size", 3); // Minimum number of points for a cluster to be considered a real obstacle (3 points)
   // Initialize the parameter for the height of the obstacles for visualization in RViz:
   double obstacle_height_ = declare_parameter<double>("obstacle_height", 0.25);
+  double min_centroid_dist_ = declare_parameter<double>("min_centroid_dist", 0.05); // Minimum distance between centroids to be visualized as separate obstacles (0.05m)
 };
 
 int main(int argc, char * argv[])

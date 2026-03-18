@@ -25,12 +25,13 @@ TEST_CASE("Verify that the circle fitting algorithm outpouts the appropriate cen
     points_test2.push_back(turtlelib::Point2D(0.3, 0.1));
     points_test2.push_back(turtlelib::Point2D(1.0, 0.0));
 
-    // Create a series of sensor points from the test example2 (Circle):
+    // Create a series of sensor points from the test example2 (Circle): // Simulates what the scanner would see
     std::vector<turtlelib::Point2D> points_test3;
-    points_test3.push_back(turtlelib::Point2D(2.0, 2.0));
-    points_test3.push_back(turtlelib::Point2D(3.0, 1.0));
-    points_test3.push_back(turtlelib::Point2D(4.0, 2.0));
-    points_test3.push_back(turtlelib::Point2D(3.0, 3.0));
+    points_test3.push_back(turtlelib::Point2D(2.0, 2.0));  // P1
+    points_test3.push_back(turtlelib::Point2D(2.5, 1.134)); 
+    points_test3.push_back(turtlelib::Point2D(3.0, 1.0)); 
+    points_test3.push_back(turtlelib::Point2D(3.5, 1.134));
+    points_test3.push_back(turtlelib::Point2D(4.0, 2.0));   // P2
 
     // Create an instance of the CircleReg algorithm:
     slamlib::CircleReg circle_reg1(points_test1);
