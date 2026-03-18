@@ -11,9 +11,4 @@
     # Circle Fitting Parameters:
     min_cluster_size: 3
     min_obst_radius: 0.02
-    max_obst_radius: 0.5
-
-    # Classification Parameters:
-    std_dev_threshold: 15
-    max_mean_threshold: 90
-    min_mean_threshold: 135
+    max_obst_radius: 0.25

@@ -18,16 +18,12 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_ros/transform_broadcaster.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
-#include "turtlelib/diff_drive.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include "nuturtle_control_interfaces/srv/initial_pose.hpp"
 #include "tf2/LinearMath/Quaternion.hpp"
 #include "visualization_msgs/msg/marker.hpp"
-#include "slamlib/ekf.hpp"
-#include <nav_msgs/msg/path.hpp>
 #include <armadillo>
-#include <unordered_map>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
@@ -48,7 +44,7 @@ public:
       this->create_subscription<sensor_msgs::msg::LaserScan>("sensor_data", 10,
         [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
             // Break apart the sensor information using unsupervised learning to cluster the points based on the the dist_threhold for the sensor data.
-            // auto timestamp_ = msg->header.stamp; // timestamp of the scan
+            auto timestamp_ = msg->header.stamp; // timestamp of the scan
             auto frame_id_ = msg->header.frame_id; // frame id of the scan
             auto ranges_ = msg->ranges; // vector of ranges
             auto angle_min_ = msg->angle_min; // minimum angle of the scan
@@ -139,9 +135,9 @@ public:
 
             // Implement the circle fitting algorithm to find the centroid and radius of each cluster to determine the location of the obstacles:
             // for each cluster, build a vector of points and pass it to the circle fitting algorithm:
+            // Build a vector of points in the current cluster:
+            std::vector<turtlelib::Point2D> cluster_points;
             for(auto & cluster : clusters) {
-              // Build a vector of points in the current cluster:
-              std::vector<turtlelib::Point2D> cluster_points;
               for(auto & index : cluster) {
                 auto range = ranges_.at(index);
                 auto angle = angle_min_ + index * angle_increment_;
@@ -149,38 +145,76 @@ public:
                 double y = range * std::sin(angle);
                 turtlelib::Point2D point(x, y);
                 cluster_points.push_back(point);
+              }
             }
             // Calculate the centroid and radius for each cluster using the circle fitting algorithm, and whether or not it is considered a circle.
             auto [centroid, radius, is_circle] = slamlib::CircleReg(cluster_points).fitCircle();
             
+            // Create an array to hold the centroids that are classified as real obstacles based on the circle fitting algorithm:
+            std::vector<turtlelib::Point2D> real_obstacle_centroids;
+            std::vector<double> real_obstacle_radii;
+
             if(is_circle) {
               // Remove any obstacles that are too small to be real (i.e. radius less than 0.05m):
-              if(radius < min_obstacle_radius_ || radius > max_obstacle_radius_) {
-                continue; // Skip this circle object as it is too large or too small to be considered a real obstacle.
+              if(!(radius >= min_obstacle_radius_ && radius <= max_obstacle_radius_)) {
+                // The obstacle is a real obstacle and within radius limits, so I can keep its origin and radius for visualization:
+                real_obstacle_centroids.push_back(centroid);
+                real_obstacle_radii.push_back(radius);
               }
-              // The obstacle is a real obstacle and within radius limits, so I can keep its origin and radius for classification and visualization:
-              
             }
-            // I am ignoring anything not considered a circle for now. May add it in as a wall later?
 
+            // For every centroid marked, publish a marker for visualization in RViz:
+            visualization_msgs::msg::MarkerArray marker_array_real_obstacles;
 
-          }
+            for (size_t i = 0; i < real_obstacle_centroids.size(); ++i) {
+              // Initialize a marker for each obstacle:
+              visualization_msgs::msg::Marker marker;
+
+              // Publish the markers with respect to the world frame:
+              marker.header.frame_id = frame_id_;
+              marker.header.stamp = timestamp_;
+              marker.ns = "real_obstacles";
+              marker.id = i;
+              marker.type = visualization_msgs::msg::Marker::CYLINDER;
+              marker.action = visualization_msgs::msg::Marker::ADD;
+              // Set orientation
+              marker.pose.orientation.w = 1.0;
+
+              // Determine obstacle locations and size:
+              auto obs = real_obstacle_centroids.at(i);
+              double obs_r = real_obstacle_radii.at(i);
+              // Set the marker information for the real obstacles:
+              marker.pose.position.x = obs.x;
+              marker.pose.position.y = obs.y;
+              marker.pose.position.z = obstacle_height_ / 2;
+              marker.scale.x = obs_r * 2;
+              marker.scale.y = obs_r * 2;
+              marker.scale.z = obstacle_height_ + 0.02; // Add a little extra height to make it visible in RViz above the Ground Truth Obstacles
+              // Real Obstacles (Green)
+              marker.color.r = 0.0;
+              marker.color.g = 1.0;
+              marker.color.b = 0.0;
+              marker.color.a = 1.0;
+              // Add obstacle to marker array
+              marker_array_real_obstacles.markers.emplace_back(marker);
+            }
+            // Publish the marker array:
+            real_obstacle_pub_->publish(marker_array_real_obstacles);
         });
   }
 
 private:
   // Initialize the ROS Infrastructure:
-    rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr real_sensor_subscriber_;
-    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr real_obstacle_pub_;
+  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr real_sensor_subscriber_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr real_obstacle_pub_;
 
-    // Initialize the parameters for Unserpervised Learning Clustering:
-    double dist_threshold_ = declare_parameter<double>("dist_threshold", 0.1); // Distance threshold for clustering points together (0.1m)
-    double min_obstacle_radius_ = declare_parameter<double>("min_obstacle_radius", 0.05); // Minimum radius for a cluster to be considered a real obstacle (0.05m)
-    double max_obstacle_radius_ = declare_parameter<double>("max_obstacle_radius", 0.5); // Maximum radius for a cluster to be considered a real obstacle (0.5m)
-    double min_cluster_size_ = declare_parameter<double>("min_cluster_size", 3); // Minimum number of points for a cluster to be considered a real obstacle (3 points)
-
-    // 
-
+  // Initialize the parameters for Unserpervised Learning Clustering:
+  double dist_threshold_ = declare_parameter<double>("dist_threshold", 0.1); // Distance threshold for clustering points together (0.1m)
+  double min_obstacle_radius_ = declare_parameter<double>("min_obstacle_radius", 0.05); // Minimum radius for a cluster to be considered a real obstacle (0.05m)
+  double max_obstacle_radius_ = declare_parameter<double>("max_obstacle_radius", 0.5); // Maximum radius for a cluster to be considered a real obstacle (0.5m)
+  double min_cluster_size_ = declare_parameter<double>("min_cluster_size", 3); // Minimum number of points for a cluster to be considered a real obstacle (3 points)
+  // Initialize the parameter for the height of the obstacles for visualization in RViz:
+  double obstacle_height_ = declare_parameter<double>("obstacle_height", 0.25);
 };
 
 int main(int argc, char * argv[])
