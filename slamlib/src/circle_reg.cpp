@@ -169,9 +169,45 @@ namespace slamlib
         // #################################### End_Citation [16] ######################################
     }
 
-    std::pair<turtlelib::Point2D, double> CircleReg::fitCircle(std::vector<turtlelib::Point2D> points) {
+    bool CircleReg::isCircle() {
+        // Classification to determine if the points in a cluster are classified as a circle or not:
+        turtlelib::Point2D P1 = read_points_.front();
+        turtlelib::Point2D P2 = read_points_.back();
+        
+        // Loop through each inner point and calculate the angle from P1 to P and from P to P2, and sum the angles, to calculate mean and std of the angles:
+        std::vector<double> angles;
+        for(size_t i = 1; i < read_points_.size() - 1; i++) {
+            turtlelib::Point2D P = read_points_.at(i);
+            // Get the vectors from P to P1 and from P2 to P:
+            turtlelib::Vector2D v1 = P - P1;
+            turtlelib::Vector2D v2 = P2 - P;
+            
+            // Get the smallest angle between the two vectors:
+            auto angle_diff = turtlelib::angle(v1, v2);
+            angles.push_back(angle_diff);
+        }
+        // Calculate mean and standard deviation of the angles:
+        double mean_angle = std::accumulate(angles.begin(), angles.end(), 0.0) / angles.size();
+        double variance_angle = 0.0;
+        for(const auto& angle : angles) {
+            variance_angle += std::pow(angle - mean_angle, 2);
+        }
+        // Calculate the std of the angles:
+        variance_angle /= angles.size();
+        double std_angle = std::sqrt(variance_angle);
+
+        // Classification logic from the paper:
+        if((mean_angle >= turtlelib::deg2rad(90) && mean_angle <= turtlelib::deg2rad(135)) && std_angle <= 0.15) {
+            return true;
+        } 
+        else {
+            return false;
+        }
+    }
+
+    std::tuple<turtlelib::Point2D, double, bool> CircleReg::fitCircle() {
         // Compute the centroid of the points in the cluster:
-        auto centroid = computeCentroid(points);
+        auto centroid = computeCentroid(read_points_);
 
         // Shift the points so that the centroid is at the origin:
         auto shifted_points = shiftPoints(centroid);
@@ -185,7 +221,10 @@ namespace slamlib
         // Compute the circle parameters a and b that best fit the given points:
         auto [circle_center, circle_radius] = computeCircleParams(centroid);
 
+        // Determine if the fitted circle is a circle or not based on the classification model:
+        bool is_circle = this->isCircle();
+
         // Return the circle parameters a and b as a Point2D for easy extraction:
-        return {circle_center, circle_radius};
+        return {circle_center, circle_radius, is_circle};
     }
 } // End of namespace slamlib

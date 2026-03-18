@@ -54,7 +54,12 @@ namespace slamlib {
         /// \brief Performs the forward pass of the circular regression functions and returns a and b:
         /// \param points: The points in the cluster.
         /// \return The parameters a and b of the circle that best fits the given points
-        std::pair<turtlelib::Point2D, double> fitCircle(std::vector<turtlelib::Point2D> points);
+        std::tuple<turtlelib::Point2D, double, bool> fitCircle();
+
+        /// \brief Determine if the fitted Circle is a circle or not based on the classifcation metrics from the paper: Fast line, arc/circle and leg detection from laster scan dat in a Player driver, IRCA 2005.
+        /// \param points: The points in the cluster.
+        /// \return True if the cluster is classified as a circle, False if the cluster is classified as not a circle.
+        bool isCircle();
 
     private: 
         // State matrices for the circle regression:

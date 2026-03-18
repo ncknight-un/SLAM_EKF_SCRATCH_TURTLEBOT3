@@ -31,6 +31,7 @@
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
+#include "slamlib/circle_reg.hpp"
 
 /// \brief A class to launch a Landmarks locator Node
 class Landmarks : public rclcpp::Node {
@@ -128,16 +129,42 @@ public:
                 } 
             }
 
-            // Remove and clusters that are too small to be an obstacle (i.e. less than 3 points):
+            // Remove and clusters that are too small to be an obstacle (i.e. less than or equal to min_cluster_size_):
             for(auto & cluster : clusters) {
-              if(cluster.size() < 3) {
+              if(cluster.size() <= min_cluster_size_) {
                 // Remove the cluster from the list of clusters:
                 clusters.erase(std::remove(clusters.begin(), clusters.end(), cluster), clusters.end());
               }
             }
 
-            // Implement a circle fitting algorithm to find the centroid and radius of each cluster to determine the location of the obstacles:
+            // Implement the circle fitting algorithm to find the centroid and radius of each cluster to determine the location of the obstacles:
+            // for each cluster, build a vector of points and pass it to the circle fitting algorithm:
+            for(auto & cluster : clusters) {
+              // Build a vector of points in the current cluster:
+              std::vector<turtlelib::Point2D> cluster_points;
+              for(auto & index : cluster) {
+                auto range = ranges_.at(index);
+                auto angle = angle_min_ + index * angle_increment_;
+                double x = range * std::cos(angle);
+                double y = range * std::sin(angle);
+                turtlelib::Point2D point(x, y);
+                cluster_points.push_back(point);
+            }
+            // Calculate the centroid and radius for each cluster using the circle fitting algorithm, and whether or not it is considered a circle.
+            auto [centroid, radius, is_circle] = slamlib::CircleReg(cluster_points).fitCircle();
+            
+            if(is_circle) {
+              // Remove any obstacles that are too small to be real (i.e. radius less than 0.05m):
+              if(radius < min_obstacle_radius_ || radius > max_obstacle_radius_) {
+                continue; // Skip this circle object as it is too large or too small to be considered a real obstacle.
+              }
+              // The obstacle is a real obstacle and within radius limits, so I can keep its origin and radius for classification and visualization:
+              
+            }
+            // I am ignoring anything not considered a circle for now. May add it in as a wall later?
 
+
+          }
         });
   }
 
@@ -148,6 +175,9 @@ private:
 
     // Initialize the parameters for Unserpervised Learning Clustering:
     double dist_threshold_ = declare_parameter<double>("dist_threshold", 0.1); // Distance threshold for clustering points together (0.1m)
+    double min_obstacle_radius_ = declare_parameter<double>("min_obstacle_radius", 0.05); // Minimum radius for a cluster to be considered a real obstacle (0.05m)
+    double max_obstacle_radius_ = declare_parameter<double>("max_obstacle_radius", 0.5); // Maximum radius for a cluster to be considered a real obstacle (0.5m)
+    double min_cluster_size_ = declare_parameter<double>("min_cluster_size", 3); // Minimum number of points for a cluster to be considered a real obstacle (3 points)
 
     // 
 
