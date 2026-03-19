@@ -16,7 +16,8 @@ The package include the following launch files:
 * `ros2 launch nuslam unknown_data_assoc.launch.xml robot:=nusim cmd_src:=teleop` to test the unknown data association detection of the obstacles with EKF SLAM.
 
 ## Teleop Simulation:
-##### INSERT SIM VIDEO HERE
+
+https://github.com/user-attachments/assets/83b06239-9bfb-47df-b908-b1e1cc987cfc
 
 ### Error Analsis:
 Final pose error Ground truth -> Odometry:
@@ -30,8 +31,8 @@ SLAM-EKF(0.000, 0.042)
 `Positional Error`: 0.00224 m (0.224 cm)
 
 ## Circle Drive Simulation:
-##### INSERT SIM VIDEO HERE
 
+https://github.com/user-attachments/assets/a0d91412-18e1-445b-ac3c-9be6821b9612
 
 ## `robot:=nusim` (Simulation Mode)
 
