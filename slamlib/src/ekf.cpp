@@ -18,10 +18,11 @@ EKF::EKF(int num_landmarks, double process_noise, double measurement_noise)
         // with large values for uncertainty for obstackes and small values for the robot state (since we are certain of its initial position)
   Covariance_ = arma::eye(3 + 2 * n_landmarks_, 3 + 2 * n_landmarks_);       // Initialize full covariance matrix
       // Only set the Covariance matrix if the landmarks is established with known values:
-      if(num_landmarks > 0) {
+  if(num_landmarks > 0) {
             // Set landmark uncertainty high:
-            Covariance_.submat(3, 3, 3 + 2 * n_landmarks_ - 1, 3 + 2 * n_landmarks_ - 1) = arma::eye(2 * n_landmarks_, 2 * n_landmarks_) * 1e6;
-      }
+    Covariance_.submat(3, 3, 3 + 2 * n_landmarks_ - 1,
+        3 + 2 * n_landmarks_ - 1) = arma::eye(2 * n_landmarks_, 2 * n_landmarks_) * 1e6;
+  }
         // Set robot state uncertainty low:
   Covariance_.submat(0, 0, 2, 2) = arma::eye(3, 3) * 1e-6;
 
@@ -58,10 +59,11 @@ EKF::EKF(
         // with large values for uncertainty for obstackes and small values for the robot state (since we are certain of its initial position)
   Covariance_ = arma::eye(3 + 2 * n_landmarks_, 3 + 2 * n_landmarks_);       // Initialize full covariance matrix
         // Set landmark uncertainty high:
-      if(num_landmarks > 0) {
+  if(num_landmarks > 0) {
             // Set landmark uncertainty high:
-            Covariance_.submat(3, 3, 3 + 2 * n_landmarks_ - 1, 3 + 2 * n_landmarks_ - 1) = arma::eye(2 * n_landmarks_, 2 * n_landmarks_) * 1e6;
-      }
+    Covariance_.submat(3, 3, 3 + 2 * n_landmarks_ - 1,
+        3 + 2 * n_landmarks_ - 1) = arma::eye(2 * n_landmarks_, 2 * n_landmarks_) * 1e6;
+  }
         // Set robot state uncertainty low:
   Covariance_.submat(0, 0, 2, 2) = arma::eye(3, 3) * 1e-6;
 
@@ -179,10 +181,12 @@ void EKF::updateEKF(const arma::colvec & z, int landmark_id)
 
         // Compute the theoretical measurement (range and bearing), given the current state estimage, using Equations 14 & 25 in tmp/slam_EKF.pdf:
   arma::colvec z_hat(2);
-  z_hat.at(0) = std::sqrt(std::pow(combined_state_(3 + 2 * landmark_id) - combined_state_.at(1), 2) +
+  z_hat.at(0) = std::sqrt(std::pow(combined_state_(3 + 2 * landmark_id) - combined_state_.at(1),
+      2) +
                                           std::pow(combined_state_(3 + 2 * landmark_id + 1) -
       combined_state_.at(2), 2));
-  z_hat(1) = turtlelib::normalize_angle(std::atan2(combined_state_.at(3 + 2 * landmark_id + 1) - combined_state_.at(2),
+  z_hat(1) = turtlelib::normalize_angle(std::atan2(combined_state_.at(3 + 2 * landmark_id + 1) -
+      combined_state_.at(2),
                             combined_state_.at(3 + 2 * landmark_id) - combined_state_.at(1)) -
     combined_state_(0));
 
@@ -206,25 +210,30 @@ void EKF::updateEKF(const arma::colvec & z, int landmark_id)
   Covariance_ = (arma::eye(3 + 2 * n_landmarks_, 3 + 2 * n_landmarks_) - K_ * H_) * Covariance_;
 }
 
-turtlelib::Transform2D EKF::getState() const {
+turtlelib::Transform2D EKF::getState() const
+{
   return turtlelib::Transform2D(turtlelib::Vector2D(combined_state_.at(1), combined_state_.at(2)),
       combined_state_.at(0));
 }
 
-arma::colvec EKF::getCombinedState() const {
+arma::colvec EKF::getCombinedState() const
+{
   return combined_state_;
 }
 
-arma::mat EKF::getCovariance() const {
+arma::mat EKF::getCovariance() const
+{
   return Covariance_;
 }
 
-arma::mat EKF::getKalmanGain() const {
+arma::mat EKF::getKalmanGain() const
+{
   return K_;
 }
 
-int EKF::getNumLandmarks() const {
-      return n_landmarks_;    
+int EKF::getNumLandmarks() const
+{
+  return n_landmarks_;
 }
 
 std::vector<turtlelib::Point2D> EKF::getLandmarkPositions() const
@@ -240,84 +249,85 @@ std::vector<turtlelib::Point2D> EKF::getLandmarkPositions() const
   return landmarks;
 }
 
-void EKF::addLandmark(const arma::colvec& z) {
+void EKF::addLandmark(const arma::colvec & z)
+{
       // Add a new landmark to the map based on the measurement and current robot pose:
-      auto theta = combined_state_.at(0);
-      auto x     = combined_state_.at(1);
-      auto y     = combined_state_.at(2);
+  auto theta = combined_state_.at(0);
+  auto x = combined_state_.at(1);
+  auto y = combined_state_.at(2);
       // Get range and bearing from measurement:
-      auto range   = z.at(0);
-      auto bearing = z.at(1);
-      auto m_x = x + range * std::cos(theta + bearing);
-      auto m_y = y + range * std::sin(theta + bearing);
+  auto range = z.at(0);
+  auto bearing = z.at(1);
+  auto m_x = x + range * std::cos(theta + bearing);
+  auto m_y = y + range * std::sin(theta + bearing);
 
       // Expand state and covariance to use new landmark:
-      int new_size = 3 + 2 * (n_landmarks_ + 1);
-      combined_state_.resize(new_size);
-      combined_state_.at(new_size - 2) = m_x;
-      combined_state_.at(new_size - 1) = m_y;
+  int new_size = 3 + 2 * (n_landmarks_ + 1);
+  combined_state_.resize(new_size);
+  combined_state_.at(new_size - 2) = m_x;
+  combined_state_.at(new_size - 1) = m_y;
 
-      Covariance_.resize(new_size, new_size);
-      Covariance_(new_size - 2, new_size - 2) = 1e6;
-      Covariance_(new_size - 1, new_size - 1) = 1e6;
+  Covariance_.resize(new_size, new_size);
+  Covariance_(new_size - 2, new_size - 2) = 1e6;
+  Covariance_(new_size - 1, new_size - 1) = 1e6;
 
       // Update A_ and K_ to match new size, so there is no size mismatch in predict and update steps:
-      A_ = arma::eye(new_size, new_size);
-      K_ = arma::zeros(new_size, 2);
+  A_ = arma::eye(new_size, new_size);
+  K_ = arma::zeros(new_size, 2);
 
       // Mark the landmark as initialized and increase the number of landmarks in the map count:
-      landmark_initialized_.push_back(true); // Mark the new landmark as initialized
-      n_landmarks_++;
+  landmark_initialized_.push_back(true);     // Mark the new landmark as initialized
+  n_landmarks_++;
 }
 
-int EKF::dataAssociation(const arma::colvec& z, double threshold) {
+int EKF::dataAssociation(const arma::colvec & z, double threshold)
+{
       // If there are no landmarks, return -1 since its new:
-    if (n_landmarks_ == 0) return -1;
+  if (n_landmarks_ == 0) {return -1;}
 
       // Get the state of the robot:
-    auto theta = combined_state_.at(0);
-    auto x = combined_state_.at(1);
-    auto y = combined_state_.at(2);
+  auto theta = combined_state_.at(0);
+  auto x = combined_state_.at(1);
+  auto y = combined_state_.at(2);
 
-    auto best_match_id = -1;
-    auto min_distance = std::numeric_limits<double>::max();
+  auto best_match_id = -1;
+  auto min_distance = std::numeric_limits<double>::max();
 
-    for (int i = 0; i < n_landmarks_; i++) {
+  for (int i = 0; i < n_landmarks_; i++) {
             // Update the H matrix, the linearize measurement model.
-            updateMeasurementModelMatrix(i, n_landmarks_);
+    updateMeasurementModelMatrix(i, n_landmarks_);
 
             // ########################### Begin_Citation [17] ##################################
             // Used language model to help me fix how I was implementing the covariance and expected measurment.
-            // Compute the Covariance Matrix (Psi): 
-            arma::mat Psi = H_ * Covariance_ * H_.t() + R_;
+            // Compute the Covariance Matrix (Psi):
+    arma::mat Psi = H_ * Covariance_ * H_.t() + R_;
 
             // Compute the Expected Measurement z_k:
-            arma::colvec z_hat(2);
-            auto dx = combined_state_(3 + 2 * i) - x;
-            auto dy = combined_state_(3 + 2 * i + 1) - y;
-            z_hat(0) = std::sqrt(dx*dx + dy*dy);
-            z_hat(1) = turtlelib::normalize_angle(std::atan2(dy,dx) - theta);
+    arma::colvec z_hat(2);
+    auto dx = combined_state_(3 + 2 * i) - x;
+    auto dy = combined_state_(3 + 2 * i + 1) - y;
+    z_hat(0) = std::sqrt(dx * dx + dy * dy);
+    z_hat(1) = turtlelib::normalize_angle(std::atan2(dy, dx) - theta);
             // ############################ End_Citation [17] ###################################
 
             // Compute the mahalanobis distance:
-            arma::colvec diff(2);
-            diff(0) = z(0) - z_hat(0);
-            diff(1) = turtlelib::normalize_angle(z(1) - z_hat(1));
-            auto mahalanobis_dist = arma::as_scalar(diff.t() * arma::inv(Psi) * diff);
-            
-            // Check if the current landmark is the best match to id:
-            if (mahalanobis_dist < min_distance) {
-                  best_match_id = i;
-                  min_distance = mahalanobis_dist;
-            }
-    }
+    arma::colvec diff(2);
+    diff(0) = z(0) - z_hat(0);
+    diff(1) = turtlelib::normalize_angle(z(1) - z_hat(1));
+    auto mahalanobis_dist = arma::as_scalar(diff.t() * arma::inv(Psi) * diff);
 
-    // Return the best matching landmark of -1 if it is new: 
-    if (min_distance > threshold){
-      return -1;
+            // Check if the current landmark is the best match to id:
+    if (mahalanobis_dist < min_distance) {
+      best_match_id = i;
+      min_distance = mahalanobis_dist;
     }
-    else {
-      return best_match_id;
-    }
+  }
+
+    // Return the best matching landmark of -1 if it is new:
+  if (min_distance > threshold) {
+    return -1;
+  } else {
+    return best_match_id;
+  }
 }
 } // End of namespace nuslam

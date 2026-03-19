@@ -94,9 +94,9 @@ public:
             arma::colvec measurement(2);
             measurement(0) = range;
             measurement(1) = bearing;
-            
+
             // Get the obstacle id from No Data Association Algorithm:
-            auto obs_id = slam_ekf_.dataAssociation(measurement,mahalanobis_threshold);
+            auto obs_id = slam_ekf_.dataAssociation(measurement, mahalanobis_threshold);
 
             if(obs_id == -1) {
               RCLCPP_DEBUG_STREAM(this->get_logger(),
@@ -107,7 +107,7 @@ public:
             } else {
               RCLCPP_DEBUG_STREAM(this->get_logger(),
                 "Existing obstacle " << obs_id << " observed again at range=" << range
-                << ", bearing=" << bearing);
+                                     << ", bearing=" << bearing);
             }
 
             // Update the SLAM EKF with the new obstacle data:
@@ -119,7 +119,8 @@ public:
           auto slam_pose = slam_ekf_.getState(); // Transform2D of the robot in the SLAM map.
 
         // Convert the SLAM EKF landmark positions to a MarkerArray:
-          visualization_msgs::msg::MarkerArray marker_array_slam_obstacles = createSLAMObstacles(slam_obstacles);
+          visualization_msgs::msg::MarkerArray marker_array_slam_obstacles =
+          createSLAMObstacles(slam_obstacles);
           slam_obstacle_pub_->publish(marker_array_slam_obstacles);
 
         // Compute map->odom:
@@ -134,7 +135,7 @@ public:
             return;
           }
 
-          t.header.stamp = this->get_clock()->now(); 
+          t.header.stamp = this->get_clock()->now();
           t.header.frame_id = "nusim/world"; // Publish the SLAM EKF pose in the world frame (remapped map frame)
           t.child_frame_id = odom_id_;
           t.transform.translation.x = map_to_odom.translation().x;

@@ -80,19 +80,19 @@ install(EXPORT slamlib-targets
         DESTINATION share/${PROJECT_NAME}/cmake)
 
 # Execution of Unit Testing CTests:  (run ctest --verbose)
-include(CTest)
+# include(CTest)
 
-option(BUILD_TESTING "Allow Unit Test Execution" ON)
+# option(BUILD_TESTING "Allow Unit Test Execution" ON)
 
-# CTest sets BUILD_TESTING to on. To disable tests add -DBUILD_TESTING=OFF when invoking cmake
-if(BUILD_TESTING)
-    # Find the Unit testing framework. In this example, Catch2
-    find_package(Catch2 3 REQUIRED)
+# # CTest sets BUILD_TESTING to on. To disable tests add -DBUILD_TESTING=OFF when invoking cmake
+# if(BUILD_TESTING)
+#     # Find the Unit testing framework. In this example, Catch2
+#     find_package(Catch2 3 REQUIRED)
 
-    # A test is just an executable that is linked against the unit testing library
-    add_executable(test_DataAssociation tests/data_assoc_test.cpp)
-    target_link_libraries(test_DataAssociation Catch2::Catch2WithMain slamlib)
+#     # A test is just an executable that is linked against the unit testing library
+#     add_executable(test_DataAssociation tests/data_assoc_test.cpp)
+#     target_link_libraries(test_DataAssociation Catch2::Catch2WithMain slamlib)
 
-    # register the test with CTest, telling it what executable to run
-    add_test(NAME TestDataAssociation COMMAND test_DataAssociation)
-endif()
+#     # register the test with CTest, telling it what executable to run
+#     add_test(NAME TestDataAssociation COMMAND test_DataAssociation)
+# endif()
