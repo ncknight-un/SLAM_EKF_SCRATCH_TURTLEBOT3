@@ -40,8 +40,9 @@ public:
       this->create_publisher<visualization_msgs::msg::MarkerArray>("~/scan_landmarks", 10);
 
     // Construct the subscriber for the real scaned data:
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort();
     real_sensor_subscriber_ =
-      this->create_subscription<sensor_msgs::msg::LaserScan>("laser_scan_data", 10,
+      this->create_subscription<sensor_msgs::msg::LaserScan>("laser_scan_data", qos,
         [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
             // Break apart the sensor information using unsupervised learning to cluster the points based on the the dist_threhold for the sensor data.
           auto timestamp_ = msg->header.stamp;   // timestamp of the scan

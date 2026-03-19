@@ -38,14 +38,14 @@ Task C.8
 Task F.1
 Task F.2
 Task F.3
-Task F.6 - Will check when doing V.3
+Task F.6
 Task C.9
 Task C.10
 Task V.1
 Task C.11
 Task C.12
 Task V.2
-Task V.3 - Will come back to it tomorrow as the last step! (Wanted to get SLAM done first)
+Task V.3 - Will come back to this after break if I have time.
 Task L.1
 Task L.2
 Task S.1

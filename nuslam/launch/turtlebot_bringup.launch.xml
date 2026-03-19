@@ -55,6 +55,7 @@
 
     <!-- Start the laser node -->
     <node pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher" name="laser">
+        <param name="frame_id" value="green/base_scan"/>
         <param name="port" value="/dev/ttyUSB0"/>
     </node>
 

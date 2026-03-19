@@ -189,6 +189,11 @@ bool CircleReg::isCircle()
     turtlelib::Vector2D v1 = P1 - P;
     turtlelib::Vector2D v2 = P2 - P;
 
+        // Skip if either vector is zero magnitude to fix zero vector issue on real laser scanner
+    if(turtlelib::magnitude(v1) < 1e-6 || turtlelib::magnitude(v2) < 1e-6) {
+        continue;
+    }
+
             // Get the smallest angle between the two vectors:
     auto angle_diff = turtlelib::angle(v1, v2);
     angles.push_back(angle_diff);

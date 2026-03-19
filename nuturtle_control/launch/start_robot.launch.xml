@@ -101,9 +101,10 @@
         <!-- Start the physical turtlebot node  -->
         <node pkg="numsr_turtlebot" exec="numsr_turtlebot" name="numsr_turtlebot"/>
 
-        <!-- Start the lazer node -->
-        <node pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher" name="lazer">
-            <param name="port" value="/dev/ttyUSB0"/>
+        <!-- Start the laser node -->
+        <node pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher" name="laser">
+        <param name="frame_id" value="base_scan"/>
+        <param name="port" value="/dev/ttyUSB0"/>
         </node>
 
         <!-- Launch the circle Node if cmd_src arg is circle -->
