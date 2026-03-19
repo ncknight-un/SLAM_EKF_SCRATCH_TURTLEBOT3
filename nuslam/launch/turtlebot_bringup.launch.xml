@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Arguement to launch the command vel type -->
+    <arg name="cmd_src" default="teleop" 
+        description="The user can control which command velocity source to launch.">
+        <choice value="circle" />
+        <choice value="teleop" />
+        <choice value="none" />
+    </arg>
+
+    <!-- Arguement for config file -->
+    <arg name="config_file" default="basic_world_laser_3obs" 
+    description="The user can control what config file is used to load the world"/>
+
+    <!-- Launch Turtle Control -->
+    <node pkg="nuturtle_control" exec="turtle_control">
+        <param from = "$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+        <remap from = "joint_states" to = "blue/joint_states"/>
+    </node>
+
+    <!-- Load the Bluebot for odometry -->
+    <include file='$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml'>
+        <arg name='color' value='blue'/>
+        <arg name='use_rviz' value='false'/> 
+        <arg name='use_jsp' value='false'/>
+    </include>
+
+    <!-- Load the Greenbot for SLAM -->
+    <include file='$(find-pkg-share nuturtle_description)/launch/load_one.launch.xml'>
+        <arg name='color' value='green'/>
+        <arg name='use_rviz' value='false'/> 
+        <!-- Set jsp to true because we are only publishing its tf -->
+        <arg name='use_jsp' value='true'/> 
+    </include>
+
+    <!-- Load the Landmarks Node -->
+    <node pkg="nuslam" exec="landmarks" name="landmarks">
+        <param from = "$(find-pkg-share nuslam)/config/landmark_detect.yaml"/>
+        <!-- topic from laser_scaner is called scan -->
+        <remap from="laser_scan_data" to="scan"/>       
+    </node> 
+
+    <!-- Publish the odometry SLAM node -->
+    <node pkg="nuslam" exec="slam_odom" name="slam_odom">
+        <param from = "$(find-pkg-share nuturtle_description)/config/diff_params.yaml"/>
+        <param from = "$(find-pkg-share nuslam)/config/slam.yaml"/>
+        <param name="body_id" value="green/base_footprint"/>
+        <param name="odom_id" value="odom"/>
+        <!-- Allow the blue to follow the nomenclature that is used in nusim for the red wheels. -->
+        <param name="wheel_left" value="wheel_left_joint"/>
+        <param name="wheel_right" value="wheel_right_joint"/>
+        <remap from="joint_states" to="blue/joint_states"/>
+        <remap from="fake_obstacles" to="landmarks/scan_landmarks"/>
+    </node>
+
+    <!-- Start the laser node -->
+    <node pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher" name="laser">
+        <param name="port" value="/dev/ttyUSB0"/>
+    </node>
+
+    <!-- Launch the circle Node if cmd_src arg is circle -->
+    <node pkg="nuturtle_control" exec="circle" if="$(eval '\'$(var cmd_src)\'==\'circle\'')">
+        <param name="frequency" value="100"/>
+    </node>
+
+</launch>

@@ -114,8 +114,8 @@
         <!-- Start the physical turtlebot node  -->
         <node pkg="numsr_turtlebot" exec="numsr_turtlebot" name="numsr_turtlebot"/>
 
-        <!-- Start the lazer node -->
-        <node pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher" name="lazer">
+        <!-- Start the laser node -->
+        <node pkg="hls_lfcd_lds_driver" exec="hlds_laser_publisher" name="laser">
             <param name="port" value="/dev/ttyUSB0"/>
         </node>
 
