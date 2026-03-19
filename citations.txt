@@ -14,5 +14,5 @@
 [13] Claude. "Simulation Error Assistance - Path Updating and Frame Adjustment". Accessed. February 27th, 2026. [Online]. Available: https://claude.ai/share/544008df-f8bc-45e4-977d-91a83432d019
 [14] wikipedia. "Line-Line Intersection". Accessed. February 27th, 2026. [Online]. Available: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection
 [15] Claude. "Noise Propagation Question and Angle Wrapping Location". Accessed. March 1st, 2026. [Online]. Available: https://claude.ai/share/9544d800-ccab-4914-9d5a-31534256621e
-[16] https://arma.sourceforge.net/docs.html#svd
-[17] https://claude.ai/share/6b27fcd6-b627-42b5-8290-d036c8d45cbf
+[16] Aramdillo. "SVD Documentation". Accessed. March 17th, 2026. [Online]. Available: https://arma.sourceforge.net/docs.html#svd
+[17] Claude. "Data Association Assistance". Accessed. March 18th, 2026. [Online]. Available: https://claude.ai/share/6b27fcd6-b627-42b5-8290-d036c8d45cbf

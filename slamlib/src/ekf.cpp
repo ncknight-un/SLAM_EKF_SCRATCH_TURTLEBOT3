@@ -132,11 +132,11 @@ void EKF::predict(const turtlelib::Twist2D & control_input)
         // Compute the Jacobian of the motion model (A matrix):
   if (std::abs(omega) > 1e-6) {         // See Equation 10 in tmp/slam_EKF.pdf for the Jacobian of the motion model with rotation
             // Note A_(0,0) does not change.
-    A_(1, 0) = (v / omega) * (std::cos(combined_state_(0)) - std::cos(state_pred(0)));
-    A_(2, 0) = (v / omega) * (std::sin(combined_state_(0)) - std::sin(state_pred(0)));
+    A_(1, 0) = (v / omega) * (std::cos(theta) - std::cos(state_pred(0)));
+    A_(2, 0) = (v / omega) * (std::sin(theta) - std::sin(state_pred(0)));
   } else {          // See Equation 9 in tmp/slam_EKF.pdf for the Jacobian of the motion model without rotation
-    A_(1, 0) = -v * std::sin(combined_state_(0));
-    A_(2, 0) = v * std::cos(combined_state_(0));
+    A_(1, 0) = -v * std::sin(theta);
+    A_(2, 0) = v * std::cos(theta);
   }
 
         // Build Q_bar - Equation 22 in tmp/slam_EKF.pdf:
@@ -182,9 +182,9 @@ void EKF::updateEKF(const arma::colvec & z, int landmark_id)
   z_hat.at(0) = std::sqrt(std::pow(combined_state_(3 + 2 * landmark_id) - combined_state_.at(1), 2) +
                                           std::pow(combined_state_(3 + 2 * landmark_id + 1) -
       combined_state_.at(2), 2));
-  z_hat(1) = std::atan2(combined_state_.at(3 + 2 * landmark_id + 1) - combined_state_.at(2),
+  z_hat(1) = turtlelib::normalize_angle(std::atan2(combined_state_.at(3 + 2 * landmark_id + 1) - combined_state_.at(2),
                             combined_state_.at(3 + 2 * landmark_id) - combined_state_.at(1)) -
-    combined_state_(0);
+    combined_state_(0));
 
         // Compute the Kalman Gain from the linearized measurement model (Equation 26 in tmp/slam_EKF.pdf):
         // Note: K will be a (3+2N x 2) to map the error in the measurement space back to the combined state space.
@@ -240,78 +240,84 @@ std::vector<turtlelib::Point2D> EKF::getLandmarkPositions() const
   return landmarks;
 }
 
-int EKF::dataAssociation(const arma::colvec& z, double threshold) {
-      // Extract the range and bearing from the measurement vector:
-      auto range = z.at(0);
-      auto bearing = z.at(1);
-
-      // Convert measurement to world frame:
+void EKF::addLandmark(const arma::colvec& z) {
+      // Add a new landmark to the map based on the measurement and current robot pose:
       auto theta = combined_state_.at(0);
-      auto x = combined_state_.at(1);
-      auto y = combined_state_.at(2);
-
+      auto x     = combined_state_.at(1);
+      auto y     = combined_state_.at(2);
+      // Get range and bearing from measurement:
+      auto range   = z.at(0);
+      auto bearing = z.at(1);
       auto m_x = x + range * std::cos(theta + bearing);
       auto m_y = y + range * std::sin(theta + bearing);
-      
-      // Temporarily expand the combined_state vector:
-      auto temp_size = n_landmarks_ + 1; // The new number of potential landmarks
-      auto new_state_size = 3 + 2 * temp_size;
 
-      // Add the new measurement to the combined state vector:
-      // Resize Combined_state to include temp landmark:
-      combined_state_.resize(new_state_size);
-      combined_state_.at(3 + 2 * n_landmarks_) =  m_x;
-      combined_state_.at(3 + 2 * n_landmarks_ + 1) = m_y;
+      // Expand state and covariance to use new landmark:
+      int new_size = 3 + 2 * (n_landmarks_ + 1);
+      combined_state_.resize(new_size);
+      combined_state_.at(new_size - 2) = m_x;
+      combined_state_.at(new_size - 1) = m_y;
 
-      // Expand covariance matrix to fit the temp landmark (high uncertainty)
-      // Expand covariance matrix to fit the temp landmark
-      if ((int)Covariance_.n_rows < new_state_size) {
-            Covariance_.resize(new_state_size, new_state_size);
-            Covariance_(new_state_size - 2, new_state_size - 2) = 1e6;
-            Covariance_(new_state_size - 1, new_state_size - 1) = 1e6;
-      }
+      Covariance_.resize(new_size, new_size);
+      Covariance_(new_size - 2, new_size - 2) = 1e6;
+      Covariance_(new_size - 1, new_size - 1) = 1e6;
 
-      // For each measurement in the current combined state vector with the temp landmark:
-      //    Compute H_k, covariance, expected_measurement, and the mahalanobis distance:
-      auto best_match_id = -1;
-      auto min_distance = std::numeric_limits<double>::max();
+      // Update A_ and K_ to match new size, so there is no size mismatch in predict and update steps:
+      A_ = arma::eye(new_size, new_size);
+      K_ = arma::zeros(new_size, 2);
 
-      for(int i = 0; i < n_landmarks_; i++) {
-            // Compute H_k: The linearized measurement model with the new measurement:
-            updateMeasurementModelMatrix(i, temp_size);
+      // Mark the landmark as initialized and increase the number of landmarks in the map count:
+      landmark_initialized_.push_back(true); // Mark the new landmark as initialized
+      n_landmarks_++;
+}
+
+int EKF::dataAssociation(const arma::colvec& z, double threshold) {
+      // If there are no landmarks, return -1 since its new:
+    if (n_landmarks_ == 0) return -1;
+
+      // Get the state of the robot:
+    auto theta = combined_state_.at(0);
+    auto x = combined_state_.at(1);
+    auto y = combined_state_.at(2);
+
+    auto best_match_id = -1;
+    auto min_distance = std::numeric_limits<double>::max();
+
+    for (int i = 0; i < n_landmarks_; i++) {
+            // Update the H matrix, the linearize measurement model.
+            updateMeasurementModelMatrix(i, n_landmarks_);
 
             // ########################### Begin_Citation [17] ##################################
-            // Compute the Covariance Matrix: 
-            arma::mat S = H_ * Covariance_ * H_.t() + R_;
+            // Used language model to help me fix how I was implementing the covariance and expected measurment.
+            // Compute the Covariance Matrix (Psi): 
+            arma::mat Psi = H_ * Covariance_ * H_.t() + R_;
 
             // Compute the Expected Measurement z_k:
             arma::colvec z_hat(2);
             auto dx = combined_state_(3 + 2 * i) - x;
             auto dy = combined_state_(3 + 2 * i + 1) - y;
             z_hat(0) = std::sqrt(dx*dx + dy*dy);
-            z_hat(1) = std::atan2(dy,dx) - theta;
+            z_hat(1) = turtlelib::normalize_angle(std::atan2(dy,dx) - theta);
             // ############################ End_Citation [17] ###################################
 
-            // Compute the Mahalanobis Distance:
-            auto mahalanobis_distance = arma::as_scalar((z - z_hat).t() * arma::inv(S) * (z - z_hat));
-            // If the Mahalanobis Distance is less than some threshold, associate the measurement with this landmark and return the landmark id:
-            if (mahalanobis_distance < threshold && mahalanobis_distance < min_distance) {
-                best_match_id = i;
-                min_distance = mahalanobis_distance;
+            // Compute the mahalanobis distance:
+            arma::colvec diff(2);
+            diff(0) = z(0) - z_hat(0);
+            diff(1) = turtlelib::normalize_angle(z(1) - z_hat(1));
+            auto mahalanobis_dist = arma::as_scalar(diff.t() * arma::inv(Psi) * diff);
+            
+            // Check if the current landmark is the best match to id:
+            if (mahalanobis_dist < min_distance) {
+                  best_match_id = i;
+                  min_distance = mahalanobis_dist;
             }
-      }
-            // Resize the combined state vector and covariance matrix back to original size:
-      if(best_match_id != -1) {
-            // This is a measurement for a landmark that has been seen:
-            combined_state_.resize(3 + 2 * n_landmarks_);
-            Covariance_.resize(3 + 2 * n_landmarks_, 3 + 2 * n_landmarks_);
-      } else {
-            // The landmark has not been seen, so increase the number of landmarks and set landmark_initialized to false, so it is added in the next update step:
-            landmark_initialized_.push_back(false);
-            n_landmarks_ = temp_size;
-      }
+    }
 
-      // Return the index of the best matched landmark or -1 if it is a new landmark:
+    // Return the best matching landmark of -1 if it is new: 
+    if (min_distance > threshold){
+      return -1;
+    }
+    else {
       return best_match_id;
+    }
 }
 } // End of namespace nuslam

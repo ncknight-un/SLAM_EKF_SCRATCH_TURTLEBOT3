@@ -4,3 +4,8 @@
     slam_process_variance: 0.001
     slam_measurement_variance: 1.0
     slam_obs_radius: 0.038
+
+    #
+
+    # Data Association Parameters:
+    mahalanobis_threshold: 0.5

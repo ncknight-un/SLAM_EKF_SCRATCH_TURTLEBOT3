@@ -79,12 +79,11 @@ public:
 
         // Construct the subscriber for Fake Obstacle Sensor Data with Noise:
     fake_obstacles_subscriber_ =
-      this->create_subscription<visualization_msgs::msg::MarkerArray>("fake_obstacles", 10,
+      this->create_subscription<visualization_msgs::msg::MarkerArray>("fake_obstacles", 100,
         [this](const visualization_msgs::msg::MarkerArray::SharedPtr msg) {
         // Break apart the Marker array, and update the SLAM EKF with each obstacle measurement:
           for(const auto & marker : msg->markers) {
             // Pull out each marker and posiiton that is in the robot frame (sensor measurements)
-            auto obs_id = marker.id;
             auto obs_x = marker.pose.position.x;
             auto obs_y = marker.pose.position.y;
 
@@ -95,9 +94,21 @@ public:
             arma::colvec measurement(2);
             measurement(0) = range;
             measurement(1) = bearing;
+            
+            // Get the obstacle id from No Data Association Algorithm:
+            auto obs_id = slam_ekf_.dataAssociation(measurement,mahalanobis_threshold);
 
-            RCLCPP_DEBUG_STREAM(this->get_logger(),
-          "Measurement for obstacle " << obs_id << ": range=" << range << ", bearing=" << bearing);
+            if(obs_id == -1) {
+              RCLCPP_DEBUG_STREAM(this->get_logger(),
+                "New obstacle detected at range=" << range << ", bearing=" << bearing);
+              // Since this is a new landmark, add it to the EKF SLAM state:
+              slam_ekf_.addLandmark(measurement);
+              obs_id = slam_ekf_.getNumLandmarks() - 1; // Get the index of the new landmark that was just added.
+            } else {
+              RCLCPP_DEBUG_STREAM(this->get_logger(),
+                "Existing obstacle " << obs_id << " observed again at range=" << range
+                << ", bearing=" << bearing);
+            }
 
             // Update the SLAM EKF with the new obstacle data:
             slam_ekf_.updateEKF(measurement, obs_id);
@@ -108,8 +119,7 @@ public:
           auto slam_pose = slam_ekf_.getState(); // Transform2D of the robot in the SLAM map.
 
         // Convert the SLAM EKF landmark positions to a MarkerArray:
-          visualization_msgs::msg::MarkerArray marker_array_slam_obstacles =
-          createSLAMObstacles(slam_obstacles);
+          visualization_msgs::msg::MarkerArray marker_array_slam_obstacles = createSLAMObstacles(slam_obstacles);
           slam_obstacle_pub_->publish(marker_array_slam_obstacles);
 
         // Compute map->odom:
@@ -124,7 +134,7 @@ public:
             return;
           }
 
-          t.header.stamp = msg->markers[0].header.stamp;
+          t.header.stamp = this->get_clock()->now(); 
           t.header.frame_id = "nusim/world"; // Publish the SLAM EKF pose in the world frame (remapped map frame)
           t.child_frame_id = odom_id_;
           t.transform.translation.x = map_to_odom.translation().x;
@@ -139,7 +149,7 @@ public:
           tf_broadcaster_slam_->sendTransform(t);
 
         // Publish the SLAM obstacles based on the MAP update from the EKF SLAM algorithm:
-          slam_path_.header.stamp = msg->markers[0].header.stamp; // Keep the same timestamp as sensor data update
+          slam_path_.header.stamp = t.header.stamp;
           slam_path_.header.frame_id = "nusim/world";
           geometry_msgs::msg::PoseStamped pose;
           pose.header = slam_path_.header;
@@ -349,9 +359,10 @@ private:
   double slam_process_variance_ = declare_parameter<double>("slam_process_variance", 0.01);
   double slam_measurement_variance_ = declare_parameter<double>("slam_measurement_variance", 0.01);
   int num_obstacles_ = declare_parameter<int>("num_obstacles", 5);
+  double mahalanobis_threshold = declare_parameter<double>("mahalanobis_threshold", 5.9);
 
   // Create the EKF SLAM object:
-  slamlib::EKF slam_ekf_{num_obstacles_, slam_process_variance_, slam_measurement_variance_};
+  slamlib::EKF slam_ekf_{0, slam_process_variance_, slam_measurement_variance_};  // Initialize the map wit no known obstacles.
 
   // Transform2D to hold the current estimated pose of the robot based on the EKF SLAM algorithm:
   turtlelib::Transform2D q_slam_;

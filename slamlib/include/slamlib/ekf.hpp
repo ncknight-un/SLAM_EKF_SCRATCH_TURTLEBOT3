@@ -52,6 +52,10 @@ namespace slamlib {
         /// \param The total number of landmarks in the map
         void updateMeasurementModelMatrix(int landmark_id, int total_landmarks);
 
+        /// \brief Function to add a new landmark to the map
+        /// \param measurement for the new landmark being observed
+        void addLandmark(const arma::colvec& measurement);
+
         /// \brief Get the current state estimate of the robot (theta, x, y)
         /// \return The current state vector
         turtlelib::Transform2D getState() const;

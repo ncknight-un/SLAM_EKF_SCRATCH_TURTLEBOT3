@@ -128,12 +128,13 @@ public:
             }
 
             // Remove clusters that are too small to be an obstacle (i.e. less than or equal to min_cluster_size_):
-            for(auto & cluster : clusters) {
-              if(static_cast<int>(cluster.size()) <= min_cluster_size_) {
-                // Remove the cluster from the list of clusters:
-                clusters.erase(std::remove(clusters.begin(), clusters.end(), cluster), clusters.end());
-              }
-            }
+            clusters.erase(
+              std::remove_if(clusters.begin(), clusters.end(),
+                [this](const std::vector<size_t>& cluster) {
+                  return static_cast<int>(cluster.size()) <= min_cluster_size_;
+                }),
+              clusters.end()
+            );
 
             RCLCPP_DEBUG_STREAM(this->get_logger(), "There are currently " << clusters.size() << " clusters detected after removing small clusters.");
 

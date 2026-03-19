@@ -9,4 +9,4 @@
     max_obstacle_radius: 0.25
 
     # Visualization Parameters:
-    min_centroid_dist: 0.05 # Minimum distance between centroids to be visualized as separate obstacles
+    min_centroid_dist: 0.1 # Minimum distance between centroids to be visualized as separate obstacles
