@@ -2,6 +2,29 @@
 * Nolan Knight
 * Winter 2025
 
+## Real-World EKF-SLAM:
+`Still working through real world implementation problems. Will update videas when real world simulation is working.`
+
+## Teleop No-Data_Association EKF-SLAM Simulation:
+
+https://github.com/user-attachments/assets/83b06239-9bfb-47df-b908-b1e1cc987cfc
+
+### Error Analsis:
+Final pose error Ground truth -> Odometry:
+Ground Truth (0.001, 0.040)
+Odometry (-0.017, -0.010)
+`Positional Error`:  0.0531 m (5.31 cm)
+
+Final pose error Ground truth -> SLAM-EKF:
+Ground Truth (0.001, 0.040)
+SLAM-EKF(0.000, 0.042)
+`Positional Error`: 0.00224 m (0.224 cm)
+
+## Circle Drive No-Data_Association EKF-SLAM Simulation:
+
+https://github.com/user-attachments/assets/a0d91412-18e1-445b-ac3c-9be6821b9612
+
+
 ### EKF SLAM Simulation with 5 Obstacles:
 
 

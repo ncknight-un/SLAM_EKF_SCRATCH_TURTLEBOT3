@@ -45,10 +45,10 @@ Task V.1
 Task C.11
 Task C.12
 Task V.2
-Task V.3 - Will come back to this after break if I have time.
+Task V.3 - Will come back to this after break if I have time. Isn't fully implemented.
 Task L.1
 Task L.2
 Task S.1
 Task S.2
 Task L.3
-Task L.4
+Task L.4 - Will come back to this after break. I have part of it working, but I have many things to fix from the sim to world test. Simulation is fully running, and videas have been added to the readme for nuslam.
