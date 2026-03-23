@@ -61,6 +61,7 @@ pose:
 This repository consists of several ROS packages
 - Nuturtle-description - URDF development and Rviz vizualization of one or multiple turtlebots in one simulation.
 - Turtlelib - Transfrom2D calculations for Point2D, Vector2D, and Twist2Ds. SVG visualization of transforms and transform calculations.
+- Slamlib - All algorithms for mapping and state estimation using in SLAM-EKF.
 - Nusim - Ground Truth Simulation for TurtleRobot. Loads obstacles and world size based on config file of choice.
 - Nuturtle_control - Odometry and Diff_Drive implementation for Simulation and Localhost operation on turtle bot. Turtlebot can be controlled via a `circle node` or `teleop_keyboard`.
 - Nuturtle_control_interfaces - Custom service message types for nuturtle_control package.
